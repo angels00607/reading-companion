@@ -1,4 +1,4 @@
-# Phase 0 — Foundations
+# Phase 0 â€” Foundations
 
 Scope: foundations only; no feature-rich screens, live providers, AI, imports,
 backup UI, challenge matching engine or gamification engine.
@@ -45,7 +45,7 @@ GitHub backup authentication, AI, reward balancing and push delivery remain defe
 
 ## Assets and acceptance
 Approved source files are now supplied in `/fonts` and preserved byte-for-byte.
-Manrope's variable source has PostScript name `Manrope-ExtraLight` and a 200–800
+Manrope's variable source has PostScript name `Manrope-ExtraLight` and a 200â€“800
 weight axis. App resources use verified 400/500/600 instances: `Manrope-Regular`,
 `Manrope-Medium`, `Manrope-SemiBold`. The approved Papernotes WOFF is converted
 to CFF OpenType without changing its `PapernotesRegular` name. Hello Baby is
@@ -64,7 +64,7 @@ All 12 foreground/background token combinations passed static contrast checks,
 with a lowest ratio of 6.04:1. Rendered Light/Dark backgrounds and System following a
 Dark simulator were checked rather than inferred from requested launch arguments.
 
-## Acceptance result � NOT COMPLETE / NOT READY TO MERGE
+## Acceptance result — NOT COMPLETE / NOT READY TO MERGE
 
 Final completed validation for this review:
 [Actions run #66 / 36875002478](https://github.com/angels00607/reading-companion/actions/runs/36875002478),
@@ -130,7 +130,7 @@ No production changes or Phase 1 work.
 Forward migrations retain legacy page values, observations, copied Journal payloads and account ownership. Original migration files remain unchanged. Final visual/accessibility acceptance and human review remain open.
 
 
-## Phase 0 corrective review — locked progress and domain invariants
+## Phase 0 corrective review â€” locked progress and domain invariants
 
 - Reading progress has two explicit modes: Page and Percentage. Journal Format is
   separate and user-only; neither concept may determine or change the other.
@@ -159,3 +159,49 @@ Forward migrations retain legacy page values, observations, copied Journal paylo
   confirmation of completion alone is insufficient: ambiguous cases return Unknown.
   Active, Completed, explicit Abandoned and override precedence retain their locked meanings.
 - No listening-time/playback behavior, feature screens or Phase 1 implementation.
+
+## Focused Dynamic Type diagnosis of run #66
+
+No further layout, typography, accessibility-semantic or test-gate changes were made
+in this diagnostic pass. The exact completed #66 logs and both xcresult SQLite
+reports were inspected, along with all 25 named tab/scenario screenshots and the
+exported serialized UI snapshots.
+
+Evidence:
+- Default xcresult: 75 assertion failures, all `Dynamic Type font sizes are partially
+  unsupported`.
+- Largest-size xcresult: 32 assertion failures, all `Dynamic Type font sizes are
+  unsupported`.
+- All 107 report the same detailed description: `User will not be able to change
+  the font size of this element`. The callback prints `AUDIT ELEMENT: unknown`
+  for every finding, meaning the optional live element is nil.
+- Structured TestIssues/UserInfo contain no affected accessibility identifier,
+  label or element bounds. Source locations point to the audit invocation, not
+  to an application view.
+- The 23 exported UI snapshots contain only the UIApplication root, empty
+  identifiers and no child elements or labels. They cannot map the findings to
+  Home/Journal/Challenges/Series/Stats, the heading, or the preview text.
+- Default and largest-size portrait screenshots visibly show text scaling.
+  That proves resizing in those captured states, not correct behavior at every
+  size or during the auditor's checks. It does not invalidate the failures.
+- Landscape captures still show a black/cropped presentation. This separate
+  visual finding is not evidence identifying the Dynamic Type culprit and was
+  not used to justify another layout change in this focused pass.
+
+Conclusion: the existing XCTest result has a confirmed diagnostic limitation:
+its failures cannot be mapped to a specific failing live element from the supplied
+logs, issue records and snapshots. An XCTest false positive is NOT established;
+a genuine app failure remains possible. The 107 findings remain blocking and
+unsuppressed. Do not change another UI component based on this evidence alone.
+
+Next necessary diagnostic evidence is a native Accessibility Inspector audit with
+its highlighted element and font-size behavior, or targeted additional native
+instrumentation capturing identified live elements and their dimensions/category
+before and during the audit. Then reproduce the identified failure and make the
+smallest correction. Existing five-tab navigation, minimum targets, full scaling,
+Manrope, appearance modes, labels and selected traits remain unchanged.
+
+No correction was justified in this pass, so no replacement acceptance run is
+claimed. After a mapped correction, rerun the complete 29/16/45-test foundation
+suite plus font registration and both UI stages, and inspect its screenshots.
+Phase 0 remains open; no Phase 1 work or merge.
