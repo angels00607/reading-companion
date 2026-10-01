@@ -3,33 +3,35 @@ import XCTest
 
 final class InvariantTests: XCTestCase {
     func testFinalPageDoesNotCompleteAndUnknownPagesCanFinish() throws {
-        var reading = try ReadingInstance(bookID: UUID(), totalPages: 100)
-        XCTAssertEqual(try ReadingRules.updateProgress(&reading, page: 100, expectedRevision: 0), 100)
+        var reading = try ReadingInstance(bookID: UUID(), progress: .pages(current: 0, total: 100))
+        let update = try ProgressRules.record(&reading, value: .pages(current: 100, total: 100), expectedRevision: 0)
+        guard case .applied(let observation) = update else { return XCTFail("Expected applied observation") }
+        XCTAssertEqual(observation.genuinePageDelta, 100)
         XCTAssertEqual(reading.status, .currentlyReading)
         XCTAssertThrowsError(try ReadingRules.finish(&reading, confirmed: false, date: nil, expectedRevision: 1))
-        var unknown = try ReadingInstance(bookID: UUID())
+        var unknown = try ReadingInstance(bookID: UUID(), progress: .pages())
         let effects = try ReadingRules.finish(&unknown, confirmed: true, date: nil, expectedRevision: 0)
         XCTAssertTrue(effects.journalInbox)
     }
     func testDNFPreservesProgressAndCannotFinishUntilResumed() throws {
-        var reading = try ReadingInstance(bookID: UUID(), currentPage: 74)
+        var reading = try ReadingInstance(bookID: UUID(), progress: .pages(current: 74))
         try ReadingRules.markDNF(&reading)
-        XCTAssertEqual(reading.currentPage, 74)
+        XCTAssertEqual(reading.progress.currentPage, 74)
         XCTAssertFalse(ReadingRules.includedInCompletedStats(reading))
         XCTAssertThrowsError(try ReadingRules.finish(&reading, confirmed: true, date: nil, expectedRevision: 1))
         try ReadingRules.resume(&reading)
-        XCTAssertEqual(reading.currentPage, 74)
+        XCTAssertEqual(reading.progress.currentPage, 74)
     }
     func testHistoricalReadingDoesNotReplayLiveEffects() throws {
-        var reading = try ReadingInstance(bookID: UUID(), historical: true)
+        var reading = try ReadingInstance(bookID: UUID(), progress: .pages(), historical: true)
         let effects = try ReadingRules.finish(&reading, confirmed: true, date: nil, expectedRevision: 0)
         XCTAssertFalse(effects.journalInbox); XCTAssertFalse(effects.challengeAnalysis); XCTAssertFalse(effects.rewardEligible)
         XCTAssertTrue(ReadingRules.includedInCompletedStats(reading))
     }
     func testRereadIdentityAndExternalFormatBoundary() throws {
         let book = UUID()
-        var first = try ReadingInstance(bookID: book)
-        let second = try ReadingInstance(bookID: book)
+        var first = try ReadingInstance(bookID: book, progress: .pages())
+        let second = try ReadingInstance(bookID: book, progress: .pages())
         XCTAssertNotEqual(first.id, second.id); XCTAssertEqual(first.bookID, second.bookID)
         for origin in [MutationOrigin.provider, .historicalImport, .restore] {
             XCTAssertThrowsError(try ReadingRules.setJournalFormat(.ebook, origin: origin, reading: &first))
@@ -42,10 +44,13 @@ final class InvariantTests: XCTestCase {
         XCTAssertEqual(OverridePolicy.decide(current: 100, incoming: 120, userOverridden: true, origin: .provider), .review)
         XCTAssertFalse(OverridePolicy.mayPropose(fingerprint: "v1", rejected: ["v1"]))
         XCTAssertTrue(OverridePolicy.mayPropose(fingerprint: "v2", rejected: ["v1"]))
-        var reading = try ReadingInstance(bookID: UUID(), currentPage: 100)
-        XCTAssertEqual(try ReadingRules.updateProgress(&reading, page: 80, expectedRevision: 0), -20)
-        XCTAssertThrowsError(try ReadingRules.updateProgress(&reading, page: 120, expectedRevision: 0))
-        XCTAssertEqual(reading.currentPage, 80)
+        var reading = try ReadingInstance(bookID: UUID(), progress: .pages(current: 100))
+        let update = try ProgressRules.record(&reading, value: .pages(current: 80), expectedRevision: 0)
+        guard case .applied(let observation) = update else { return XCTFail("Expected applied correction") }
+        XCTAssertEqual(observation.genuinePageDelta, -20)
+        let conflict = try ProgressRules.record(&reading, value: .pages(current: 120), expectedRevision: 0)
+        guard case .requiresReview = conflict else { return XCTFail("Stale progress must be retained for review") }
+        XCTAssertEqual(reading.progress.currentPage, 80)
     }
     func testChallengeVersionsConfidenceTBDAndISOWeek() throws {
         XCTAssertEqual(ChallengeRules.version(year: 2027), .b)
@@ -62,10 +67,8 @@ final class InvariantTests: XCTestCase {
         XCTAssertFalse(JournalRules.bookReviewReady(requiredFieldsPresent: true, format: nil))
         XCTAssertTrue(JournalRules.correctionRequired(copied: "old", current: "new"))
         XCTAssertEqual(SeriesRules.trackerPages(entryCount: 41), 3)
-        XCTAssertEqual(SeriesRules.effectiveStatus(override: .abandoned, reliable: true,
-            hasUnreadPublished: true, allConfirmedRead: false, confirmedComplete: false), .abandoned)
-        XCTAssertEqual(SeriesRules.effectiveStatus(override: nil, reliable: true,
-            hasUnreadPublished: false, allConfirmedRead: true, confirmedComplete: false), .waiting)
+        XCTAssertEqual(SeriesRules.effectiveStatus(override: .abandoned, evidence: .init(hasUnreadIncludedPublished: true)), .abandoned)
+        XCTAssertEqual(SeriesRules.effectiveStatus(override: nil, evidence: .init(allIncludedPublishedRead: true, knownOngoing: true)), .waiting)
     }
     func testRestoreCannotLoseOrDuplicateXP() throws {
         let a = try XPAward(semanticKey: "completion:a", amount: 10)

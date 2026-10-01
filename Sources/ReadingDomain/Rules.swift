@@ -6,16 +6,6 @@ public struct CompletionEffects: Equatable, Sendable {
     public let rewardEligible: Bool
 }
 public enum ReadingRules {
-    public static func updateProgress(_ reading: inout ReadingInstance, page: Int,
-                                      expectedRevision: Int) throws -> Int {
-        guard reading.revision == expectedRevision else { throw DomainError.staleRevision }
-        guard reading.status == .currentlyReading else { throw DomainError.invalidTransition }
-        guard page >= 0, reading.totalPages.map({ page <= $0 }) ?? true else { throw DomainError.invalidProgress }
-        let delta = page - reading.currentPage
-        reading.currentPage = page; reading.revision += 1
-        // Reaching the final page deliberately does not finish the reading.
-        return delta
-    }
     public static func finish(_ reading: inout ReadingInstance, confirmed: Bool,
                               date: ReadingDate?, expectedRevision: Int) throws -> CompletionEffects {
         guard reading.revision == expectedRevision else { throw DomainError.staleRevision }
@@ -43,6 +33,10 @@ public enum ReadingRules {
 public enum JournalComponentStatus: String, Codable, Sendable { case pending, ready, copied, none }
 public enum JournalRules {
     public static let bookReviewCapacity = 100
+    public static func mayGenerateCompletionWork(status: ReadingStatus, origin: MutationOrigin) -> Bool {
+        status != .dnf && origin != .historicalImport
+    }
+    public static func inCompletionFlow(status: ReadingStatus) -> Bool { status == .read }
     public static func bookReviewReady(requiredFieldsPresent: Bool, format: JournalFormat?) -> Bool {
         requiredFieldsPresent && format != nil
     }
@@ -64,13 +58,15 @@ public enum ChallengeRules {
 }
 public enum SeriesStatus: String, Codable, Sendable { case active, waiting, completed, abandoned, unknown }
 public enum SeriesRules {
-    public static func effectiveStatus(override: SeriesStatus?, reliable: Bool,
-        hasUnreadPublished: Bool, allConfirmedRead: Bool, confirmedComplete: Bool) -> SeriesStatus {
+    public static func effectiveStatus(override: SeriesStatus?, evidence: SeriesStatusEvidence) -> SeriesStatus {
         if let override { return override }
-        guard reliable else { return .unknown }
-        if hasUnreadPublished { return .active }
-        if allConfirmedRead && confirmedComplete { return .completed }
-        return .waiting
+        if evidence.hasUnreadIncludedPublished == true { return .active }
+        if evidence.allIncludedConfirmedRead == true && evidence.confirmedComplete == true { return .completed }
+        if evidence.allIncludedPublishedRead == true && evidence.confirmedComplete != true
+            && (evidence.hasAnnouncedOrExpectedFutureEntry == true || evidence.knownOngoing == true) {
+            return .waiting
+        }
+        return .unknown
     }
     public static func trackerPages(entryCount: Int) -> Int {
         max(1, (entryCount + 19) / 20)

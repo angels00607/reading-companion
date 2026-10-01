@@ -16,6 +16,10 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
             let url = Bundle.module.url(forResource: "local_v1", withExtension: "sql")!
             try db.execute(sql: String(contentsOf: url, encoding: .utf8))
         }
+        migrator.registerMigration("local_v2", foreignKeyChecks: .deferred) { db in
+            let url = Bundle.module.url(forResource: "local_v2", withExtension: "sql")!
+            try db.execute(sql: String(contentsOf: url, encoding: .utf8))
+        }
         try migrator.migrate(queue)
     }
     public func addBook(_ book: Book, wantsToRead: Bool, mutation: MutationEnvelope) throws {
@@ -88,4 +92,3 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
         }
     }
 }
-

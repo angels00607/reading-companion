@@ -27,5 +27,7 @@ jobs:
         with:
           version: latest
       - run: supabase start
-      - run: supabase db reset
+      - run: supabase db reset --version 202610010001
+      - run: docker exec -i supabase_db_reading-companion-foundations psql -U postgres -d postgres < scripts/seed_progress_v1.sql
+      - run: supabase migration up --local
       - run: supabase test db

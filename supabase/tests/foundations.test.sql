@@ -29,16 +29,16 @@ select is((public.apply_book_create(
  '30000000-0000-0000-0000-000000000002',1,'Stale','Author',true)->>'status'),
  'stale_generation','Old dataset generation is rejected');
 reset role;
-insert into public.readings(owner_id,id,book_id,status) values
+insert into public.readings(owner_id,id,book_id,status,progress_mode) values
  ('00000000-0000-0000-0000-000000000001','40000000-0000-0000-0000-000000000001',
-  '10000000-0000-0000-0000-000000000001','dnf');
+  '10000000-0000-0000-0000-000000000001','dnf','page');
 select throws_ok($$insert into public.journal_components(owner_id,id,reading_id,component,state) values
  ('00000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001',
  '40000000-0000-0000-0000-000000000001','book_review','ready')$$,
- 'P0001','Journal requires completed reading','DNF cannot create journal component');
-select throws_ok($$insert into public.readings(owner_id,id,book_id,status) values
+ 'P0001','DNF cannot generate completion Journal work','DNF cannot create journal component');
+select throws_ok($$insert into public.readings(owner_id,id,book_id,status,progress_mode) values
  ('00000000-0000-0000-0000-000000000002','40000000-0000-0000-0000-000000000002',
- '10000000-0000-0000-0000-000000000001','read')$$,
+ '10000000-0000-0000-0000-000000000001','read','page')$$,
  '23503',null,'Cross-owner foreign keys are rejected');
 insert into public.xp_awards(owner_id,semantic_key,amount) values
  ('00000000-0000-0000-0000-000000000001','finish:one',10);

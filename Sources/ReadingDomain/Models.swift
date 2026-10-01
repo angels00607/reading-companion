@@ -77,8 +77,8 @@ public struct ReadingInstance: Equatable, Sendable {
     public let id: UUID
     public let bookID: UUID
     public var status: ReadingStatus
-    public var currentPage: Int
-    public var totalPages: Int?
+    public internal(set) var progress: ReadingProgress
+    public internal(set) var progressObservations: [ProgressObservation] = []
     public var startDate: ReadingDate?
     public var finishDate: ReadingDate?
     public var journalFormat: JournalFormat?
@@ -86,12 +86,9 @@ public struct ReadingInstance: Equatable, Sendable {
     public let historical: Bool
     public var revision: Int
     public init(id: UUID = UUID(), bookID: UUID, status: ReadingStatus = .currentlyReading,
-                currentPage: Int = 0, totalPages: Int? = nil, historical: Bool = false) throws {
-        guard currentPage >= 0, totalPages.map({ $0 > 0 && currentPage <= $0 }) ?? true else {
-            throw DomainError.invalidProgress
-        }
-        self.id = id; self.bookID = bookID; self.status = status; self.currentPage = currentPage
-        self.totalPages = totalPages; self.historical = historical; revision = 0
+                progress: ReadingProgress, historical: Bool = false) {
+        self.id = id; self.bookID = bookID; self.status = status; self.progress = progress
+        self.historical = historical; revision = 0
         rating = .unknown
     }
 }
