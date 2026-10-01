@@ -1,0 +1,248 @@
+# Reading Companion --- Architecture Direction
+
+**Status:** proposed direction for Codex technical audit.\
+Do not treat unresolved implementation choices as approved merely
+because they appear here.
+
+## 1. Architecture goals
+
+The architecture must optimize for: - iPhone-first user experience; -
+reliable offline-capable reading workflows; - user data ownership; -
+strict protection of manual corrections; - replaceable external metadata
+providers; - deterministic domain rules; - safe import/reconciliation; -
+testability; - migration/backup longevity.
+
+## 2. High-level shape
+
+``` text
+iPhone App
+  ├─ Presentation / Design System
+  ├─ Domain Layer
+  │    ├─ Books & Readings
+  │    ├─ Journal
+  │    ├─ Series
+  │    ├─ Challenges
+  │    ├─ Quests / XP / Achievements
+  │    ├─ Stats
+  │    └─ Attention
+  ├─ Local Persistence
+  ├─ Sync / Conflict Layer
+  ├─ Provider Adapters
+  │    ├─ Open Library
+  │    ├─ Google Books
+  │    ├─ StoryGraph CSV
+  │    └─ Manual
+  └─ Backup / Export
+
+              ↕ sync
+
+Supabase
+  ├─ Auth (method TBD)
+  ├─ Live cloud database
+  └─ server-side functions/jobs only where justified
+
+Independent backup paths
+  ├─ GitHub manual versioned snapshots
+  └─ Local portable export
+```
+
+## 3. Client technology
+
+Target is an iPhone-first production-quality app.
+
+Codex technical audit must recommend the final client stack. A native
+iOS approach is expected to be evaluated first because the product
+relies on: - native navigation/sheets; - haptics; - Dynamic Type; -
+VoiceOver; - iOS notifications; - offline/local persistence; - polished
+iPhone behavior.
+
+Do not lock a framework before audit.
+
+## 4. Layering
+
+Recommended conceptual separation:
+
+### Presentation
+
+Screens and reusable components only. It must not contain authoritative
+business rules.
+
+### Domain
+
+Pure/testable rules: - status transitions; - finish confirmation; - DNF
+exclusions; - Challenge occupancy/matching decisions; - A/B year rule; -
+Journal readiness; - Series effective status; - XP event eligibility; -
+Stats inclusion.
+
+### Data
+
+Repositories abstract: - local persistence; - Supabase sync; - provider
+data; - import; - backup.
+
+The UI should depend on domain/repository interfaces rather than
+provider SDKs directly.
+
+## 5. Local-first / offline direction
+
+Local data should support immediate use of: - Library/My Books; - Book
+Page for cached books; - Currently Reading; - Update Progress; -
+Journal; - Favorites/Quotes; - local Stats; - pending Attention data.
+
+Offline writes should be queued and synced later.
+
+Codex must propose: - local database technology; - mutation log/outbox
+strategy; - conflict detection; - retry/idempotency; - migration
+strategy.
+
+Do not implement last-write-wins if it can silently destroy user
+overrides.
+
+## 6. Supabase role
+
+Chosen product direction: - live cloud database; - sync/source of cloud
+data; - authentication/account support; - cross-device recovery/sync as
+architecture permits.
+
+Codex must validate: - auth method; - RLS; - schema; - indexes; -
+quotas; - conflict/sync model; - migrations; - deployment/environment
+separation.
+
+Supabase is not the GitHub backup.
+
+## 7. Provider abstraction
+
+Define a stable interface such as:
+
+``` text
+BookMetadataProvider
+  search(query, preferredLanguage)
+  fetchBook(providerID)
+  fetchEditions(bookID)
+  refreshKnownMetadata(...)
+```
+
+Candidate adapters: - OpenLibraryProvider - GoogleBooksProvider -
+StoryGraphImportProvider - ManualProvider
+
+Provider output must include provenance and uncertainty. Provider
+results do not bypass user review/override rules.
+
+StoryGraph live integration is not a V1 dependency.
+
+## 8. AI integration boundary
+
+AI can assist with: - journal summary drafting/revision; - challenge
+explanation/analysis; - possibly data-research assistance when product
+flow explicitly requests it.
+
+AI must not: - invent missing facts; - auto-confirm Challenges; -
+silently write authoritative bibliographic/series data; - infer Journal
+Format.
+
+Codex must propose: - provider/model abstraction; - prompt/context
+boundaries; - privacy approach; - response validation; - retry/error
+behavior; - cost/rate controls where relevant.
+
+Do not assume direct access to existing ChatGPT project conversations.
+
+## 9. Sync and conflicts
+
+Required semantics: - manual user correction has highest authority; -
+external changes become proposals; - rejected proposal suppression
+depends on evidence fingerprint/source version; - offline local
+mutations survive reconnect; - duplicate progress events must not be
+created by retries; - completion side effects must be idempotent.
+
+Codex should consider an outbox/event approach for local mutations and
+idempotency keys for side effects.
+
+## 10. Domain events
+
+Useful events may include: - `ReadingStarted` -
+`ReadingProgressUpdated` - `BookCompletionConfirmed` -
+`ReadingMarkedDNF` - `ReadingResumed` - `JournalComponentCompleted` -
+`JournalCopied` - `ChallengeAssignmentConfirmed` - `QuestCompleted` -
+`AchievementUnlocked` - `SeriesDataChangeProposed`
+
+Historical imports must not emit live equivalents that trigger
+gamification/completion cascades.
+
+## 11. Attention architecture
+
+Use persistent `AttentionItem` for unresolved work. Push/in-app
+notifications are delivery/history, not the authoritative unresolved
+state.
+
+One reusable `ProposedDataChange` / `DataChangeReview` flow should
+serve: - Series updates; - Book metadata updates; - Import
+reconciliation.
+
+## 12. Backup architecture
+
+### GitHub
+
+Manual, punctual, versioned snapshots. Not continuous sync and not one
+commit per app mutation.
+
+### Local export
+
+Independent portable backup.
+
+### Manifest
+
+Include: - backup format version; - schema version; - app version; -
+timestamp; - source device; - entity counts; - integrity/checksum data.
+
+Restore: 1. select backup; 2. parse/validate; 3. integrity check; 4.
+preview contents/impact; 5. explicit confirmation; 6.
+transactional/rollback-safe application; 7. post-restore validation.
+
+Never include credentials/tokens.
+
+## 13. Security
+
+Technical audit must address: - Supabase RLS; - secure credential
+storage (e.g. platform secure storage where appropriate); - secrets
+outside repository; - least-privilege provider credentials; - backup
+secret exclusion; - input validation; - safe file import; - privacy of
+reading data.
+
+## 14. Performance
+
+Plan for hundreds to thousands of Books. - local indexed search; -
+DB-side sort/filter; - progressive loading; - optimized cover
+thumbnails/cache; - no N+1 provider calls; - cached provider metadata; -
+efficient Stats aggregation.
+
+## 15. Testing architecture
+
+Required layers: - domain unit tests; - repository/data tests; -
+migration tests; - import/reconcile fixtures; - sync/conflict tests; -
+UI/component tests; - accessibility tests where tooling permits; -
+end-to-end critical flows.
+
+Critical end-to-end flows: 1. Search → Add → Start → Update → Finish →
+Read. 2. Finish → Journal Inbox → Ready → Journal Session → Copied. 3.
+Reread without duplicate Book. 4. DNF exclusions. 5. Challenge
+sequential confirm/reject. 6. StoryGraph historical import without live
+side effects. 7. Offline progress → reconnect → no data
+loss/duplication. 8. External proposal → Keep Current → no silent
+recurrence. 9. Backup → preview → restore validation.
+
+## 16. Decisions Codex must return for approval before Phase 0
+
+-   final iOS stack;
+-   local database;
+-   sync/outbox/conflict design;
+-   Supabase auth approach;
+-   schema/RLS strategy;
+-   provider priority/matching approach;
+-   AI integration approach;
+-   GitHub backup authentication approach;
+-   backup serialization format;
+-   notification delivery architecture;
+-   environment/configuration strategy;
+-   test stack;
+-   observability/logging approach.
+
+Do not code the application before these decisions are reviewed.

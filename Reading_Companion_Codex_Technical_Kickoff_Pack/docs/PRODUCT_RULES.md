@@ -1,0 +1,191 @@
+# Reading Companion --- Product Rules
+
+This file extracts behavior that should become domain logic and
+automated tests.
+
+## Priority order
+
+When values conflict: 1. explicit current user value / user override; 2.
+previously accepted app value; 3. trusted imported/external proposal
+awaiting user acceptance; 4. AI suggestion; 5. unknown.
+
+External data never silently replaces level 1.
+
+## Books, Editions, Readings
+
+-   One canonical `Book` can have many `Edition` records.
+-   One `Book` can have many `ReadingInstance` records.
+-   Reread = new ReadingInstance.
+-   Latest ReadingInstance may drive the Book Page's current personal
+    rating.
+-   Edition language/title/cover/ISBN/pages may differ.
+-   Preferred search edition is English.
+-   Offer French only when a verified published French edition exists.
+
+## Journal Format
+
+-   Values: Paperback / Hardcover / Ebook / Audiobook.
+-   Belongs to ReadingInstance.
+-   Must be explicitly selected by user.
+-   Never imported, inferred, suggested, preselected, or copied from
+    Edition metadata.
+-   Required for Book Review Ready to Journal.
+
+## Status and progress
+
+-   To Read → Currently Reading → Read.
+-   Currently Reading → DNF.
+-   DNF → Currently Reading via Resume.
+-   Current-page update computes delta from previous page.
+-   Final page requires explicit finish confirmation.
+-   Do not create completion side effects until confirmation.
+
+## DNF exclusions
+
+A DNF: - does not create Book Review; - does not auto-run Challenge
+matching; - does not count as Books Read; - is excluded from Reading
+Stats and physical Journal Stats; - gives no completion XP; - retains
+progress; - can be resumed.
+
+## Historical imports
+
+Imported historical records: - populate Library/Reading History/Stats
+where data exists; - do not replay live completion events; - do not
+mass-award XP/Achievements; - do not mass-create Quest progress; - do
+not auto-run historical Challenge assignment unless a future explicit
+workflow says so.
+
+## Journal
+
+A finished Book creates/enters Journal Inbox. Readiness is per
+component, not one global boolean.
+
+Book Review physical fields: - Title - Author - Pages - Rating -
+Format - Start - Finish - Summary
+
+Rules: - whole-star rating 1--5 + No rating; - never round half stars
+automatically; - manual pages/dates override imported values; -
+Challenge pending does not block Book Review readiness; - Favorite and
+Quote support explicit "none" states; - physical-copy status is tracked
+independently; - later changed copied data creates Journal Correction.
+
+## Series
+
+-   User series status override wins.
+-   No generated series image.
+-   Fractional positions supported.
+-   Unconfirmed future books do not count in confirmed total.
+-   Release dates are exact/year/unknown only if verified.
+-   Next Book = next included unread series entry.
+-   External changes require review.
+-   Same rejected correction is suppressed until evidence changes.
+
+## Challenges
+
+### Calendar version
+
+`year % 2 == 0` → A\
+`year % 2 == 1` → B
+
+Persist/snapshot yearly configuration so later content edits do not
+rewrite history.
+
+### Sequential assignment
+
+For each Challenge/version/year: - confirmed prompt becomes occupied; -
+later books can only target free prompts; - Challenges are independent
+from one another.
+
+### Automatic proposals
+
+-   Analyze all eligible free prompts.
+-   Only propose if confidence ≥70% and evidence is reliable.
+-   Display one best proposal at a time with exact percentage.
+-   Reject requires no reason.
+-   After reject, show next-best eligible ≥70%.
+-   Store rejection fingerprint/evidence so identical suggestion does
+    not immediately recur.
+-   Confirm is always user action.
+-   Manual assignment remains available.
+
+### 52 Weeks
+
+-   finish date determines week;
+-   no finish date → cannot auto-place;
+-   no borrowing between weeks;
+-   first chronologically finished eligible book wins tie by default;
+-   manual replacement only with another book from same week.
+
+## Quests
+
+-   Activity/behavior only.
+-   Never require a book's genre/trope/content.
+-   No XP loss or punishment.
+-   Must be possible when issued.
+-   Use history/cooldowns.
+-   Adaptive targets use smoothed activity, not one anomalous week.
+-   Daily/Weekly/Monthly current starting volume: 2/3/3.
+-   Candidate rerolls: Daily 1/day, Weekly 1/week.
+-   Rerolled quest cannot immediately return.
+
+## Stats
+
+-   DNF excluded.
+-   ReadingInstance is counting unit for rereads.
+-   Exactly one Primary Genre per reading for stats.
+-   User genre choice overrides suggestion.
+-   No rating is distinct from 0 stars.
+-   Best Book Month is manually selected.
+-   Book of Year is manually selected from monthly winners/candidates.
+-   Comparisons are factual and neutral.
+-   Reading Days count days read; never display "missed days" as
+    failure.
+
+## XP / Achievements
+
+-   XP permanent.
+-   No XP loss.
+-   No daily login reward/streak multiplier.
+-   No simple page=XP farm.
+-   Challenge XP only after Confirm.
+-   Import/backup/admin actions award no XP.
+-   Levels unlock cosmetics only.
+-   Achievements are visible, one-time, with explicit
+    condition/progress.
+-   No secret achievements.
+-   No bronze/silver/gold tier requirement.
+
+## Attention / notifications
+
+-   Push notification is delivery; AttentionItem is persistent
+    unresolved work.
+-   Turning push off never hides required AttentionItem.
+-   Group bulk update noise.
+-   Badge counts meaningful unresolved attention.
+-   Informational no-action notifications can expire; unresolved
+    AttentionItems persist.
+
+## Imports / reconciliation
+
+Preview groups: - New Books - Possible Updates - Already Up to Date -
+Needs Review
+
+Never blind-overwrite enriched/user-corrected data. Matching uncertainty
+must be reviewable. Maintain Import History.
+
+## Backup / restore
+
+-   Supabase live data/sync.
+-   GitHub manual versioned snapshots, not per-change commits.
+-   Local export independent.
+-   Restore requires preview and integrity check.
+-   High-impact destructive operations require explicit confirmation.
+-   Secrets never enter backup payloads.
+
+## UX safety rules
+
+-   Unknown is neutral, not error.
+-   No guilt copy.
+-   No social/community V1.
+-   No unnecessary confirmation for reversible actions; prefer Undo.
+-   Red is reserved for genuinely destructive/error semantics.
