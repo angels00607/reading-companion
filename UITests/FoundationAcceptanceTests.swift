@@ -9,6 +9,12 @@ final class FoundationAcceptanceTests: XCTestCase {
     func testDarkDefault() throws { try audit(style: "Dark", category: "UICTContentSizeCategoryL", orientation: .portrait) }
 
     @MainActor
+    func testDarkSurfaceCandidateDefault() throws {
+        try audit(style: "Dark", category: "UICTContentSizeCategoryL", orientation: .portrait,
+                  extraLaunchArguments: ["-phase1-dark-surface-candidate"])
+    }
+
+    @MainActor
     func testSystemFollowsSimulatorDarkAppearance() throws {
         // CI sets the simulator appearance to Dark before launching the test host.
         try audit(style: "System", category: "UICTContentSizeCategoryL", orientation: .portrait)
@@ -23,13 +29,15 @@ final class FoundationAcceptanceTests: XCTestCase {
     }
 
     @MainActor
-    private func audit(style: String, category: String, orientation: UIDeviceOrientation) throws {
+    private func audit(style: String, category: String, orientation: UIDeviceOrientation,
+                       extraLaunchArguments: [String] = []) throws {
         continueAfterFailure = true
         let app = XCUIApplication()
         // CI sets the real simulator category; launch defaults must not freeze
         // Dynamic Type while the accessibility auditor changes categories.
         app.launchArguments = ["-phase0-diagnostics"]
         if style != "System" { app.launchArguments += ["-phase0-appearance", style] }
+        app.launchArguments += extraLaunchArguments
         app.launch()
         XCUIDevice.shared.orientation = orientation
         defer { app.terminate() }
@@ -74,7 +82,8 @@ final class FoundationAcceptanceTests: XCTestCase {
             XCTAssertGreaterThan(Double(matching) / Double(samples), 0.25,
                                  "Rendered \(style) must contain its semantic background")
             let screenshot = XCTAttachment(screenshot: capture)
-            screenshot.name = "\(name)-\(style)-\(category)-\(XCUIDevice.shared.orientation.rawValue)"
+            let variant = extraLaunchArguments.isEmpty ? "" : "-DarkSurfaceCandidate"
+            screenshot.name = "\(name)-\(style)-\(category)-\(XCUIDevice.shared.orientation.rawValue)\(variant)"
             screenshot.lifetime = .keepAlways
             add(screenshot)
             recordLiveElements(app, context: "before-" + name + "-" + style + "-" + category)

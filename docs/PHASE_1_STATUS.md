@@ -34,11 +34,23 @@ statistics, synchronization workflows, rewards or any other Phase 2+ behavior.
 ## Validation status
 
 - Human visual review approved changing the centralized Light Mode semantic
-  `background` token from `#F8FAFB` to `#F5EEF8`. Dark Mode and the existing
-  `surface`, `surface-blue` and `surface-plum` hierarchy remain unchanged.
+  `background` token from `#F8FAFB` to `#F5EEF8`, `surface-blue` from `#E4F3F4`
+  to `#E7EAF6`, and `primary-soft` from `#91C9E2` to `#9EB7D8`.
+- Human visual review corrections add a restrained semantic surface to BookRow,
+  selected-icon treatment to the five-tab shell, whole-word chip reflow, tighter
+  shared-state grouping, clearer BottomSheet separation, and multiline offline
+  presentation. At accessibility sizes the five icons remain visible while visual
+  labels are hidden; their accessible names and selected traits remain available.
+- Dark soft-blue tokens move toward periwinkle (`surface-blue #242B49`, primary
+  `#A9BCE3`). The authoritative Dark background and surface remain `#030B19` and
+  `#0D1B2A`. Candidate surface `#151728` is available only in the visual-QA A/B
+  fixture and remains pending human approval.
 - Static contrast verification against the updated Light Mode background passes:
   text-primary 17.33:1, text-secondary 5.56:1, primary 9.99:1, secondary 7.88:1
   and error 5.76:1.
+- Updated palette checks pass, including 9.47:1 for Light primary on surface-blue,
+  7.60:1 for Dark secondary text on surface-blue, and 9.73:1 for Dark secondary
+  text on experimental surface `#151728`.
 - Local `swift build`: passed.
 - Local SQLite migration/invariant suite: 16 tests passed.
 - Initial CI run 36899019449 confirmed Swift/UI/domain/data tests, iOS build,

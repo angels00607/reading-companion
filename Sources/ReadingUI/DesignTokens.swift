@@ -18,13 +18,17 @@ public enum DesignTokens {
     public static let sheetRadius: CGFloat = 22
     public static let minimumTouchTarget: CGFloat = 44
     public static func background(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x030B19 : 0xF5EEF8) }
-    public static func surface(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x0D1B2A : 0xFFFFFF) }
+    public static func surface(_ scheme: ColorScheme) -> Color {
+        let candidateDarkSurface = ProcessInfo.processInfo.arguments.contains("-phase1-dark-surface-candidate")
+        return Color(hex: scheme == .dark ? (candidateDarkSurface ? 0x151728 : 0x0D1B2A) : 0xFFFFFF)
+    }
     public static func raisedSurface(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x13283A : 0xFFFFFF) }
-    public static func blueSurface(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x183548 : 0xE4F3F4) }
+    public static func blueSurface(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x242B49 : 0xE7EAF6) }
     public static func plumSurface(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x341F35 : 0xECD0EC) }
     public static func text(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xF5F8FA : 0x030B19) }
     public static func secondaryText(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xAFC3CF : 0x4F6272) }
-    public static func primary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x91C9E2 : 0x143D5B) }
+    public static func primary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xA9BCE3 : 0x143D5B) }
+    public static func primarySoft(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xA9BCE3 : 0x9EB7D8) }
     public static func onPrimary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x030B19 : 0xFFFFFF) }
     public static func primaryStrong(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x4F81AA : 0x143D5B) }
     public static func secondary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xBA71A2 : 0x7E2A53) }

@@ -31,22 +31,25 @@ public struct FoundationShell: View {
         }.padding(.top, 8)
     }
     private var tabBar: some View {
-        Group {
-            if typeSize.isAccessibilitySize { ScrollView(.horizontal) { tabButtons }.frame(height: max(56, navigationLabelSize * 1.6 + navigationIconSize + 16)).accessibilityIdentifier("foundationTabScroll") }
-            else { tabButtons }
-        }.background(DesignTokens.surface(scheme)).overlay(alignment: .top) { Divider() }.accessibilityElement(children: .contain).accessibilityLabel("Main navigation")
+        tabButtons
+            .background(DesignTokens.surface(scheme)).overlay(alignment: .top) { Divider() }
+            .accessibilityElement(children: .contain).accessibilityLabel("Main navigation")
     }
     private var tabButtons: some View {
         HStack(alignment: .top, spacing: 0) {
             ForEach(MainTab.allCases) { tab in
                 Button { selectedTab = tab } label: {
                     VStack(spacing: 4) {
-                        Image(systemName: tab.symbol).font(.title3).accessibilityHidden(true)
-                        Text(tab.rawValue).font(DesignTokens.functionalFont(size: 11, relativeTo: .body, weight: selectedTab == tab ? .semiBold : .medium)).multilineTextAlignment(.center).fixedSize(horizontal: typeSize.isAccessibilitySize, vertical: true)
+                        Image(systemName: tab.symbol).font(.title3).frame(width: 40, height: 36)
+                            .background(selectedTab == tab ? DesignTokens.blueSurface(scheme) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
+                            .accessibilityHidden(true)
+                        if !typeSize.isAccessibilitySize {
+                            Text(tab.rawValue).font(DesignTokens.functionalFont(size: 11, relativeTo: .body, weight: selectedTab == tab ? .semiBold : .medium)).multilineTextAlignment(.center)
+                        }
                     }.padding(.vertical, 6).padding(.horizontal, 4).frame(minWidth: 44, maxWidth: typeSize.isAccessibilitySize ? nil : .infinity, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
                 }.buttonStyle(.plain).accessibilityLabel(tab.rawValue).accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton).accessibilityIdentifier("foundationTab." + tab.rawValue)
             }
-        }.padding(.horizontal, 8)
+        }.padding(.horizontal, 8).frame(maxWidth: .infinity)
     }
 }
 
@@ -77,10 +80,17 @@ private struct Phase1PreviewScreen: View {
     }
     private var challenges: some View {
         Group {
-            HStack { FilterChip("Selected", isSelected: $selectedFilter); FilterChip("Unselected", isSelected: Binding(get: { !selectedFilter }, set: { selectedFilter = !$0 })) }
+            ViewThatFits(in: .horizontal) {
+                HStack { filterChips }
+                VStack(alignment: .leading, spacing: 8) { filterChips }
+            }
             AppSegmentedControl(options: [("Recent", "Recent"), ("All", "All")], selection: $segment)
             DataChangeReview(field: "Preview field", current: "Current preview value", proposed: "Proposed preview value", source: "Preview source")
         }
+    }
+    @ViewBuilder private var filterChips: some View {
+        FilterChip("Selected", isSelected: $selectedFilter)
+        FilterChip("Unselected", isSelected: Binding(get: { !selectedFilter }, set: { selectedFilter = !$0 }))
     }
     private var series: some View {
         Group {

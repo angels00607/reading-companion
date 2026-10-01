@@ -34,7 +34,7 @@ jobs:
           xcrun simctl ui "$READING_SIMULATOR_ID" appearance dark
           xcrun simctl help ui
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationDefault.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testSystemFollowsSimulatorDarkAppearance CODE_SIGNING_ALLOWED=NO test
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationDefault.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkSurfaceCandidateDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testSystemFollowsSimulatorDarkAppearance CODE_SIGNING_ALLOWED=NO test
       - name: Largest-accessibility-size foundation acceptance
         if: always()
         run: |

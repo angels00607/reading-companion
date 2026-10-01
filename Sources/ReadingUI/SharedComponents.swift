@@ -45,7 +45,8 @@ public struct BookRow: View {
             if !typeSize.isAccessibilitySize { HStack(alignment: .top, spacing: 12) { BookCover(title: book.title, symbol: book.coverSymbol); metadata; Spacer(minLength: 0) } }
             VStack(alignment: .leading, spacing: 12) { BookCover(title: book.title, symbol: book.coverSymbol); metadata }
         }
-        .padding(.vertical, DesignTokens.Spacing.small)
+        .padding(DesignTokens.Spacing.medium)
+        .background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(book.title), by \(book.author)" + (book.detail.map { ", \($0)" } ?? ""))
         .accessibilityIdentifier("phase1.bookRow")
@@ -145,6 +146,7 @@ public struct FilterChip: View {
                 if isSelected { Image(systemName: "checkmark").accessibilityHidden(true) }
                 Text(title)
             }.font(DesignTokens.functionalFont(size: 14, relativeTo: .body, weight: .medium))
+                .lineLimit(1).fixedSize(horizontal: true, vertical: true)
                 .padding(.horizontal, 12).frame(minHeight: 44)
                 .foregroundStyle(isSelected ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme))
                 .background(isSelected ? DesignTokens.blueSurface(scheme) : DesignTokens.surface(scheme), in: Capsule())
@@ -177,7 +179,7 @@ public struct AppBottomSheet<Content: View>: View {
     public init(title: String, @ViewBuilder content: () -> Content) { self.title = title; self.content = content() }
     public var body: some View {
         VStack(spacing: 16) {
-            Capsule().fill(DesignTokens.border(scheme)).frame(width: 36, height: 5).accessibilityHidden(true)
+            Capsule().fill(DesignTokens.secondaryText(scheme).opacity(0.45)).frame(width: 36, height: 5).accessibilityHidden(true)
             Text(title).font(DesignTokens.functionalFont(size: 22, relativeTo: .title2, weight: .semiBold)).frame(maxWidth: .infinity, alignment: .leading)
             content
         }.padding(20).background(DesignTokens.surface(scheme), in: UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22))
@@ -224,11 +226,11 @@ public struct StatePresentation: View {
     public init(kind: StatePresentationKind, title: String, message: String) { self.kind = kind; self.title = title; self.message = message }
     private var symbol: String { switch kind { case .empty: "books.vertical"; case .error: "exclamationmark.triangle"; case .offline: "wifi.slash" } }
     public var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 6) {
             Image(systemName: symbol).font(.title).foregroundStyle(kind == .error ? DesignTokens.error(scheme) : DesignTokens.primary(scheme)).accessibilityHidden(true)
             Text(title).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold))
             Text(message).font(DesignTokens.functionalFont(size: 14)).foregroundStyle(DesignTokens.secondaryText(scheme)).multilineTextAlignment(.center)
-        }.frame(maxWidth: .infinity).padding(20).accessibilityElement(children: .combine)
+        }.frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.vertical, 12).accessibilityElement(children: .combine)
     }
 }
 
@@ -238,7 +240,8 @@ public struct OfflineBanner: View {
     public var body: some View {
         Label("Offline — local reading tools remain available", systemImage: "wifi.slash")
             .font(DesignTokens.functionalFont(size: 13, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.text(scheme))
-            .frame(maxWidth: .infinity).padding(10).background(DesignTokens.blueSurface(scheme))
+            .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+            .padding(10).background(DesignTokens.blueSurface(scheme))
     }
 }
 
@@ -250,11 +253,11 @@ public struct DataChangeReview: View {
         self.field = field; self.current = current; self.proposed = proposed; self.source = source; self.accept = accept; self.keep = keep; self.edit = edit
     }
     public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             Text(field).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold))
             comparison("Current", current, color: DesignTokens.blueSurface(scheme))
             comparison("Proposed", proposed, color: DesignTokens.plumSurface(scheme))
-            Label("Source: \(source)", systemImage: "link").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme))
+            Label("Source: \(source)", systemImage: "link").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme)).padding(.top, -2)
             ViewThatFits(in: .horizontal) {
                 HStack { AppButton("Keep", kind: .secondary, action: keep); AppButton("Accept", action: accept); AppButton("Edit", kind: .tertiary, action: edit) }
                 VStack(spacing: 8) { AppButton("Keep", kind: .secondary, action: keep); AppButton("Accept", action: accept); AppButton("Edit", kind: .tertiary, action: edit) }

@@ -19,8 +19,8 @@ Book covers are the richest visual elements.
 
   Name              HEX         Role
   ----------------- ----------- -------------------------------------
-  Frosted Berry     `#E4F3F4`   soft selected/current surface
-  Blueberry Cream   `#91C9E2`   soft accent / dark-mode primary
+  Frosted Berry     `#E7EAF6`   soft selected/current surface
+  Blueberry Cream   `#9EB7D8`   soft accent
   Ripe Blue         `#4F81AA`   links, progress, common interaction
   Berry Peel        `#143D5B`   light-mode primary action
   Midnight Jam      `#030B19`   primary text / dark background
@@ -43,13 +43,13 @@ Approximate use: 75% neutrals+blue / 20% plum / 5% semantic exceptions.
   ---------------- -----------
   background       `#F5EEF8`
   surface          `#FFFFFF`
-  surface-blue     `#E4F3F4`
+  surface-blue     `#E7EAF6`
   surface-plum     `#ECD0EC`
   text-primary     `#030B19`
   text-secondary   `#4F6272`
   border           `#DCE6EA`
   primary          `#143D5B`
-  primary-soft     `#91C9E2`
+  primary-soft     `#9EB7D8`
   secondary        `#7E2A53`
   secondary-soft   `#BA71A2`
 
@@ -63,13 +63,18 @@ Approximate use: 75% neutrals+blue / 20% plum / 5% semantic exceptions.
   text-primary       `#F5F8FA`
   text-secondary     `#AFC3CF`
   border             `#24445B`
-  primary            `#91C9E2`
+  primary            `#A9BCE3`
+  surface-blue       `#242B49`
   primary-strong     `#4F81AA`
   secondary          `#BA71A2`
   secondary-strong   `#7E2A53`
 
 Dark mode is Midnight Blue, not black. Do not make every card Berry
 Peel.
+
+The authoritative Dark `surface` remains `#0D1B2A`. Candidate `#151728`
+is presentation-only and pending human A/B approval; it must not be used as
+the production semantic token until that review is complete.
 
 ## Typography
 
