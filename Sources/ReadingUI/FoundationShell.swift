@@ -1,6 +1,6 @@
 import SwiftUI
 
-public enum MainTab: String, CaseIterable, Identifiable {
+public enum MainTab: String, CaseIterable, Identifiable, Hashable {
     case home = "Home", journal = "Journal", challenges = "Challenges", series = "Series", stats = "Stats"
     public var id: String { rawValue }
     var symbol: String {
@@ -38,7 +38,7 @@ public struct FoundationShell: View {
     }
 
     private var foundationTabBar: some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .top, spacing: 0) {
             ForEach(MainTab.allCases) { tab in
                 Button { selectedTab = tab } label: {
                     VStack(spacing: 4) {
@@ -66,7 +66,7 @@ public struct FoundationShell: View {
                 .buttonStyle(.plain)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(tab.rawValue)
-                .accessibilityAddTraits(selectedTab == tab ? .isSelected : [])
+                .accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton)
                 .accessibilityIdentifier("foundationTab." + tab.rawValue)
             }
         }
