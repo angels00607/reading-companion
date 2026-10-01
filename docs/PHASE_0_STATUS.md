@@ -19,10 +19,13 @@ The approved V2 documents remain authoritative.
 - SQLite, native invariant/repository/sync and Supabase RLS test infrastructure.
 
 ## Validation
-Windows SQLite migration checks: 8 tests passed.
-Native Swift/GRDB compilation, iOS build, Supabase integration tests and visual/accessibility
-checks require the CI/Mac environment and are not claimed as passed here.
-Phase 0 exit gate remains open until those required checks pass.
+Windows and CI SQLite migration checks: 8 tests passed.
+macOS CI: Swift/GRDB compilation and all 12 native tests passed.
+iOS simulator-target application build passed.
+Supabase migration/reset and all 14 database/RLS tests passed.
+Evidence: GitHub Actions run 36838179188, code commit 0a8ad76e28e072e87e45fd2f8d954e96cfed564e.
+Device visual/accessibility checks and approved font rendering remain unverified.
+The Phase 0 exit gate remains open for those acceptance checks and human review.
 
 ## Engineering baselines
 Swift 6 / Xcode 16+, iOS 17+, GRDB 7.0.0 pinned; XcodeGen generates the app project.
@@ -46,3 +49,4 @@ Font binaries were not supplied. Registration/font-role wiring is present; appro
 licensed assets and PostScript-name verification are needed for typography visual QA.
 No screenshot or device QA is claimed.
 Phase 1 or any broader feature work requires review and explicit authorization.
+
