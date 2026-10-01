@@ -24,8 +24,7 @@ macOS CI: Swift/GRDB compilation and all 12 native tests passed.
 iOS simulator-target application build passed.
 Supabase migration/reset and all 14 database/RLS tests passed.
 Evidence: GitHub Actions run 36838179188, code commit 0a8ad76e28e072e87e45fd2f8d954e96cfed564e.
-Device visual/accessibility checks and approved font rendering remain unverified.
-The Phase 0 exit gate remains open for those acceptance checks and human review.
+At that baseline, visual/accessibility checks and approved font rendering were unverified.
 
 ## Engineering baselines
 Swift 6 / Xcode 16+, iOS 17+, GRDB 7.0.0 pinned; XcodeGen generates the app project.
@@ -45,10 +44,75 @@ No Challenge TBD content is seeded or inferred.
 GitHub backup authentication, AI, reward balancing and push delivery remain deferred.
 
 ## Assets and acceptance
-Font binaries were not supplied. Registration/font-role wiring is present; approved,
-licensed assets and PostScript-name verification are needed for typography visual QA.
-No screenshot or device QA is claimed.
-Phase 1 or any broader feature work requires review and explicit authorization.
+Approved source files are now supplied in `/fonts` and preserved byte-for-byte.
+Manrope's variable source has PostScript name `Manrope-ExtraLight` and a 200–800
+weight axis. App resources use verified 400/500/600 instances: `Manrope-Regular`,
+`Manrope-Medium`, `Manrope-SemiBold`. The approved Papernotes WOFF is converted
+to CFF OpenType without changing its `PapernotesRegular` name. Hello Baby is
+copied unchanged and registers as `HelloBabyRegular`.
+All five app fonts passed hosted UIKit registration checks without fallback.
+The preparation script verifies approved source checksums and reproduces resources.
+Font roles remain locked: Manrope functional; Papernotes and Hello Baby reserved accents.
+
+Simulator QA discovered insufficient landscape native-tab touch height and low-contrast
+inactive native labels. The foundation navigation now uses explicit 44-point minimum
+targets and semantic foreground colors. Regular text sizes retain a five-column row;
+accessibility sizes use full-size labels in a horizontal scrolling row. Both labels and
+symbols scale, and the footer reserves scaled height. The heading uses adaptive SwiftUI
+Manrope typography. No font-size cap or audit-issue exclusion is used.
+All 12 foreground/background token combinations passed static contrast checks,
+with a lowest ratio of 6.04:1. Rendered Light/Dark backgrounds and System following a
+Dark simulator were checked rather than inferred from requested launch arguments.
+
+## Acceptance result � NOT COMPLETE / NOT READY TO MERGE
+
+Last completed full validation:
+[Actions run 36871299920](https://github.com/angels00607/reading-companion/actions/runs/36871299920),
+code `debb05bfbda2ddd7a7177a7fef8fea11e628da27`, iPhone SE (3rd generation) simulator.
+
+| Check | Result |
+| --- | --- |
+| Native Swift/domain/GRDB suite | 29 passed |
+| SQLite migration/invariant suite | 16 passed |
+| Supabase migrations/RLS suite | 45 passed |
+| iOS simulator application build | Passed |
+| Hosted UIKit font registration | Passed; all five resources registered without fallback |
+| Foundation UI/accessibility scenarios | 0 of 5 accepted; suite failed |
+| Static semantic color contrast | 12 combinations passed; minimum 6.04:1 |
+
+The UI run captured 23 tab/scenario screenshots: all five tabs in default Light,
+Dark and System; five in largest-text Dark landscape; Home, Journal and Challenges
+in largest-text Light portrait. Dynamic Type audit findings persist: partially
+unsupported at default size and unsupported at the largest size. The issue handler
+returns false and preserves all failures. XCTest does not identify a live element
+for these findings; they are unresolved, not classified as false positives.
+No other audit categories reported findings on completed screens, but that does not
+constitute full accessibility acceptance. Labels and 44-point target assertions were
+checked for reached controls. The largest Light portrait run stopped when XCTest
+could not determine the offscreen Series button activation point; Series/Stats
+coverage in that scenario is incomplete.
+
+Visual review of exported screenshots also exposed letterboxed landscape rendering.
+The subsequent corrective code explicitly declares portrait and both landscape
+orientations, removes a redundant Button accessibility grouping override, and scrolls
+by viewport geometry before querying an offscreen button's hit point.
+These corrections are in `621e4c91594512a39e44231d0f362443d6ae96f0`.
+[Verification run 36873922445](https://github.com/angels00607/reading-companion/actions/runs/36873922445)
+is still in progress at this handoff: SQLite/Supabase pass; macOS Swift tests and iOS
+build steps pass; final simulator acceptance is not yet verified.
+
+Remaining acceptance gates:
+- Resolve or substantiate the Dynamic Type audit findings through targeted native
+  inspection; do not suppress them merely to obtain a green run.
+- Verify full-screen landscape rendering and all five largest-text portrait navigation
+  targets after the corrective changes, then obtain a passing complete acceptance run.
+- Physical-device and spoken VoiceOver interaction have not been performed. Automated
+  labels/traits checks do not replace listening and navigating with VoiceOver.
+- Review the final visual/accessibility evidence before accepting Phase 0.
+
+Phase 0 is not fully complete and is not ready to merge. The draft PR remains open;
+no merge or Phase 1 work has occurred. All locked domain rules below remain unchanged.
+Phase 1 requires review and explicit authorization.
 
 ## Corrective pass validation
 Corrective code commit 402969c1a8f21a2ab685b59cc6ec6d0d9b049e65 passed:
@@ -61,7 +125,7 @@ The parallel PR run hit a GitHub release-lookup rate limit before Supabase setup
 the CLI is now pinned to verified release 2.119.0 to remove that lookup dependency.
 No production changes or Phase 1 work.
 
-Forward migrations retain legacy page values, observations, copied Journal payloads and account ownership. Original migration files remain unchanged. No specification deviations are intended. Font assets/device visual/accessibility QA and human acceptance remain open.
+Forward migrations retain legacy page values, observations, copied Journal payloads and account ownership. Original migration files remain unchanged. Final visual/accessibility acceptance and human review remain open.
 
 
 ## Phase 0 corrective review — locked progress and domain invariants
