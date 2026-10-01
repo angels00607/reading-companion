@@ -15,16 +15,16 @@ expected = {
 }
 for name, checksum in expected.items():
     assert hashlib.sha256((source / name).read_bytes()).hexdigest() == checksum, name
-    font = TTFont(source / name)
+    font = TTFont(source / name, recalcTimestamp=False)
     print(name, "family=", font["name"].getDebugName(1), "PostScript=", font["name"].getDebugName(6))
 
 for role, weight in [("Regular", 400), ("Medium", 500), ("SemiBold", 600)]:
-    font = instantiateVariableFont(TTFont(source / "Manrope-VariableFont_wght.ttf"),
+    font = instantiateVariableFont(TTFont(source / "Manrope-VariableFont_wght.ttf", recalcTimestamp=False),
                                    {"wght": weight}, updateFontNames=True)
     path = output / f"Manrope-{role}.ttf"
     font.save(path)
     assert TTFont(path)["name"].getDebugName(6) == f"Manrope-{role}"
-font = TTFont(source / "PapernotesRegular.woff")
+font = TTFont(source / "PapernotesRegular.woff", recalcTimestamp=False)
 assert font.sfntVersion == "OTTO"
 font.flavor = None
 font.save(output / "PapernotesRegular.otf")
