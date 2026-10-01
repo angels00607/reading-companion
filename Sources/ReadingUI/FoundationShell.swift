@@ -1,7 +1,4 @@
 import SwiftUI
-#if canImport(UIKit)
-import UIKit
-#endif
 
 public enum MainTab: String, CaseIterable, Identifiable {
     case home = "Home", journal = "Journal", challenges = "Challenges", series = "Series", stats = "Stats"
@@ -18,9 +15,10 @@ public enum MainTab: String, CaseIterable, Identifiable {
 }
 public struct FoundationShell: View {
     @Environment(\.colorScheme) private var scheme
+    @State private var selectedTab: MainTab = .home
     public init() {}
     public var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             ForEach(MainTab.allCases) { tab in
                 NavigationStack {
                     Text("Foundation preview")
@@ -28,54 +26,66 @@ public struct FoundationShell: View {
                         .foregroundStyle(DesignTokens.secondaryText(scheme))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(DesignTokens.background(scheme))
-                        .background(FullHeightTabBarConfiguration().frame(width: 0, height: 0))
                         .navigationTitle(tab.rawValue)
                 }
                 .tabItem { Label(tab.rawValue, systemImage: tab.symbol) }
+                .tag(tab)
+                .hideFoundationNativeTabBar()
             }
         }
         .tint(DesignTokens.primary(scheme))
+        .safeAreaInset(edge: .bottom, spacing: 0) { foundationTabBar }
+    }
+
+    private var foundationTabBar: some View {
+        HStack(spacing: 0) {
+            ForEach(MainTab.allCases) { tab in
+                Button { selectedTab = tab } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: tab.symbol)
+                            .font(.system(size: 20))
+                        Text(tab.rawValue)
+                            .font(DesignTokens.functionalFont(size: 11, relativeTo: .caption2,
+                                weight: selectedTab == tab ? .semiBold : .medium))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 4)
+                    .frame(minWidth: DesignTokens.minimumTouchTarget, maxWidth: .infinity,
+                           minHeight: DesignTokens.minimumTouchTarget)
+                    .contentShape(Rectangle())
+                    .foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme))
+                    .overlay(alignment: .top) {
+                        if selectedTab == tab {
+                            Rectangle().fill(DesignTokens.primary(scheme))
+                                .frame(width: 24, height: 2).accessibilityHidden(true)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(tab.rawValue)
+                .accessibilityAddTraits(selectedTab == tab ? .isSelected : [])
+                .accessibilityIdentifier("foundationTab." + tab.rawValue)
+            }
+        }
+        .padding(.horizontal, 8)
+        .background(DesignTokens.surface(scheme))
+        .overlay(alignment: .top) { Divider() }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Main navigation")
     }
 }
 
-// UIKit owns the native bar geometry. A SwiftUI environment override does not
-// change its compact-height traits. The controller must retain regular-height
-// navigation geometry so the native bar does not shrink below 44 points.
-#if canImport(UIKit)
-private struct FullHeightTabBarConfiguration: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> ConfigurationController { ConfigurationController() }
-    func updateUIViewController(_ controller: ConfigurationController, context: Context) { controller.configure() }
-
-    final class ConfigurationController: UIViewController {
-        private var configured = false
-        override func loadView() {
-            view = UIView()
-            view.isUserInteractionEnabled = false
-            view.isAccessibilityElement = false
-        }
-        override func viewDidAppear(_ animated: Bool) {
-            super.viewDidAppear(animated)
-            configure()
-        }
-        override func viewDidLayoutSubviews() {
-            super.viewDidLayoutSubviews()
-            configure()
-        }
-        func configure() {
-            guard !configured, let controller = tabBarController else { return }
-            configured = true
-            let bar = controller.tabBar
-            controller.traitOverrides.verticalSizeClass = .regular
-            bar.traitOverrides.verticalSizeClass = .regular
-            bar.setNeedsLayout()
-            controller.view.setNeedsLayout()
-        }
+private extension View {
+    @ViewBuilder func hideFoundationNativeTabBar() -> some View {
+        #if os(iOS)
+        toolbar(.hidden, for: .tabBar)
+        #else
+        self
+        #endif
     }
 }
-#else
-private struct FullHeightTabBarConfiguration: View {
-    var body: some View { EmptyView() }
-}
-#endif
 #Preview("Light") { FoundationShell().preferredColorScheme(.light) }
 #Preview("Dark") { FoundationShell().preferredColorScheme(.dark) }

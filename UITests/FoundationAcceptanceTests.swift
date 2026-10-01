@@ -32,9 +32,9 @@ final class FoundationAcceptanceTests: XCTestCase {
         XCUIDevice.shared.orientation = orientation
         defer { app.terminate() }
         let tabs = ["Home", "Journal", "Challenges", "Series", "Stats"]
-        XCTAssertEqual(app.tabBars.buttons.count, tabs.count)
+        XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "foundationTab.")).count, tabs.count)
         for name in tabs {
-            let button = app.tabBars.buttons[name]
+            let button = app.buttons["foundationTab." + name]
             XCTAssertTrue(button.waitForExistence(timeout: 5))
             XCTAssertEqual(button.label, name)
             XCTAssertTrue(button.isHittable)

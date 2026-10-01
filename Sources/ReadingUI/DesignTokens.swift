@@ -10,8 +10,12 @@ public enum DesignTokens {
     public static func text(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xF5F8FA : 0x030B19) }
     public static func secondaryText(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xAFC3CF : 0x4F6272) }
     public static func primary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x91C9E2 : 0x143D5B) }
-    public static func functionalFont(size: CGFloat, relativeTo style: Font.TextStyle = .body) -> Font {
-        .custom("Manrope-Regular", size: size, relativeTo: style)
+    public enum FunctionalFontWeight: String, Sendable {
+        case regular = "Manrope-Regular", medium = "Manrope-Medium", semiBold = "Manrope-SemiBold"
+    }
+    public static func functionalFont(size: CGFloat, relativeTo style: Font.TextStyle = .body,
+                                      weight: FunctionalFontWeight = .regular) -> Font {
+        .custom(weight.rawValue, size: size, relativeTo: style)
     }
 }
 private extension Color {
