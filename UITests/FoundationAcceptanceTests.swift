@@ -37,6 +37,8 @@ final class FoundationAcceptanceTests: XCTestCase {
             let button = app.buttons["foundationTab." + name]
             XCTAssertTrue(button.waitForExistence(timeout: 5))
             XCTAssertEqual(button.label, name)
+            let scroll = app.scrollViews["foundationTabScroll"]
+            for _ in 0..<6 where !button.isHittable && scroll.exists { scroll.swipeLeft() }
             XCTAssertTrue(button.isHittable)
             XCTAssertGreaterThanOrEqual(button.frame.width, 44)
             XCTAssertGreaterThanOrEqual(button.frame.height, 44)

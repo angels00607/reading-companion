@@ -15,6 +15,7 @@ public enum MainTab: String, CaseIterable, Identifiable, Hashable {
 }
 public struct FoundationShell: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var selectedTab: MainTab = .home
     public init() {}
     public var body: some View {
@@ -38,6 +39,23 @@ public struct FoundationShell: View {
     }
 
     private var foundationTabBar: some View {
+        Group {
+            if typeSize.isAccessibilitySize {
+                ScrollView(.horizontal) {
+                    tabButtons
+                }
+                .accessibilityIdentifier("foundationTabScroll")
+            } else {
+                tabButtons
+            }
+        }
+        .background(DesignTokens.surface(scheme))
+        .overlay(alignment: .top) { Divider() }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Main navigation")
+    }
+
+    private var tabButtons: some View {
         HStack(alignment: .top, spacing: 0) {
             ForEach(MainTab.allCases) { tab in
                 Button { selectedTab = tab } label: {
@@ -48,14 +66,11 @@ public struct FoundationShell: View {
                             .font(DesignTokens.functionalFont(size: 11, relativeTo: .caption2,
                                 weight: selectedTab == tab ? .semiBold : .medium))
                             .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
+                            .fixedSize(horizontal: typeSize.isAccessibilitySize, vertical: true)
                     }
-                    // Compact navigation follows Apple's large-content-viewer
-                    // pattern; main content continues through every Dynamic Type size.
-                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 4)
-                    .frame(minWidth: DesignTokens.minimumTouchTarget, maxWidth: .infinity,
+                    .frame(minWidth: DesignTokens.minimumTouchTarget, maxWidth: typeSize.isAccessibilitySize ? nil : .infinity,
                            minHeight: DesignTokens.minimumTouchTarget)
                     .contentShape(Rectangle())
                     .foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme))
@@ -71,27 +86,13 @@ public struct FoundationShell: View {
                 .accessibilityLabel(tab.rawValue)
                 .accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton)
                 .accessibilityIdentifier("foundationTab." + tab.rawValue)
-                .foundationLargeContentViewer(for: tab)
             }
         }
         .padding(.horizontal, 8)
-        .background(DesignTokens.surface(scheme))
-        .overlay(alignment: .top) { Divider() }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Main navigation")
     }
 }
 
 private extension View {
-    @ViewBuilder func foundationLargeContentViewer(for tab: MainTab) -> some View {
-        #if os(iOS)
-        accessibilityShowsLargeContentViewer {
-            Label(tab.rawValue, systemImage: tab.symbol)
-        }
-        #else
-        self
-        #endif
-    }
     @ViewBuilder func hideFoundationNativeTabBar() -> some View {
         #if os(iOS)
         toolbar(.hidden, for: .tabBar)
