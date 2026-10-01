@@ -79,7 +79,7 @@ final class FoundationAcceptanceTests: XCTestCase {
                 .sufficientElementDescription, .textClipped, .trait]) { issue in
                     findingNumber += 1
                     if findingNumber == 1 {
-                        recordLiveElements(app, context: "during-" + name + "-" + style + "-" + category)
+                        self.recordLiveElements(app, context: "during-" + name + "-" + style + "-" + category)
                     }
                 print("AUDIT ISSUE: \(issue.detailedDescription)")
                 print("AUDIT ELEMENT: \(issue.element?.debugDescription ?? "unknown")")
