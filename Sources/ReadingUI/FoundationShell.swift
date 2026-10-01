@@ -39,7 +39,8 @@ public struct FoundationShell: View {
 }
 
 // UIKit owns the native bar geometry. A SwiftUI environment override does not
-// change its compact-height traits; override only the bar, preserving content traits.
+// change its compact-height traits. The controller must retain regular-height
+// navigation geometry so the native bar does not shrink below 44 points.
 #if canImport(UIKit)
 private struct FullHeightTabBarConfiguration: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> ConfigurationController { ConfigurationController() }
@@ -61,11 +62,13 @@ private struct FullHeightTabBarConfiguration: UIViewControllerRepresentable {
             configure()
         }
         func configure() {
-            guard !configured, let bar = tabBarController?.tabBar else { return }
+            guard !configured, let controller = tabBarController else { return }
             configured = true
+            let bar = controller.tabBar
+            controller.traitOverrides.verticalSizeClass = .regular
             bar.traitOverrides.verticalSizeClass = .regular
             bar.setNeedsLayout()
-            tabBarController?.view.setNeedsLayout()
+            controller.view.setNeedsLayout()
         }
     }
 }
