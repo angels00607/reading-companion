@@ -11,6 +11,9 @@ struct ReadingCompanionApp: App {
             .scaledFont(for: UIFont(name: "Manrope-SemiBold", size: 28)!)]
         navigation.titleTextAttributes = [.font: UIFontMetrics(forTextStyle: .headline)
             .scaledFont(for: UIFont(name: "Manrope-SemiBold", size: 17)!)]
+        UITabBar.appearance().unselectedItemTintColor = UIColor { traits in
+            UIColor(DesignTokens.secondaryText(traits.userInterfaceStyle == .dark ? .dark : .light))
+        }
         UITabBarItem.appearance().setTitleTextAttributes(
             [.font: UIFont(name: "Manrope-Medium", size: 11)!], for: .normal)
         UITabBarItem.appearance().setTitleTextAttributes(
