@@ -14,6 +14,26 @@ jobs:
       - run: brew install xcodegen
       - run: xcodegen generate
       - run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Select available iPhone simulator
+        run: |
+          xcrun simctl list devices available -j > /tmp/reading-simulators.json
+          python3 - <<'PY'
+          import json, os
+          devices = json.load(open('/tmp/reading-simulators.json'))['devices']
+          phones = [d for group in devices.values() for d in group if 'iPhone' in d['name']]
+          assert phones, 'An iPhone simulator is required for acceptance QA'
+          phone = sorted(phones, key=lambda d: ('SE' not in d['name'], d['name']))[0]
+          print('Acceptance device:', phone['name'], phone['udid'])
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('READING_SIMULATOR_ID=' + phone['udid'] + '\n')
+          PY
+      - name: Foundation shell accessibility and screenshot matrix
+        run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationAcceptance.xcresult CODE_SIGNING_ALLOWED=NO test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: foundation-acceptance-results
+          path: work/FoundationAcceptance.xcresult
   sqlite:
     runs-on: ubuntu-latest
     steps:

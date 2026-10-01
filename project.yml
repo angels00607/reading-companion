@@ -35,8 +35,23 @@ targets:
           - Manrope-SemiBold.ttf
           - Papernotes-Regular.ttf
           - HelloBaby.ttf
+  FoundationAcceptanceTests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.readingcompanion.foundationtests
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: ReadingCompanion
 schemes:
   ReadingCompanion:
     build:
       targets:
         ReadingCompanion: all
+    test:
+      targets:
+        - FoundationAcceptanceTests
