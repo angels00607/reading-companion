@@ -10,8 +10,6 @@ public struct FoundationShell: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var selectedTab: MainTab = .home
-    @ScaledMetric(relativeTo: .body) private var navigationLabelSize: CGFloat = 11
-    @ScaledMetric(relativeTo: .title3) private var navigationIconSize: CGFloat = 20
     public init() {}
     public var body: some View {
         NavigationStack {
@@ -40,7 +38,7 @@ public struct FoundationShell: View {
             ForEach(MainTab.allCases) { tab in
                 Button { selectedTab = tab } label: {
                     VStack(spacing: 4) {
-                        Image(systemName: tab.symbol).font(.title3).frame(width: 40, height: 36)
+                        Image(systemName: tab.symbol).font(.system(size: 20)).frame(width: 40, height: 36)
                             .background(selectedTab == tab ? DesignTokens.blueSurface(scheme) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
                             .accessibilityHidden(true)
                         if !typeSize.isAccessibilitySize {
