@@ -1,4 +1,4 @@
-name: Phase 0 foundations
+name: Phase 1 shared UI
 on:
   push:
   pull_request:
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: foundation-acceptance-results
+          name: phase-1-acceptance-results
           path: |
             work/Foundation*.xcresult
             work/acceptance-screenshots

@@ -47,7 +47,13 @@ final class FoundationAcceptanceTests: XCTestCase {
             button.tap()
             XCTAssertTrue(app.staticTexts["foundationTitle"].waitForExistence(timeout: 5))
             XCTAssertEqual(app.staticTexts["foundationTitle"].label, name)
-            XCTAssertTrue(app.staticTexts["Foundation preview"].exists)
+            XCTAssertTrue(app.staticTexts["Phase 1 component preview data"].exists)
+            let representativeComponent = [
+                "Home": "phase1.bookRow", "Journal": "phase1.bottomSheet",
+                "Challenges": "phase1.dataChangeReview", "Series": "phase1.attentionRow",
+                "Stats": "phase1.accessibleChart"
+            ][name]!
+            XCTAssertTrue(app.descendants(matching: .any)[representativeComponent].waitForExistence(timeout: 3))
             let capture = app.screenshot()
             // Verify rendered appearance, not just the requested launch argument.
             let bitmap = try XCTUnwrap(capture.image.cgImage)
