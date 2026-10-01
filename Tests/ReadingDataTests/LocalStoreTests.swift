@@ -7,7 +7,7 @@ final class LocalStoreTests: XCTestCase {
         let owner = UUID()
         let store = try LocalStore(path: ":memory:", ownerID: owner)
         let book = Book(ownerID: owner, title: "Test", author: "Author")
-        let mutation = MutationEnvelope(ownerID: owner, entityID: book.id, expectedRevision: 0,
+        let mutation = try MutationEnvelope(ownerID: owner, entityID: book.id, expectedRevision: 0,
             generation: UUID(), kind: "book.create", payload: JSONEncoder().encode(BookCreatePayload(title: book.title, author: book.author, wantsToRead: true)))
         try store.addBook(book, wantsToRead: true, mutation: mutation)
         XCTAssertEqual(try store.bookCount(), 1)
@@ -15,7 +15,7 @@ final class LocalStoreTests: XCTestCase {
         XCTAssertEqual(pending.map(\.id), [mutation.id])
         // Same mutation ID causes outbox failure; the newly inserted book must also roll back.
         let other = Book(ownerID: owner, title: "Other", author: "Author")
-        let duplicate = MutationEnvelope(id: mutation.id, ownerID: owner, entityID: other.id,
+        let duplicate = try MutationEnvelope(id: mutation.id, ownerID: owner, entityID: other.id,
             expectedRevision: 0, generation: mutation.generation, kind: "book.create", payload: JSONEncoder().encode(BookCreatePayload(title: other.title, author: other.author, wantsToRead: false)))
         XCTAssertThrowsError(try store.addBook(other, wantsToRead: false, mutation: duplicate))
         XCTAssertEqual(try store.bookCount(), 1)
@@ -37,3 +37,4 @@ final class LocalStoreTests: XCTestCase {
         XCTAssertEqual(try reopened.bookCount(), 1)
     }
 }
+
