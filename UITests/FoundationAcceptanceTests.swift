@@ -28,7 +28,7 @@ final class FoundationAcceptanceTests: XCTestCase {
         let app = XCUIApplication()
         // CI sets the real simulator category; launch defaults must not freeze
         // Dynamic Type while the accessibility auditor changes categories.
-        app.launchArguments = []
+        app.launchArguments = ["-phase0-diagnostics"]
         if style != "System" { app.launchArguments += ["-phase0-appearance", style] }
         app.launch()
         XCUIDevice.shared.orientation = orientation
@@ -71,10 +71,16 @@ final class FoundationAcceptanceTests: XCTestCase {
             screenshot.name = "\(name)-\(style)-\(category)-\(XCUIDevice.shared.orientation.rawValue)"
             screenshot.lifetime = .keepAlways
             add(screenshot)
+            recordLiveElements(app, context: "before-" + name + "-" + style + "-" + category)
+            var findingNumber = 0
             // No issue filtering: findings fail the acceptance check.
             do {
                 try app.performAccessibilityAudit(for: [.contrast, .dynamicType, .hitRegion,
                 .sufficientElementDescription, .textClipped, .trait]) { issue in
+                    findingNumber += 1
+                    if findingNumber == 1 {
+                        recordLiveElements(app, context: "during-" + name + "-" + style + "-" + category)
+                    }
                 print("AUDIT ISSUE: \(issue.detailedDescription)")
                 print("AUDIT ELEMENT: \(issue.element?.debugDescription ?? "unknown")")
                     return false
@@ -82,6 +88,28 @@ final class FoundationAcceptanceTests: XCTestCase {
             } catch {
                 XCTFail("Accessibility audit failed for \(name), \(style), \(category): \(error)")
             }
+            recordLiveElements(app, context: "after-" + name + "-" + style + "-" + category)
         }
+    }
+
+    @MainActor
+    private func recordLiveElements(_ app: XCUIApplication, context: String) {
+        var rows: [[String: Any]] = []
+        for element in app.buttons.allElementsBoundByIndex + app.staticTexts.allElementsBoundByIndex {
+            rows.append(["identifier": element.identifier, "label": element.label,
+                "frame": NSStringFromCGRect(element.frame), "selected": element.isSelected,
+                "enabled": element.isEnabled, "type": element.elementType.rawValue])
+        }
+        let payload: [String: Any] = ["context": context, "time": Date().timeIntervalSince1970,
+            "orientation": XCUIDevice.shared.orientation.rawValue, "elements": rows,
+            "tree": app.debugDescription]
+        do {
+            let data = try JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys])
+            let attachment = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
+            attachment.name = "Live-elements-" + context
+            attachment.lifetime = .keepAlways
+            add(attachment)
+            print("LIVE ELEMENTS: " + String(decoding: data, as: UTF8.self))
+        } catch { XCTFail("Could not capture live diagnostic evidence: \(error)") }
     }
 }

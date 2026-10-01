@@ -40,6 +40,12 @@ jobs:
         run: |
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size accessibility-extra-extra-extra-large
           xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationAccessibility.xcresult -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightAccessibilityXXXL -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkAccessibilityXXXLLandscape CODE_SIGNING_ALLOWED=NO test
+      - name: Collect opt-in app diagnostics
+        if: always()
+        run: |
+          mkdir -p work/diagnostics
+          container=$(xcrun simctl get_app_container "$READING_SIMULATOR_ID" com.readingcompanion.app data)
+          cp "$container/Documents/phase0-diagnostics.jsonl" work/diagnostics/
       - name: Export acceptance screenshots
         if: always()
         run: |
@@ -55,6 +61,7 @@ jobs:
           path: |
             work/Foundation*.xcresult
             work/acceptance-screenshots
+            work/diagnostics
   sqlite:
     runs-on: ubuntu-latest
     steps:

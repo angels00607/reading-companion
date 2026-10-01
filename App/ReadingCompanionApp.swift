@@ -4,7 +4,14 @@ import ReadingUI
 @main
 struct ReadingCompanionApp: App {
     var body: some Scene {
-        WindowGroup { FoundationShell().preferredColorScheme(acceptanceAppearance) }
+        WindowGroup {
+            FoundationShell().preferredColorScheme(acceptanceAppearance)
+                .onAppear {
+                    #if DEBUG
+                    Phase0Diagnostics.shared.start()
+                    #endif
+                }
+        }
     }
 
     private var acceptanceAppearance: ColorScheme? {
