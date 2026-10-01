@@ -24,7 +24,7 @@ final class FoundationAcceptanceTests: XCTestCase {
 
     @MainActor
     private func audit(style: String, category: String, orientation: UIDeviceOrientation) throws {
-        continueAfterFailure = false
+        continueAfterFailure = true
         let app = XCUIApplication()
         // CI sets the real simulator category; launch defaults must not freeze
         // Dynamic Type while the accessibility auditor changes categories.
@@ -72,11 +72,15 @@ final class FoundationAcceptanceTests: XCTestCase {
             screenshot.lifetime = .keepAlways
             add(screenshot)
             // No issue filtering: findings fail the acceptance check.
-            try app.performAccessibilityAudit(for: [.contrast, .dynamicType, .hitRegion,
+            do {
+                try app.performAccessibilityAudit(for: [.contrast, .dynamicType, .hitRegion,
                 .sufficientElementDescription, .textClipped, .trait]) { issue in
                 print("AUDIT ISSUE: \(issue.detailedDescription)")
                 print("AUDIT ELEMENT: \(issue.element?.debugDescription ?? "unknown")")
-                return false
+                    return false
+                }
+            } catch {
+                XCTFail("Accessibility audit failed for \(name), \(style), \(category): \(error)")
             }
         }
     }
