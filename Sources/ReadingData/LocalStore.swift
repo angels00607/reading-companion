@@ -50,7 +50,7 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
     }
     public func pending(ownerID: UUID) async throws -> [MutationEnvelope] {
         guard ownerID == self.ownerID else { throw DomainError.invalidTransition }
-        return try queue.read { db in
+        return try await queue.read { db in
             try Row.fetchAll(db, sql: """
                 SELECT * FROM outbox WHERE owner_id=? AND state='pending'
                 AND ordinal < COALESCE((SELECT MIN(ordinal) FROM outbox WHERE owner_id=? AND state='review'),9223372036854775807)
@@ -65,7 +65,7 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
         }
     }
     public func acknowledge(id: UUID, revision: Int) async throws {
-        try queue.write { db in
+        try await queue.write { [self] db in
             if let row = try Row.fetchOne(db, sql: "SELECT entity_id,kind FROM outbox WHERE owner_id=? AND id=?",
                                           arguments: [ownerID.uuidString,id.uuidString]) {
                 let kind: String = row["kind"]
@@ -78,7 +78,7 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
         }
     }
     public func requireReview(id: UUID) async throws {
-        try queue.write { db in
+        try await queue.write { [self] db in
             try db.execute(sql: "UPDATE outbox SET state='review' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
         }
     }
@@ -88,3 +88,4 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
         }
     }
 }
+
