@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 public enum MainTab: String, CaseIterable, Identifiable {
     case home = "Home", journal = "Journal", challenges = "Challenges", series = "Series", stats = "Stats"
@@ -25,15 +26,44 @@ public struct FoundationShell: View {
                         .foregroundStyle(DesignTokens.secondaryText(scheme))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(DesignTokens.background(scheme))
+                        .background(FullHeightTabBarConfiguration().frame(width: 0, height: 0))
                         .navigationTitle(tab.rawValue)
                 }
                 .tabItem { Label(tab.rawValue, systemImage: tab.symbol) }
             }
         }
         .tint(DesignTokens.primary(scheme))
-        // Retain the full-height native tab bar in compact-height landscape.
-        // Its compact variant exposes 31-point controls on small iPhones.
-        .environment(\.verticalSizeClass, .regular)
+    }
+}
+
+// UIKit owns the native bar geometry. A SwiftUI environment override does not
+// change its compact-height traits; override only the bar, preserving content traits.
+private struct FullHeightTabBarConfiguration: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> ConfigurationController { ConfigurationController() }
+    func updateUIViewController(_ controller: ConfigurationController, context: Context) { controller.configure() }
+
+    final class ConfigurationController: UIViewController {
+        override func loadView() {
+            view = UIView()
+            view.isUserInteractionEnabled = false
+            view.isAccessibilityElement = false
+        }
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            configure()
+        }
+        override func viewDidLayoutSubviews() {
+            super.viewDidLayoutSubviews()
+            configure()
+        }
+        func configure() {
+            guard let bar = tabBarController?.tabBar else { return }
+            if bar.traitOverrides.verticalSizeClass != .regular {
+                bar.traitOverrides.verticalSizeClass = .regular
+                bar.setNeedsLayout()
+                tabBarController?.view.setNeedsLayout()
+            }
+        }
     }
 }
 #Preview("Light") { FoundationShell().preferredColorScheme(.light) }
