@@ -37,7 +37,7 @@ Do not map external edition format into Journal Format.
 
 One reading occurrence. Suggested fields: - `id` - `book_id` -
 `edition_id` optional - `status`
-(`to_read|currently_reading|read|dnf`) - `start_date` optional -
+(`currently_reading|read|dnf`) - `start_date` optional -
 `finish_date` optional - `progress_mode` explicit (`page|percentage`) - `current_page` optional in Page mode - `progress_percentage` optional in Percentage mode -
 `effective_total_pages` optional/user-overridable - `rating_whole`
 optional 1--5 - `journal_format` optional enum
@@ -45,14 +45,16 @@ optional 1--5 - `journal_format` optional enum
 `primary_genre_id` optional - `is_historical_import` - `created_at` -
 `updated_at`
 
-Consider whether To Read is represented by a ReadingInstance or a
-library-state record; preserve product behavior either way.
+To Read is library membership/intent, as approved in V2; it is not a ReadingInstance status.
 
-### ReadingProgressEvent
+### ProgressObservation
 
-Suggested fields: - `id` - `reading_instance_id` - `recorded_at` -
-`previous_page` - `new_page` - `pages_delta` - `source` (`user|import`
-etc.)
+Fields: stable observation/mutation ID, ReadingInstance ID, original unit
+(`page|percentage`), genuine previous/new value in that unit, optional genuine
+Page denominator, base revision, recorded UTC timestamp and requires-review state.
+Percentage observations have no page fields. Previous value may be unknown.
+Page delta is derived only from two genuine same-unit positions in a resolved observation;
+it is never derived from percentage. Unit/value history is immutable.
 
 Completion side effects occur only after explicit finish confirmation.
 
@@ -80,6 +82,11 @@ Do not create for DNF.
 
 ### JournalComponentState
 
+Components reference ReadingInstance directly; a completed JournalEntry is not
+a universal prerequisite. Purpose distinguishes preparation from completion work.
+DNF cannot generate completion-based work. Completion-flow queries exclude DNF,
+and historical-import commands never automatically enqueue Journal Inbox work.
+Existing preparation/history is not deleted or reclassified on DNF.
 Prefer a reusable component-state model or explicit columns.
 Components: - `book_review` - `series` - `challenges` - `favorite` -
 `quote`
@@ -418,4 +425,3 @@ User
   confirmation of completion alone is insufficient: ambiguous cases return Unknown.
   Active, Completed, explicit Abandoned and override precedence retain their locked meanings.
 - No listening-time/playback behavior, feature screens or Phase 1 implementation.
-

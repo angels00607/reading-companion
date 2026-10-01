@@ -51,7 +51,15 @@ No screenshot or device QA is claimed.
 Phase 1 or any broader feature work requires review and explicit authorization.
 
 ## Corrective pass validation
-16 SQLite migration/invariant tests passed locally. Native and Supabase corrective tests and iOS rebuild are pending CI. Prior baseline results above are not evidence for the corrected code.
+Corrective code commit 402969c1a8f21a2ab685b59cc6ec6d0d9b049e65 passed:
+- 29 native Swift tests, including legacy GRDB upgrade preservation.
+- 16 SQLite migration/invariant tests locally and in CI.
+- 45 Supabase/RLS tests, including a seeded migration-001 to migration-002 upgrade.
+- iOS simulator-target rebuild.
+Evidence: GitHub Actions run 36840373918.
+The parallel PR run hit a GitHub release-lookup rate limit before Supabase setup;
+the CLI is now pinned to verified release 2.119.0 to remove that lookup dependency.
+No production changes or Phase 1 work.
 
 Forward migrations retain legacy page values, observations, copied Journal payloads and account ownership. Original migration files remain unchanged. No specification deviations are intended. Font assets/device visual/accessibility QA and human acceptance remain open.
 
