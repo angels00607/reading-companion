@@ -36,7 +36,9 @@ public struct FoundationShell: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .background(DesignTokens.background(scheme))
+            #if os(iOS)
             .toolbar(.hidden, for: .navigationBar)
+            #endif
         }
         .tint(DesignTokens.primary(scheme))
         .safeAreaInset(edge: .bottom, spacing: 0) { foundationTabBar }
