@@ -20,20 +20,13 @@ public struct FoundationShell: View {
     @State private var navigationHeight: CGFloat = 56
     public init() {}
     public var body: some View {
-        TabView(selection: $selectedTab) {
-            ForEach(MainTab.allCases) { tab in
-                NavigationStack {
+        NavigationStack {
                     Text("Foundation preview")
                         .font(DesignTokens.functionalFont(size: 16))
                         .foregroundStyle(DesignTokens.secondaryText(scheme))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(DesignTokens.background(scheme))
-                        .navigationTitle(tab.rawValue)
-                }
-                .tabItem { Label(tab.rawValue, systemImage: tab.symbol) }
-                .tag(tab)
-                .hideFoundationNativeTabBar()
-            }
+                        .navigationTitle(selectedTab.rawValue)
         }
         .tint(DesignTokens.primary(scheme))
         .safeAreaInset(edge: .bottom, spacing: 0) { foundationTabBar }
@@ -109,14 +102,5 @@ private struct FoundationNavigationHeight: PreferenceKey {
     }
 }
 
-private extension View {
-    @ViewBuilder func hideFoundationNativeTabBar() -> some View {
-        #if os(iOS)
-        toolbar(.hidden, for: .tabBar)
-        #else
-        self
-        #endif
-    }
-}
 #Preview("Light") { FoundationShell().preferredColorScheme(.light) }
 #Preview("Dark") { FoundationShell().preferredColorScheme(.dark) }
