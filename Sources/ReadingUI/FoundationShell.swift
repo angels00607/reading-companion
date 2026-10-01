@@ -17,6 +17,7 @@ public struct FoundationShell: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var selectedTab: MainTab = .home
+    @State private var navigationHeight: CGFloat = 56
     public init() {}
     public var body: some View {
         TabView(selection: $selectedTab) {
@@ -44,6 +45,7 @@ public struct FoundationShell: View {
                 ScrollView(.horizontal) {
                     tabButtons
                 }
+                .frame(height: navigationHeight)
                 .accessibilityIdentifier("foundationTabScroll")
             } else {
                 tabButtons
@@ -53,6 +55,9 @@ public struct FoundationShell: View {
         .overlay(alignment: .top) { Divider() }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Main navigation")
+        .onPreferenceChange(FoundationNavigationHeight.self) { height in
+            navigationHeight = max(DesignTokens.minimumTouchTarget, height)
+        }
     }
 
     private var tabButtons: some View {
@@ -89,6 +94,18 @@ public struct FoundationShell: View {
             }
         }
         .padding(.horizontal, 8)
+        .background {
+            GeometryReader { geometry in
+                Color.clear.preference(key: FoundationNavigationHeight.self, value: geometry.size.height)
+            }
+        }
+    }
+}
+
+private struct FoundationNavigationHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
