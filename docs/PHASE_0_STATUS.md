@@ -66,9 +66,11 @@ Dark simulator were checked rather than inferred from requested launch arguments
 
 ## Acceptance result � NOT COMPLETE / NOT READY TO MERGE
 
-Last completed full validation:
-[Actions run 36871299920](https://github.com/angels00607/reading-companion/actions/runs/36871299920),
-code `debb05bfbda2ddd7a7177a7fef8fea11e628da27`, iPhone SE (3rd generation) simulator.
+Final completed validation for this review:
+[Actions run #66 / 36875002478](https://github.com/angels00607/reading-companion/actions/runs/36875002478),
+code/documentation head `5fa3b8a067b13adc1857ab086359f79b9e7c56aa`, iPhone SE
+(3rd generation) simulator. Workflow completed with failure; artifacts were exported
+as `foundation-acceptance-results` (artifact 11170305375).
 
 | Check | Result |
 | --- | --- |
@@ -77,35 +79,35 @@ code `debb05bfbda2ddd7a7177a7fef8fea11e628da27`, iPhone SE (3rd generation) simu
 | Supabase migrations/RLS suite | 45 passed |
 | iOS simulator application build | Passed |
 | Hosted UIKit font registration | Passed; all five resources registered without fallback |
-| Foundation UI/accessibility scenarios | 0 of 5 accepted; suite failed |
+| Foundation UI/accessibility scenarios | 0 of 5 accepted; Dynamic Type failures |
 | Static semantic color contrast | 12 combinations passed; minimum 6.04:1 |
 
-The UI run captured 23 tab/scenario screenshots: all five tabs in default Light,
-Dark and System; five in largest-text Dark landscape; Home, Journal and Challenges
-in largest-text Light portrait. Dynamic Type audit findings persist: partially
-unsupported at default size and unsupported at the largest size. The issue handler
-returns false and preserves all failures. XCTest does not identify a live element
-for these findings; they are unresolved, not classified as false positives.
-No other audit categories reported findings on completed screens, but that does not
-constitute full accessibility acceptance. Labels and 44-point target assertions were
-checked for reached controls. The largest Light portrait run stopped when XCTest
-could not determine the offscreen Series button activation point; Series/Stats
-coverage in that scenario is incomplete.
+The complete run reached and activated Home, Journal, Challenges, Series and Stats
+in each of the five scenarios: default Light/Dark/System, largest-text Light portrait
+and largest-text Dark landscape. Each button appears in five tap events. The previous
+offscreen Series/Stats activation error did not recur. Navigation, label, touch-size,
+heading and rendered-appearance assertions recorded no failures in this run.
 
-Visual review of exported screenshots also exposed letterboxed landscape rendering.
-The subsequent corrective code explicitly declares portrait and both landscape
-orientations, removes a redundant Button accessibility grouping override, and scrolls
-by viewport geometry before querying an offscreen button's hit point.
-These corrections are in `621e4c91594512a39e44231d0f362443d6ae96f0`.
-[Verification run 36873922445](https://github.com/angels00607/reading-companion/actions/runs/36873922445)
-is still in progress at this handoff: SQLite/Supabase pass; macOS Swift tests and iOS
-build steps pass; final simulator acceptance is not yet verified.
+Dynamic Type audit findings persist: partially unsupported at default size and
+unsupported at the largest size. All five scenarios fail for those findings. The
+issue handler returns false and preserves failures. XCTest does not identify a live
+element for these findings; they are unresolved, not classified as false positives.
+No other audit categories reported findings, but this does not establish full
+accessibility acceptance. Physical-device and spoken VoiceOver testing remain
+unperformed.
+
+The corrective code explicitly declares portrait and both landscape orientations,
+removes a redundant Button accessibility grouping override, and scrolls by viewport
+geometry before querying an offscreen button's hit point. These changes compiled and
+ran in #66. The earlier letterboxed screenshots are superseded by the exported #66
+captures; visual confirmation of full-screen landscape rendering remains a review gate.
 
 Remaining acceptance gates:
 - Resolve or substantiate the Dynamic Type audit findings through targeted native
   inspection; do not suppress them merely to obtain a green run.
-- Verify full-screen landscape rendering and all five largest-text portrait navigation
-  targets after the corrective changes, then obtain a passing complete acceptance run.
+- Review the exported #66 landscape captures to confirm full-screen rendering, then
+  obtain a passing complete acceptance run after resolving Dynamic Type. Largest-text
+  portrait navigation now reaches all five tabs.
 - Physical-device and spoken VoiceOver interaction have not been performed. Automated
   labels/traits checks do not replace listening and navigating with VoiceOver.
 - Review the final visual/accessibility evidence before accepting Phase 0.
