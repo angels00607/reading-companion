@@ -17,7 +17,7 @@ public struct FoundationShell: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var selectedTab: MainTab = .home
-    @ScaledMetric(relativeTo: .caption2) private var navigationLabelSize: CGFloat = 11
+    @ScaledMetric(relativeTo: .body) private var navigationLabelSize: CGFloat = 11
     public init() {}
     public var body: some View {
         NavigationStack {
@@ -71,7 +71,7 @@ public struct FoundationShell: View {
                         Image(systemName: tab.symbol)
                             .font(.system(size: 20))
                         Text(tab.rawValue)
-                            .font(DesignTokens.functionalFont(size: 11, relativeTo: .caption2,
+                            .font(DesignTokens.functionalFont(size: 11, relativeTo: .body,
                                 weight: selectedTab == tab ? .semiBold : .medium))
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: typeSize.isAccessibilitySize, vertical: true)
