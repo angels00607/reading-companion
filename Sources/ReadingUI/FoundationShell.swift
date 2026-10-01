@@ -50,6 +50,9 @@ public struct FoundationShell: View {
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                    // Compact navigation follows Apple's large-content-viewer
+                    // pattern; main content continues through every Dynamic Type size.
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 4)
                     .frame(minWidth: DesignTokens.minimumTouchTarget, maxWidth: .infinity,
@@ -68,6 +71,7 @@ public struct FoundationShell: View {
                 .accessibilityLabel(tab.rawValue)
                 .accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton)
                 .accessibilityIdentifier("foundationTab." + tab.rawValue)
+                .foundationLargeContentViewer(for: tab)
             }
         }
         .padding(.horizontal, 8)
@@ -79,6 +83,15 @@ public struct FoundationShell: View {
 }
 
 private extension View {
+    @ViewBuilder func foundationLargeContentViewer(for tab: MainTab) -> some View {
+        #if os(iOS)
+        accessibilityShowsLargeContentViewer {
+            Label(tab.rawValue, systemImage: tab.symbol)
+        }
+        #else
+        self
+        #endif
+    }
     @ViewBuilder func hideFoundationNativeTabBar() -> some View {
         #if os(iOS)
         toolbar(.hidden, for: .tabBar)
