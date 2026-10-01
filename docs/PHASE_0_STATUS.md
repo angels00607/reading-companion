@@ -205,3 +205,59 @@ No correction was justified in this pass, so no replacement acceptance run is
 claimed. After a mapped correction, rerun the complete 29/16/45-test foundation
 suite plus font registration and both UI stages, and inspect its screenshots.
 Phase 0 remains open; no Phase 1 work or merge.
+
+## Targeted live-element instrumentation result
+
+Diagnostic run: https://github.com/angels00607/reading-companion/actions/runs/36881967712
+Tested code: `b7cf86f97f9d16cca33d793b68c6164d147db700`.
+Artifact `foundation-acceptance-results` (11173665673) includes both xcresult
+bundles, 25 named screenshots, live-element JSON attachments and
+`diagnostics/phase0-diagnostics.jsonl`.
+
+Only opt-in DEBUG observation and test evidence capture were added. FoundationShell,
+fonts, tokens, navigation, labels, selected traits, minimum targets, audit categories
+and thresholds are unchanged. Every issue still returns false. Normal launches do
+not enable instrumentation; Release omits the observer.
+
+Evidence:
+- 73 XCTest snapshots: 25 before, 23 during the first finding, 25 after tab audits.
+  Two tab audits had no finding callback; their scenarios still fail on other tabs.
+- Live snapshots identify all five `foundationTab.*` buttons, `foundationTitle`
+  and the `Foundation preview` text, with labels, frames, selected/enabled state
+  and full accessible trees.
+- 453 UIKit samples: 325 category-change observations, 123 timer samples and five
+  launches. All five processes observe all 12 categories, XS to Accessibility XXXL.
+- Light portrait Home target grows from 72 x 55.5 pt to 95 x 117.5 pt; heading
+  from 78.5 x 38.5 pt to 134 x 66 pt; preview bounds from 144.5 x 22 pt to
+  244.5 x 123 pt. These are live frames, not inferred font sizes or proof for
+  every intermediate category.
+- No visited UILabel/UITextView exposes a UIFont. SwiftUI uses drawing/hosting
+  views, including CGDrawingView, without public UIView font descriptors. The
+  logger records unavailability rather than guessing fonts from intended names.
+- All 107 findings still have nil live elements despite accessible trees being
+  available at the callbacks: 75 default-size and 32 largest-size findings,
+  unchanged from #66. They include no affected identifier, label, frame or UIFont.
+- Five findings per default-size tab make navigation text a candidate, not a
+  mapped culprit. Largest Light portrait has three on Home, three on Journal,
+  none on Challenges/Series and one on Stats. Counts cannot justify a UI fix.
+- All 25 screenshots were inspected. Portrait text visibly enlarges. Landscape
+  export presentation remains inconsistent with native window/scene geometry:
+  UIKit and XCTest report 667 x 375 pt and landscape orientation. Screenshot
+  presentation alone cannot identify the Dynamic Type culprit or justify redesign.
+
+Validation: 29 Swift, 16 SQLite and 45 Supabase/RLS tests pass; iOS build and
+font registration pass. Both UI stages fail and all five scenarios remain blocked
+by Dynamic Type. No other assertion or audit category reports failure.
+
+Conclusion: identifiable live nodes and real category changes are now recorded,
+but a specific failing node and actual font descriptor cannot be associated with
+the nil-element findings. This public UIKit/XCTest instrumentation has reached its
+diagnostic boundary. A false positive is unproven; all findings remain blocking.
+No speculative UI correction was applied.
+
+Stop this pass per the approved condition. Next evidence must be a native
+Accessibility Inspector audit with the highlighted failing element, or tooling
+that supplies the missing SwiftUI font/finding association. Interactive native
+Inspector is unavailable through this Windows session and the CI interface used.
+After a mapped correction, repeat the full suite, both UI stages and screenshot
+review. Phase 0 remains open; PR #1 remains draft; no merge or Phase 1.
