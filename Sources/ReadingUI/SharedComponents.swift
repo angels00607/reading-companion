@@ -37,27 +37,25 @@ public struct BookCover: View {
 
 public struct BookRow: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     public let book: PreviewBook
     public init(book: PreviewBook) { self.book = book }
     public var body: some View {
-        HStack(alignment: .top, spacing: DesignTokens.Spacing.medium) {
-            BookCover(title: book.title, symbol: book.coverSymbol)
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xSmall) {
-                Text(book.title).font(DesignTokens.functionalFont(size: 17, relativeTo: .headline, weight: .semiBold))
-                    .foregroundStyle(DesignTokens.text(scheme)).fixedSize(horizontal: false, vertical: true)
-                Text(book.author).font(DesignTokens.functionalFont(size: 14, relativeTo: .subheadline))
-                    .foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal: false, vertical: true)
-                if let detail = book.detail {
-                    Text(detail).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .medium))
-                        .foregroundStyle(DesignTokens.secondaryText(scheme))
-                }
-            }
-            Spacer(minLength: 0)
+        ViewThatFits(in: .horizontal) {
+            if !typeSize.isAccessibilitySize { HStack(alignment: .top, spacing: 12) { BookCover(title: book.title, symbol: book.coverSymbol); metadata; Spacer(minLength: 0) } }
+            VStack(alignment: .leading, spacing: 12) { BookCover(title: book.title, symbol: book.coverSymbol); metadata }
         }
         .padding(.vertical, DesignTokens.Spacing.small)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(book.title), by \(book.author)" + (book.detail.map { ", \($0)" } ?? ""))
         .accessibilityIdentifier("phase1.bookRow")
+    }
+    private var metadata: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(book.title).font(DesignTokens.functionalFont(size: 17, relativeTo: .headline, weight: .semiBold)).foregroundStyle(DesignTokens.text(scheme)).fixedSize(horizontal: false, vertical: true)
+            Text(book.author).font(DesignTokens.functionalFont(size: 14, relativeTo: .subheadline)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal: false, vertical: true)
+            if let detail = book.detail { Text(detail).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal: false, vertical: true) }
+        }
     }
 }
 
@@ -128,8 +126,8 @@ public struct AppButton: View {
                 .font(DesignTokens.functionalFont(size: 16, relativeTo: .body, weight: .semiBold))
                 .frame(maxWidth: kind == .tertiary ? nil : .infinity, minHeight: 48)
                 .padding(.horizontal, kind == .tertiary ? 4 : 16)
-                .foregroundStyle(kind == .primary ? DesignTokens.surface(scheme) : DesignTokens.primary(scheme))
-                .background(kind == .primary ? DesignTokens.primaryStrong(scheme) : Color.clear,
+                .foregroundStyle(kind == .primary ? DesignTokens.onPrimary(scheme) : DesignTokens.primary(scheme))
+                .background(kind == .primary ? DesignTokens.primary(scheme) : Color.clear,
                             in: RoundedRectangle(cornerRadius: DesignTokens.buttonRadius))
                 .overlay(RoundedRectangle(cornerRadius: DesignTokens.buttonRadius)
                     .stroke(kind == .secondary ? DesignTokens.border(scheme) : Color.clear))
@@ -166,7 +164,7 @@ public struct AppSegmentedControl<Option: Hashable>: View {
                     Text(label).font(DesignTokens.functionalFont(size: 14, relativeTo: .body, weight: selection == option ? .semiBold : .medium))
                         .frame(maxWidth: .infinity, minHeight: 44).padding(.horizontal, 6)
                         .background(selection == option ? DesignTokens.surface(scheme) : Color.clear, in: RoundedRectangle(cornerRadius: 9))
-                }.buttonStyle(.plain).foregroundStyle(selection == option ? DesignTokens.text(scheme) : DesignTokens.secondaryText(scheme))
+                }.buttonStyle(.plain).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selection == option ? DesignTokens.text(scheme) : DesignTokens.secondaryText(scheme))
                     .accessibilityAddTraits(selection == option ? .isSelected : [])
             }
         }.padding(4).background(DesignTokens.blueSurface(scheme), in: RoundedRectangle(cornerRadius: 12))
@@ -257,7 +255,10 @@ public struct DataChangeReview: View {
             comparison("Current", current, color: DesignTokens.blueSurface(scheme))
             comparison("Proposed", proposed, color: DesignTokens.plumSurface(scheme))
             Label("Source: \(source)", systemImage: "link").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme))
-            HStack { AppButton("Keep", kind: .secondary, action: keep); AppButton("Accept", action: accept); AppButton("Edit", kind: .tertiary, action: edit) }
+            ViewThatFits(in: .horizontal) {
+                HStack { AppButton("Keep", kind: .secondary, action: keep); AppButton("Accept", action: accept); AppButton("Edit", kind: .tertiary, action: edit) }
+                VStack(spacing: 8) { AppButton("Keep", kind: .secondary, action: keep); AppButton("Accept", action: accept); AppButton("Edit", kind: .tertiary, action: edit) }
+            }
         }.padding(16).background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
             .overlay(RoundedRectangle(cornerRadius: DesignTokens.cardRadius).stroke(DesignTokens.border(scheme)))
             .accessibilityIdentifier("phase1.dataChangeReview")
@@ -288,17 +289,25 @@ public struct AttentionRow: View {
 public struct AccessibleChartDatum: Identifiable, Sendable { public let id: String; public let label: String; public let value: Double; public init(_ label: String, value: Double) { id = label; self.label = label; self.value = value } }
 public struct AccessibleBarChart: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     public let title: String; public let data: [AccessibleChartDatum]
     public init(title: String, data: [AccessibleChartDatum]) { self.title = title; self.data = data }
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold))
-            ForEach(data) { item in
-                HStack { Text(item.label).frame(width: 48, alignment: .leading); GeometryReader { proxy in Capsule().fill(DesignTokens.primary(scheme)).frame(width: proxy.size.width * normalized(item.value)) }.frame(height: 10); Text(item.value.formatted()).monospacedDigit() }
-                    .font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).accessibilityElement(children: .ignore).accessibilityLabel("\(item.label), \(item.value.formatted())")
-            }
+            ForEach(data) { item in chartRow(item) }
         }.accessibilityElement(children: .contain).accessibilityLabel(title)
             .accessibilityIdentifier("phase1.accessibleChart")
+    }
+    private func chartRow(_ item: AccessibleChartDatum) -> some View {
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 6) { HStack { Text(item.label); Spacer(); Text(item.value.formatted()).monospacedDigit() }; GeometryReader { proxy in Capsule().fill(DesignTokens.primary(scheme)).frame(width: proxy.size.width * normalized(item.value)) }.frame(height: 10) }
+            } else {
+                HStack { Text(item.label).frame(width: 48, alignment: .leading); GeometryReader { proxy in Capsule().fill(DesignTokens.primary(scheme)).frame(width: proxy.size.width * normalized(item.value)) }.frame(height: 10); Text(item.value.formatted()).monospacedDigit() }
+            }
+        }.font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).frame(minHeight: 44)
+            .accessibilityElement(children: .ignore).accessibilityLabel("\(item.label), \(item.value.formatted())")
     }
     private func normalized(_ value: Double) -> Double { let maximum = data.map(\.value).max() ?? 1; return maximum > 0 ? max(0, value / maximum) : 0 }
 }

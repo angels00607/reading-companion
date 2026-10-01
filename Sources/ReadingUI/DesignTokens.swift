@@ -25,6 +25,7 @@ public enum DesignTokens {
     public static func text(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xF5F8FA : 0x030B19) }
     public static func secondaryText(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xAFC3CF : 0x4F6272) }
     public static func primary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x91C9E2 : 0x143D5B) }
+    public static func onPrimary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x030B19 : 0xFFFFFF) }
     public static func primaryStrong(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x4F81AA : 0x143D5B) }
     public static func secondary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xBA71A2 : 0x7E2A53) }
     public static func border(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x24445B : 0xDCE6EA) }

@@ -35,6 +35,10 @@ statistics, synchronization workflows, rewards or any other Phase 2+ behavior.
 
 - Local `swift build`: passed.
 - Local SQLite migration/invariant suite: 16 tests passed.
+- Initial CI run 36899019449 confirmed Swift/UI/domain/data tests, iOS build,
+  font registration, SQLite and Supabase/RLS. It also mapped new Phase 1 contrast,
+  hit-target and accessibility-size layout findings; those component defects were
+  corrected in the follow-up pass without changing audit thresholds.
 - Swift/XCTest, iOS application build, hosted font registration, UI audits and
   Supabase/RLS: require the GitHub macOS/Linux runners because this machine has only
   Apple Command Line Tools and cannot resolve XCTest or run `xcodebuild`.
