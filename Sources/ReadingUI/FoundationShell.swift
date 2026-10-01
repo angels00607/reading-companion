@@ -46,6 +46,7 @@ private struct FullHeightTabBarConfiguration: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: ConfigurationController, context: Context) { controller.configure() }
 
     final class ConfigurationController: UIViewController {
+        private var configured = false
         override func loadView() {
             view = UIView()
             view.isUserInteractionEnabled = false
@@ -60,12 +61,11 @@ private struct FullHeightTabBarConfiguration: UIViewControllerRepresentable {
             configure()
         }
         func configure() {
-            guard let bar = tabBarController?.tabBar else { return }
-            if bar.traitOverrides.verticalSizeClass != .regular {
-                bar.traitOverrides.verticalSizeClass = .regular
-                bar.setNeedsLayout()
-                tabBarController?.view.setNeedsLayout()
-            }
+            guard !configured, let bar = tabBarController?.tabBar else { return }
+            configured = true
+            bar.traitOverrides.verticalSizeClass = .regular
+            bar.setNeedsLayout()
+            tabBarController?.view.setNeedsLayout()
         }
     }
 }
