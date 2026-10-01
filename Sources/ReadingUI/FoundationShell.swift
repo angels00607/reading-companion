@@ -18,6 +18,7 @@ public struct FoundationShell: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var selectedTab: MainTab = .home
     @ScaledMetric(relativeTo: .body) private var navigationLabelSize: CGFloat = 11
+    @ScaledMetric(relativeTo: .title3) private var navigationIconSize: CGFloat = 20
     public init() {}
     public var body: some View {
         NavigationStack {
@@ -50,7 +51,7 @@ public struct FoundationShell: View {
                 ScrollView(.horizontal) {
                     tabButtons
                 }
-                .frame(height: max(56, navigationLabelSize * 1.6 + 36))
+                .frame(height: max(56, navigationLabelSize * 1.6 + navigationIconSize + 16))
                 .accessibilityIdentifier("foundationTabScroll")
             } else {
                 tabButtons
@@ -69,7 +70,8 @@ public struct FoundationShell: View {
                 Button { selectedTab = tab } label: {
                     VStack(spacing: 4) {
                         Image(systemName: tab.symbol)
-                            .font(.system(size: 20))
+                            .font(.title3)
+                            .accessibilityHidden(true)
                         Text(tab.rawValue)
                             .font(DesignTokens.functionalFont(size: 11, relativeTo: .body,
                                 weight: selectedTab == tab ? .semiBold : .medium))
