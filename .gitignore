@@ -1,0 +1,11 @@
+.build/
+work/
+.swiftpm/
+*.xcodeproj/
+DerivedData/
+.env
+.env.*
+!.env.example
+Config/*.local.xcconfig
+App/Info.plist
+.DS_Store

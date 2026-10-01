@@ -1,0 +1,81 @@
+name: Phase 0 foundations
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      - run: swift test
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Select available iPhone simulator
+        run: |
+          xcrun simctl list devices available -j > /tmp/reading-simulators.json
+          python3 - <<'PY'
+          import json, os
+          devices = json.load(open('/tmp/reading-simulators.json'))['devices']
+          phones = [d for group in devices.values() for d in group if 'iPhone' in d['name']]
+          assert phones, 'An iPhone simulator is required for acceptance QA'
+          phone = sorted(phones, key=lambda d: ('SE' not in d['name'], d['name']))[0]
+          print('Acceptance device:', phone['name'], phone['udid'])
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('READING_SIMULATOR_ID=' + phone['udid'] + '\n')
+          PY
+      - name: Default-size foundation acceptance
+        run: |
+          xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
+          xcrun simctl ui "$READING_SIMULATOR_ID" appearance dark
+          xcrun simctl help ui
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationDefault.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testSystemFollowsSimulatorDarkAppearance CODE_SIGNING_ALLOWED=NO test
+      - name: Largest-accessibility-size foundation acceptance
+        if: always()
+        run: |
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size accessibility-extra-extra-extra-large
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationAccessibility.xcresult -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightAccessibilityXXXL -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkAccessibilityXXXLLandscape CODE_SIGNING_ALLOWED=NO test
+      - name: Collect opt-in app diagnostics
+        if: always()
+        run: |
+          mkdir -p work/diagnostics
+          container=$(xcrun simctl get_app_container "$READING_SIMULATOR_ID" com.readingcompanion.app data)
+          cp "$container/Documents/phase0-diagnostics.jsonl" work/diagnostics/
+      - name: Export acceptance screenshots
+        if: always()
+        run: |
+          for result in work/Foundation*.xcresult; do
+            if [ -d "$result" ]; then
+              xcrun xcresulttool export attachments --path "$result" --output-path "work/acceptance-screenshots/$(basename "$result" .xcresult)"
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: foundation-acceptance-results
+          path: |
+            work/Foundation*.xcresult
+            work/acceptance-screenshots
+            work/diagnostics
+  sqlite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/test_local_schema.py
+  supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.119.0
+      - run: supabase start
+      - run: supabase db reset --version 202610010001
+      - run: docker exec -i supabase_db_reading-companion-foundations psql -U postgres -d postgres < scripts/seed_progress_v1.sql
+      - run: supabase migration up --local
+      - run: supabase test db
