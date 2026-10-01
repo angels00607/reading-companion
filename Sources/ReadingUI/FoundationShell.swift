@@ -21,12 +21,22 @@ public struct FoundationShell: View {
     public init() {}
     public var body: some View {
         NavigationStack {
-                    Text("Foundation preview")
-                        .font(DesignTokens.functionalFont(size: 16))
-                        .foregroundStyle(DesignTokens.secondaryText(scheme))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(DesignTokens.background(scheme))
-                        .navigationTitle(selectedTab.rawValue)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(selectedTab.rawValue)
+                    .font(DesignTokens.functionalFont(size: 28, relativeTo: .largeTitle, weight: .semiBold))
+                    .foregroundStyle(DesignTokens.text(scheme))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .accessibilityAddTraits(.isHeader)
+                    .accessibilityIdentifier("foundationTitle")
+                Text("Foundation preview")
+                    .font(DesignTokens.functionalFont(size: 16))
+                    .foregroundStyle(DesignTokens.secondaryText(scheme))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .background(DesignTokens.background(scheme))
+            .toolbar(.hidden, for: .navigationBar)
         }
         .tint(DesignTokens.primary(scheme))
         .safeAreaInset(edge: .bottom, spacing: 0) { foundationTabBar }

@@ -45,7 +45,8 @@ final class FoundationAcceptanceTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(button.frame.width, 44)
             XCTAssertGreaterThanOrEqual(button.frame.height, 44)
             button.tap()
-            XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.staticTexts["foundationTitle"].waitForExistence(timeout: 5))
+            XCTAssertEqual(app.staticTexts["foundationTitle"].label, name)
             XCTAssertTrue(app.staticTexts["Foundation preview"].exists)
             let capture = app.screenshot()
             // Verify rendered appearance, not just the requested launch argument.

@@ -1,17 +1,8 @@
 import SwiftUI
 import ReadingUI
-import UIKit
 
 @main
 struct ReadingCompanionApp: App {
-    init() {
-        // UIKit owns native navigation titles; use the approved functional font.
-        let navigation = UINavigationBar.appearance()
-        navigation.largeTitleTextAttributes = [.font: UIFontMetrics(forTextStyle: .largeTitle)
-            .scaledFont(for: UIFont(name: "Manrope-SemiBold", size: 28)!)]
-        navigation.titleTextAttributes = [.font: UIFontMetrics(forTextStyle: .headline)
-            .scaledFont(for: UIFont(name: "Manrope-SemiBold", size: 17)!)]
-    }
     var body: some Scene {
         WindowGroup { FoundationShell().preferredColorScheme(acceptanceAppearance) }
     }
