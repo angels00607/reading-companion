@@ -28,23 +28,32 @@ jobs:
           with open(os.environ['GITHUB_ENV'], 'a') as env:
               env.write('READING_SIMULATOR_ID=' + phone['udid'] + '\n')
           PY
-      - name: Foundation shell accessibility and screenshot matrix
+      - name: Default-size foundation acceptance
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" appearance dark
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationAcceptance.xcresult CODE_SIGNING_ALLOWED=NO test
+          xcrun simctl help ui
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationDefault.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testSystemFollowsSimulatorDarkAppearance CODE_SIGNING_ALLOWED=NO test
+      - name: Largest-accessibility-size foundation acceptance
+        if: always()
+        run: |
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size accessibility-extra-extra-extra-large
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationAccessibility.xcresult -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightAccessibilityXXXL -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkAccessibilityXXXLLandscape CODE_SIGNING_ALLOWED=NO test
       - name: Export acceptance screenshots
         if: always()
         run: |
-          if [ -d work/FoundationAcceptance.xcresult ]; then
-            xcrun xcresulttool export attachments --path work/FoundationAcceptance.xcresult --output-path work/acceptance-screenshots
-          fi
+          for result in work/Foundation*.xcresult; do
+            if [ -d "$result" ]; then
+              xcrun xcresulttool export attachments --path "$result" --output-path "work/acceptance-screenshots/$(basename "$result" .xcresult)"
+            fi
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: foundation-acceptance-results
           path: |
-            work/FoundationAcceptance.xcresult
+            work/Foundation*.xcresult
             work/acceptance-screenshots
   sqlite:
     runs-on: ubuntu-latest

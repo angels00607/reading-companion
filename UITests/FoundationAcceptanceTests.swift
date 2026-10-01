@@ -26,7 +26,9 @@ final class FoundationAcceptanceTests: XCTestCase {
     private func audit(style: String, category: String, orientation: UIDeviceOrientation) throws {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments = ["-UIPreferredContentSizeCategoryName", category]
+        // CI sets the real simulator category; launch defaults must not freeze
+        // Dynamic Type while the accessibility auditor changes categories.
+        app.launchArguments = []
         if style != "System" { app.launchArguments += ["-phase0-appearance", style] }
         app.launch()
         XCUIDevice.shared.orientation = orientation
@@ -61,7 +63,11 @@ final class FoundationAcceptanceTests: XCTestCase {
             add(screenshot)
             // No issue filtering: findings fail the acceptance check.
             try app.performAccessibilityAudit(for: [.contrast, .dynamicType, .hitRegion,
-                .sufficientElementDescription, .textClipped, .trait])
+                .sufficientElementDescription, .textClipped, .trait]) { issue in
+                print("AUDIT ISSUE: \(issue.detailedDescription)")
+                print("AUDIT ELEMENT: \(issue.element?.debugDescription ?? "unknown")")
+                return false
+            }
         }
     }
 }
