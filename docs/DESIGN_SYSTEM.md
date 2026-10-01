@@ -41,7 +41,7 @@ Approximate use: 75% neutrals+blue / 20% plum / 5% semantic exceptions.
 
   Token            Value
   ---------------- -----------
-  background       `#F8FAFB`
+  background       `#F5EEF8`
   surface          `#FFFFFF`
   surface-blue     `#E4F3F4`
   surface-plum     `#ECD0EC`

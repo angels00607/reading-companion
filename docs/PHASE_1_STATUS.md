@@ -33,6 +33,12 @@ statistics, synchronization workflows, rewards or any other Phase 2+ behavior.
 
 ## Validation status
 
+- Human visual review approved changing the centralized Light Mode semantic
+  `background` token from `#F8FAFB` to `#F5EEF8`. Dark Mode and the existing
+  `surface`, `surface-blue` and `surface-plum` hierarchy remain unchanged.
+- Static contrast verification against the updated Light Mode background passes:
+  text-primary 17.33:1, text-secondary 5.56:1, primary 9.99:1, secondary 7.88:1
+  and error 5.76:1.
 - Local `swift build`: passed.
 - Local SQLite migration/invariant suite: 16 tests passed.
 - Initial CI run 36899019449 confirmed Swift/UI/domain/data tests, iOS build,

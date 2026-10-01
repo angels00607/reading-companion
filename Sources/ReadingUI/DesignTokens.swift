@@ -17,7 +17,7 @@ public enum DesignTokens {
     public static let progressRadius: CGFloat = 7
     public static let sheetRadius: CGFloat = 22
     public static let minimumTouchTarget: CGFloat = 44
-    public static func background(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x030B19 : 0xF8FAFB) }
+    public static func background(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x030B19 : 0xF5EEF8) }
     public static func surface(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x0D1B2A : 0xFFFFFF) }
     public static func raisedSurface(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x13283A : 0xFFFFFF) }
     public static func blueSurface(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x183548 : 0xE4F3F4) }

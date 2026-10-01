@@ -537,7 +537,7 @@ exception colors.
 
 ### Light tokens
 
--   background `#F8FAFB`
+-   background `#F5EEF8`
 -   surface `#FFFFFF`
 -   surface-blue `#E4F3F4`
 -   surface-plum `#ECD0EC`
@@ -771,4 +771,3 @@ before coding.
   confirmation of completion alone is insufficient: ambiguous cases return Unknown.
   Active, Completed, explicit Abandoned and override precedence retain their locked meanings.
 - No listening-time/playback behavior, feature screens or Phase 1 implementation.
-
