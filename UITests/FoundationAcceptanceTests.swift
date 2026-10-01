@@ -2,28 +2,27 @@ import XCTest
 
 final class FoundationAcceptanceTests: XCTestCase {
     @MainActor
-    func testLightDefault() throws { try audit(style: "Light", category: "UICTContentSizeCategoryL") }
+    func testLightDefault() throws { try audit(style: "Light", category: "UICTContentSizeCategoryL", orientation: .portrait) }
 
     @MainActor
-    func testDarkDefault() throws { try audit(style: "Dark", category: "UICTContentSizeCategoryL") }
+    func testDarkDefault() throws { try audit(style: "Dark", category: "UICTContentSizeCategoryL", orientation: .portrait) }
 
     @MainActor
-    func testLightAccessibilityXXXL() throws { try audit(style: "Light", category: "UICTContentSizeCategoryAccessibilityXXXL") }
+    func testLightAccessibilityXXXL() throws { try audit(style: "Light", category: "UICTContentSizeCategoryAccessibilityXXXL", orientation: .portrait) }
 
     @MainActor
     func testDarkAccessibilityXXXLLandscape() throws {
-        XCUIDevice.shared.orientation = .landscapeLeft
-        defer { XCUIDevice.shared.orientation = .portrait }
-        try audit(style: "Dark", category: "UICTContentSizeCategoryAccessibilityXXXL")
+        try audit(style: "Dark", category: "UICTContentSizeCategoryAccessibilityXXXL", orientation: .landscapeLeft)
     }
 
     @MainActor
-    private func audit(style: String, category: String) throws {
+    private func audit(style: String, category: String, orientation: UIDeviceOrientation) throws {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments = ["-AppleInterfaceStyle", style,
                                "-UIPreferredContentSizeCategoryName", category]
         app.launch()
+        XCUIDevice.shared.orientation = orientation
         defer { app.terminate() }
         let tabs = ["Home", "Journal", "Challenges", "Series", "Stats"]
         XCTAssertEqual(app.tabBars.buttons.count, tabs.count)

@@ -29,11 +29,19 @@ jobs:
           PY
       - name: Foundation shell accessibility and screenshot matrix
         run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationAcceptance.xcresult CODE_SIGNING_ALLOWED=NO test
+      - name: Export acceptance screenshots
+        if: always()
+        run: |
+          if [ -d work/FoundationAcceptance.xcresult ]; then
+            xcrun xcresulttool export attachments --path work/FoundationAcceptance.xcresult --output-path work/acceptance-screenshots
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: foundation-acceptance-results
-          path: work/FoundationAcceptance.xcresult
+          path: |
+            work/FoundationAcceptance.xcresult
+            work/acceptance-screenshots
   sqlite:
     runs-on: ubuntu-latest
     steps:

@@ -31,6 +31,9 @@ public struct FoundationShell: View {
             }
         }
         .tint(DesignTokens.primary(scheme))
+        // Retain the full-height native tab bar in compact-height landscape.
+        // Its compact variant exposes 31-point controls on small iPhones.
+        .environment(\.verticalSizeClass, .regular)
     }
 }
 #Preview("Light") { FoundationShell().preferredColorScheme(.light) }
