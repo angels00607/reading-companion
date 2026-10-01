@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#endif
 
 public enum MainTab: String, CaseIterable, Identifiable {
     case home = "Home", journal = "Journal", challenges = "Challenges", series = "Series", stats = "Stats"
@@ -38,6 +40,7 @@ public struct FoundationShell: View {
 
 // UIKit owns the native bar geometry. A SwiftUI environment override does not
 // change its compact-height traits; override only the bar, preserving content traits.
+#if canImport(UIKit)
 private struct FullHeightTabBarConfiguration: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> ConfigurationController { ConfigurationController() }
     func updateUIViewController(_ controller: ConfigurationController, context: Context) { controller.configure() }
@@ -66,5 +69,10 @@ private struct FullHeightTabBarConfiguration: UIViewControllerRepresentable {
         }
     }
 }
+#else
+private struct FullHeightTabBarConfiguration: View {
+    var body: some View { EmptyView() }
+}
+#endif
 #Preview("Light") { FoundationShell().preferredColorScheme(.light) }
 #Preview("Dark") { FoundationShell().preferredColorScheme(.dark) }
