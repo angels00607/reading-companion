@@ -33,8 +33,20 @@ targets:
           - Manrope-Regular.ttf
           - Manrope-Medium.ttf
           - Manrope-SemiBold.ttf
-          - Papernotes-Regular.ttf
-          - HelloBaby.ttf
+          - PapernotesRegular.otf
+          - Hello Baby.otf
+  FoundationFontTests:
+    type: bundle.unit-testing
+    platform: iOS
+    sources:
+      - AppTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.readingcompanion.fonttests
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: ReadingCompanion
   FoundationAcceptanceTests:
     type: bundle.ui-testing
     platform: iOS
@@ -54,4 +66,5 @@ schemes:
         ReadingCompanion: all
     test:
       targets:
+        - FoundationFontTests
         - FoundationAcceptanceTests
