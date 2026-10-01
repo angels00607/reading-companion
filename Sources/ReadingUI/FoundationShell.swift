@@ -92,7 +92,6 @@ public struct FoundationShell: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityElement(children: .ignore)
                 .accessibilityLabel(tab.rawValue)
                 .accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton)
                 .accessibilityIdentifier("foundationTab." + tab.rawValue)
