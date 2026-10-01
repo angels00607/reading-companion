@@ -28,7 +28,7 @@ final class Phase0Diagnostics: NSObject {
         func walk(_ view: UIView, path: String) {
             var row: [String: Any] = ["path": path, "class": String(describing: type(of: view)),
                 "identifier": view.accessibilityIdentifier ?? "", "label": view.accessibilityLabel ?? "",
-                "frameInWindow": NSStringFromCGRect(view.convert(view.bounds, to: nil)),
+                "frameInWindow": String(describing: view.convert(view.bounds, to: nil)),
                 "isAccessibilityElement": view.isAccessibilityElement,
                 "hidden": view.isHidden, "alpha": view.alpha,
                 "category": view.traitCollection.preferredContentSizeCategory.rawValue]
@@ -57,7 +57,7 @@ final class Phase0Diagnostics: NSObject {
                         "class": String(describing: type(of: element)),
                         "identifier": element.accessibilityIdentifier ?? "",
                         "label": element.accessibilityLabel ?? "",
-                        "accessibilityFrame": NSStringFromCGRect(element.accessibilityFrame),
+                        "accessibilityFrame": String(describing: element.accessibilityFrame),
                         "traits": element.accessibilityTraits.rawValue,
                         "fontExposure": "UIAccessibilityElement exposes no UIFont"])
                 }
@@ -68,7 +68,7 @@ final class Phase0Diagnostics: NSObject {
             for (windowIndex, window) in scene.windows.enumerated() {
                 walk(window, path: "scene/\(sceneIndex)/window/\(windowIndex)")
                 rows.append(["sceneOrientation": scene.interfaceOrientation.rawValue,
-                    "screenBounds": NSStringFromCGRect(scene.screen.bounds)])
+                    "screenBounds": String(describing: scene.screen.bounds)])
             }
         }
         let record: [String: Any] = ["time": Date().timeIntervalSince1970, "reason": reason,

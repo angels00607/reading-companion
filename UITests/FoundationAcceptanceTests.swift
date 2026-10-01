@@ -97,7 +97,7 @@ final class FoundationAcceptanceTests: XCTestCase {
         var rows: [[String: Any]] = []
         for element in app.buttons.allElementsBoundByIndex + app.staticTexts.allElementsBoundByIndex {
             rows.append(["identifier": element.identifier, "label": element.label,
-                "frame": NSStringFromCGRect(element.frame), "selected": element.isSelected,
+                "frame": String(describing: element.frame), "selected": element.isSelected,
                 "enabled": element.isEnabled, "type": element.elementType.rawValue])
         }
         let payload: [String: Any] = ["context": context, "time": Date().timeIntervalSince1970,
