@@ -4,6 +4,41 @@ Scope: foundations only; no feature-rich screens, live providers, AI, imports,
 backup UI, challenge matching engine or gamification engine.
 The approved V2 documents remain authoritative.
 
+## Current decision — Phase 0 exit gate satisfied
+
+Phase 0 satisfies the five-item exit gate defined in
+`docs/IMPLEMENTATION_PLAN.md` and is ready for final human review before merge:
+
+| Authoritative Phase 0 exit-gate requirement | Evidence | Status |
+| --- | --- | --- |
+| Builds cleanly | iOS simulator build passed on current head `43d0b9a1f61cc511a20349aba1de81b6fa0b0955` in Actions run 36885708054 | Satisfied |
+| Migrations tested | 16 local SQLite migration/invariant tests and 45 Supabase migration/RLS tests passed on the current head; the 16 SQLite tests were also reproduced locally | Satisfied |
+| Light/Dark tokens render | Rendered Light, Dark and System-following-Dark backgrounds were exercised; all 12 semantic foreground/background combinations passed static contrast checks | Satisfied |
+| Navigation shell works | All five destinations were reached in every acceptance scenario; navigation, label, touch-size, heading and rendered-appearance assertions had no failures in the completed evidence | Satisfied |
+| Core invariants have tests | 29 Swift/domain/GRDB tests passed on the current head, covering the locked progress, DNF, journal, series, sync and restore rules | Satisfied |
+
+This decision is deliberately narrower than full accessibility acceptance. Dynamic
+Type, VoiceOver and responsive accessibility verification are assigned to Phase 12
+by the implementation plan. The existing Dynamic Type result is therefore an open
+Phase 12 QA risk, not a sixth Phase 0 exit-gate requirement.
+
+The risk has not been resolved, suppressed or reinterpreted:
+- 107 XCTest Dynamic Type findings remain unresolved (75 default-size and 32
+  largest-size findings).
+- No responsible live element has been identified. Every finding supplies a nil
+  element and no affected identifier, label, frame or font descriptor.
+- Targeted instrumentation recorded accessible live trees and real resizing through
+  all 12 content-size categories, but did not establish that the findings are false
+  positives.
+- No audit finding is suppressed and the existing accessibility tests and thresholds
+  remain unchanged.
+- Native Accessibility Inspector/manual device inspection and full Phase 12
+  verification remain required before release.
+
+PR #1 may leave draft status for final human review, but must not be represented as
+having passed the Dynamic Type audit. Do not merge automatically and do not begin
+Phase 1 until the human review and merge decision are complete.
+
 ## Implemented
 - Swift package boundaries: ReadingDomain, ReadingData and ReadingUI.
 - SwiftUI five-tab preview shell and Light/Dark semantic tokens.
@@ -64,7 +99,7 @@ All 12 foreground/background token combinations passed static contrast checks,
 with a lowest ratio of 6.04:1. Rendered Light/Dark backgrounds and System following a
 Dark simulator were checked rather than inferred from requested launch arguments.
 
-## Acceptance result — NOT COMPLETE / NOT READY TO MERGE
+## Earlier full-accessibility acceptance framing and diagnostic history
 
 Final completed validation for this review:
 [Actions run #66 / 36875002478](https://github.com/angels00607/reading-companion/actions/runs/36875002478),
@@ -112,9 +147,12 @@ Remaining acceptance gates:
   labels/traits checks do not replace listening and navigating with VoiceOver.
 - Review the final visual/accessibility evidence before accepting Phase 0.
 
-Phase 0 is not fully complete and is not ready to merge. The draft PR remains open;
-no merge or Phase 1 work has occurred. All locked domain rules below remain unchanged.
-Phase 1 requires review and explicit authorization.
+At the time of this run, the result was framed as blocking Phase 0 because the broader
+accessibility matrix was being treated as an additional acceptance gate. The current
+decision above supersedes that framing by applying the authoritative five-item Phase 0
+exit gate and retaining the unresolved accessibility result for Phase 12. No merge or
+Phase 1 work has occurred. All locked domain rules below remain unchanged. Phase 1
+still requires review and explicit authorization.
 
 ## Corrective pass validation
 Corrective code commit 402969c1a8f21a2ab685b59cc6ec6d0d9b049e65 passed:
@@ -204,7 +242,9 @@ Manrope, appearance modes, labels and selected traits remain unchanged.
 No correction was justified in this pass, so no replacement acceptance run is
 claimed. After a mapped correction, rerun the complete 29/16/45-test foundation
 suite plus font registration and both UI stages, and inspect its screenshots.
-Phase 0 remains open; no Phase 1 work or merge.
+At the time of this diagnostic pass, Phase 0 was kept open; no Phase 1 work or merge
+occurred. The current exit-gate decision above supersedes only that scheduling
+conclusion, not any diagnostic evidence.
 
 ## Targeted live-element instrumentation result
 
@@ -260,4 +300,5 @@ Accessibility Inspector audit with the highlighted failing element, or tooling
 that supplies the missing SwiftUI font/finding association. Interactive native
 Inspector is unavailable through this Windows session and the CI interface used.
 After a mapped correction, repeat the full suite, both UI stages and screenshot
-review. Phase 0 remains open; PR #1 remains draft; no merge or Phase 1.
+review. This remains required Phase 12/release evidence. PR #1 remains unmerged and
+no Phase 1 work has begun.
