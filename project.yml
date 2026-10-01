@@ -36,7 +36,7 @@ targets:
           - PapernotesRegular.otf
           - Hello Baby.otf
   FoundationFontTests:
-    type: bundle.unit-testing
+    type: bundle.unit-test
     platform: iOS
     sources:
       - AppTests
