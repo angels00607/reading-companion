@@ -20,7 +20,7 @@ final class FoundationAcceptanceTests: XCTestCase {
     private func audit(style: String, category: String, orientation: UIDeviceOrientation) throws {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments = ["-AppleInterfaceStyle", style,
+        app.launchArguments = ["-phase0-appearance", style,
                                "-UIPreferredContentSizeCategoryName", category]
         app.launch()
         XCUIDevice.shared.orientation = orientation
