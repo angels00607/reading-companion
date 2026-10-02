@@ -55,7 +55,14 @@ final class BooksCoreAcceptanceTests: XCTestCase {
         let field = app.textFields[id].exists ? app.textFields[id] : app.textViews[id]
         XCTAssertTrue(field.waitForExistence(timeout: 5)); field.tap()
         let old = field.value as? String ?? ""
+        // Tapping the label-side of a populated field can place the caret at its
+        // beginning. Delete from the actual end, then verify the live value;
+        // otherwise the fixture can enter "400257" instead of replacing "257".
+        if !old.isEmpty && old != label {
+            field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        }
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old == label ? 0 : old.count) + text)
+        XCTAssertEqual(field.value as? String, text, "The live field must contain the requested test input")
         if app.buttons["Done"].exists { app.buttons["Done"].tap() }
     }
     @MainActor private func tap(_ app: XCUIApplication, _ id: String) {
