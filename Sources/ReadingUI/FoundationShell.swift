@@ -10,11 +10,17 @@ public struct FoundationShell: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var selectedTab: MainTab = .home
-    public init() {}
+    private let homeContent: AnyView?
+    public init() { homeContent = nil }
+    public init(homeContent: AnyView) { self.homeContent = homeContent }
     public var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) { header; Phase1PreviewScreen(tab: selectedTab) }
+                VStack(alignment: .leading, spacing: 24) {
+                    header
+                    if let homeContent, selectedTab == .home { homeContent }
+                    else { Phase1PreviewScreen(tab: selectedTab) }
+                }
                     .padding(.horizontal, DesignTokens.margin).padding(.bottom, 24)
             }.background(DesignTokens.background(scheme)).scrollContentBackground(.hidden)
             #if os(iOS)
@@ -25,7 +31,7 @@ public struct FoundationShell: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(selectedTab.rawValue).font(DesignTokens.functionalFont(size: 28, relativeTo: .largeTitle, weight: .semiBold)).foregroundStyle(DesignTokens.text(scheme)).fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader).accessibilityIdentifier("foundationTitle")
-            Text("Phase 1 component preview data").font(DesignTokens.functionalFont(size: 13, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondaryText(scheme))
+            if homeContent == nil { Text("Phase 1 component preview data").font(DesignTokens.functionalFont(size: 13, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
         }.padding(.top, 8)
     }
     private var tabBar: some View {

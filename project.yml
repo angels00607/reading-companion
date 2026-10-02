@@ -25,6 +25,10 @@ targets:
     dependencies:
       - package: Foundations
         product: ReadingUI
+      - package: Foundations
+        product: ReadingData
+      - package: Foundations
+        product: ReadingDomain
     info:
       path: App/Info.plist
       properties:
