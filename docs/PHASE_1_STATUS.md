@@ -64,6 +64,12 @@ statistics, synchronization workflows, rewards or any other Phase 2+ behavior.
   potential clipping, contrast audit detections and undersized interaction targets
   continue to be reported by the foundation audit. Landscape/orientation policy
   remains deferred; Phase 1 does not introduce a new orientation design.
+- Final CI run 36975201218 (#92) on commit `7adf231` passed Swift tests, the iOS
+  build, font registration, SQLite integrity and Supabase/RLS validation. The
+  unfiltered accessibility audit remains red with 147 findings: 90 Dynamic Type,
+  30 potential clipping, 18 contrast detections and 9 undersized interaction targets.
+  Removing the completed A/B fixture accounts for the lower totals versus CI #90;
+  no new unresolved Phase 1 regression was identified.
 - Local `swift build`: passed.
 - Local SQLite migration/invariant suite: 16 tests passed.
 - Initial CI run 36899019449 confirmed Swift/UI/domain/data tests, iOS build,
