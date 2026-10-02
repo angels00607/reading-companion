@@ -72,13 +72,16 @@ struct BooksScreen<Content: View>: View {
     }
 }
 struct BooksField: View {
+    @Environment(\.colorScheme) private var scheme
     let label: String
     @Binding var value: String
     @FocusState private var focused: Bool
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label).font(DesignTokens.functionalFont(size: 14, weight: .medium))
-            TextField(label, text: $value, axis: .vertical).textFieldStyle(.roundedBorder)
+            TextField(text: $value, axis: .vertical) {
+                Text(label).foregroundStyle(DesignTokens.secondaryText(scheme))
+            }.textFieldStyle(.roundedBorder)
                 .font(DesignTokens.functionalFont(size: 16)).frame(minHeight: 44)
                 .focused($focused)
                 .accessibilityLabel(label).accessibilityIdentifier("books.field." + label)
