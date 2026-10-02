@@ -1,0 +1,13 @@
+begin;
+select plan(9);
+select has_column('public','books','cover_ref','Cover override column exists');
+select has_column('public','editions','edition_title','Edition title is independent');
+select has_column('public','readings','primary_genre','Primary Genre belongs to reading');
+select has_table('public','provider_links','Provider identities are private');
+select ok((select relrowsecurity from pg_class where oid='public.provider_links'::regclass),'Provider identity RLS enabled');
+select ok(not has_table_privilege('anon','public.provider_links','SELECT'),'Anonymous cannot read identities');
+select ok(not has_table_privilege('authenticated','public.provider_links','INSERT'),'Raw writes remain forbidden');
+select ok(has_table_privilege('authenticated','public.provider_links','SELECT'),'Authenticated reads pass through RLS');
+select ok(not exists(select 1 from information_schema.columns where table_schema='public' and table_name='editions' and column_name='journal_format'),'Edition never provides user Format');
+select * from finish();
+rollback;

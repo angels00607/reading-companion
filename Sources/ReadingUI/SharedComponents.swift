@@ -1,4 +1,9 @@
 import SwiftUI
+#if os(iOS)
+import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 public struct PreviewBook: Identifiable, Sendable {
     public let id: String
@@ -6,8 +11,9 @@ public struct PreviewBook: Identifiable, Sendable {
     public let author: String
     public let coverSymbol: String?
     public let detail: String?
-    public init(id: String, title: String, author: String, coverSymbol: String? = nil, detail: String? = nil) {
-        self.id = id; self.title = title; self.author = author; self.coverSymbol = coverSymbol; self.detail = detail
+    public let coverURL: URL?
+    public init(id: String, title: String, author: String, coverSymbol: String? = nil, detail: String? = nil, coverURL: URL? = nil) {
+        self.id = id; self.title = title; self.author = author; self.coverSymbol = coverSymbol; self.detail = detail; self.coverURL = coverURL
     }
 }
 
@@ -16,8 +22,9 @@ public struct BookCover: View {
     private let title: String
     private let symbol: String?
     private let width: CGFloat
-    public init(title: String, symbol: String? = nil, width: CGFloat = 54) {
-        self.title = title; self.symbol = symbol; self.width = width
+    private let url: URL?
+    public init(title: String, symbol: String? = nil, width: CGFloat = 54, url: URL? = nil) {
+        self.title = title; self.symbol = symbol; self.width = width; self.url = url
     }
     public var body: some View {
         ZStack {
@@ -27,6 +34,17 @@ public struct BookCover: View {
                 .font(.title2)
                 .foregroundStyle(DesignTokens.primary(scheme))
                 .accessibilityHidden(true)
+            if let url {
+                if url.isFileURL {
+                    #if os(iOS)
+                    if let image = UIImage(contentsOfFile: url.path) { Image(uiImage: image).resizable().scaledToFit().accessibilityHidden(true) }
+                    #elseif os(macOS)
+                    if let image = NSImage(contentsOf: url) { Image(nsImage: image).resizable().scaledToFit().accessibilityHidden(true) }
+                    #endif
+                } else {
+                    AsyncImage(url: url) { image in image.resizable().scaledToFit() } placeholder: { Color.clear }.accessibilityHidden(true)
+                }
+            }
         }
         .frame(width: width, height: width * 1.5)
         .overlay(RoundedRectangle(cornerRadius: DesignTokens.coverRadius).stroke(DesignTokens.border(scheme)))
@@ -42,8 +60,8 @@ public struct BookRow: View {
     public init(book: PreviewBook) { self.book = book }
     public var body: some View {
         ViewThatFits(in: .horizontal) {
-            if !typeSize.isAccessibilitySize { HStack(alignment: .top, spacing: 12) { BookCover(title: book.title, symbol: book.coverSymbol); metadata; Spacer(minLength: 0) } }
-            VStack(alignment: .leading, spacing: 12) { BookCover(title: book.title, symbol: book.coverSymbol); metadata }
+            if !typeSize.isAccessibilitySize { HStack(alignment: .top, spacing: 12) { BookCover(title: book.title, symbol: book.coverSymbol, url: book.coverURL); metadata; Spacer(minLength: 0) } }
+            VStack(alignment: .leading, spacing: 12) { BookCover(title: book.title, symbol: book.coverSymbol, url: book.coverURL); metadata }
         }
         .padding(DesignTokens.Spacing.medium)
         .background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
@@ -90,7 +108,7 @@ public enum ReadingProgressValue: Equatable, Sendable {
             if let current, let total { return "Page \(current) of \(total)" }
             if let current { return "Page \(current), total unknown" }
             return "Page progress unknown"
-        case let .percentage(value): return value.map { "\(Int($0.rounded())) percent" } ?? "Percentage unknown"
+        case let .percentage(value): return value.map { "\($0.formatted(.number.precision(.fractionLength(0...8)))) percent" } ?? "Percentage unknown"
         }
     }
 }

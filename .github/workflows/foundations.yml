@@ -1,4 +1,4 @@
-name: Phase 1 shared UI
+name: Phase 2 Books Core
 on:
   push:
   pull_request:
@@ -28,7 +28,13 @@ jobs:
           with open(os.environ['GITHUB_ENV'], 'a') as env:
               env.write('READING_SIMULATOR_ID=' + phone['udid'] + '\n')
           PY
+      - name: Books Core acceptance and Human Visual QA
+        run: |
+          xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/BooksCore.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/BooksCoreAcceptanceTests CODE_SIGNING_ALLOWED=NO test
       - name: Default-size foundation acceptance
+        if: always()
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" appearance dark
@@ -54,19 +60,25 @@ jobs:
               xcrun xcresulttool export attachments --path "$result" --output-path "work/acceptance-screenshots/$(basename "$result" .xcresult)"
             fi
           done
+          if [ -d work/BooksCore.xcresult ]; then
+            xcrun xcresulttool export attachments --path work/BooksCore.xcresult --output-path work/books-core-screenshots
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: phase-1-acceptance-results
+          name: phase-2-acceptance-results
           path: |
             work/Foundation*.xcresult
             work/acceptance-screenshots
             work/diagnostics
+            work/BooksCore.xcresult
+            work/books-core-screenshots
   sqlite:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: python3 scripts/test_local_schema.py
+      - run: python3 scripts/test_books_schema.py
   supabase:
     runs-on: ubuntu-latest
     steps:

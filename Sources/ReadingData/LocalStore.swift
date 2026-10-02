@@ -4,7 +4,7 @@ import ReadingDomain
 
 /// One account per store. Local mutations and queue records share the same transaction.
 public final class LocalStore: @unchecked Sendable, OutboxRepository {
-    private let queue: DatabaseQueue
+    let queue: DatabaseQueue
     public let ownerID: UUID
     public init(path: String, ownerID: UUID) throws {
         self.ownerID = ownerID
@@ -18,6 +18,10 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
         }
         migrator.registerMigration("local_v2", foreignKeyChecks: .deferred) { db in
             let url = Bundle.module.url(forResource: "local_v2", withExtension: "sql")!
+            try db.execute(sql: String(contentsOf: url, encoding: .utf8))
+        }
+        migrator.registerMigration("local_v3") { db in
+            let url = Bundle.module.url(forResource: "local_v3", withExtension: "sql")!
             try db.execute(sql: String(contentsOf: url, encoding: .utf8))
         }
         try migrator.migrate(queue)
@@ -44,7 +48,7 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
             try enqueue(mutation, db: db)
         }
     }
-    private func enqueue(_ mutation: MutationEnvelope, db: Database) throws {
+    func enqueue(_ mutation: MutationEnvelope, db: Database) throws {
         try db.execute(sql: """
             INSERT INTO outbox(id,owner_id,entity_id,expected_revision,generation,command_version,kind,payload,ordinal)
             VALUES (?,?,?,?,?,?,?,?,(SELECT COALESCE(MAX(ordinal),0)+1 FROM outbox))
