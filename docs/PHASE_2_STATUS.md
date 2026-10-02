@@ -49,6 +49,12 @@ debounced; requests bounded/throttled/cached with timeouts. Editions fetch at mo
 Manual Add and cached local workflows work without network. Google Books priority,
 cross-provider scoring and additional adapters remain TBD rather than inferred.
 Sources are recorded per field; no provider contract includes user Format.
+Title/author corrections entered during external Add are recorded as manual
+overrides in the same transaction; untouched fields retain their provider source.
+The first adapter refreshes work title/cover/synopsis. Fetching changed author
+records and edition refresh proposals is not implemented; manual corrections remain
+available. In-memory HTTP caching is bounded to the provider instance lifetime,
+not an approved indefinite freshness policy for a future multi-provider engine.
 
 Exact single provider work identity reuses a Book; contradictory ISBN/work identity,
 ambiguous repeats and manual title/author matches require explicit reuse or Add Anyway.
@@ -64,13 +70,60 @@ does not dispatch future Journal/Challenge/XP consumers in Phase 2.
 
 ## Validation and Human Visual QA
 
-Local: 16 existing SQLite tests and 3 new additive migration tests pass; diff check passes.
-Swift, iOS/font/UI and Supabase/RLS results are pending macOS/Linux CI validation.
-BooksCoreAcceptanceTests demonstrates the official flow and produces named captures
-for 13 screen states in Light, Dark and compact Accessibility XXXL, including top
-and lower captures. DEBUG fixture routes are labelled QA metadata and are never
-enabled on ordinary/Release launches. Screenshots/contact sheets will be linked here.
+Automated evidence: [CI #110](https://github.com/angels00607/reading-companion/actions/runs/36987677905)
+on application/test commit `0405605b75c63597705ef363e99645da16575995`.
+The final documentation and QA-board commit changes no application/test source.
+
+| Check | Result |
+| --- | --- |
+| Swift domain/data/shared UI suite | 52 tests pass, including the 32 baseline tests |
+| SQLite invariants / additive migration | 16 existing + 3 new tests pass |
+| Supabase migrations / ownership / RLS | 56 tests pass |
+| iOS simulator application build | Pass |
+| Hosted approved-font registration | Pass, no fallback |
+| Official Search → Add → Start → 183 → 257 → +74 → final page → confirm → Read | Pass |
+| Light / Dark / compact Accessibility XXXL Books Core visual tests | All 3 pass |
+| Existing unfiltered foundation acceptance | Fails; findings remain open, detailed below |
+| Local diff check | Pass |
+
+Font tests verify Manrope-Regular, Manrope-Medium, Manrope-SemiBold,
+PapernotesRegular and HelloBabyRegular. Existing approved font assets are unchanged.
+
+BooksCoreAcceptanceTests produces 83 named captures: 13 screen states × top/lower ×
+3 display scenarios, plus 5 official-flow milestones. Visible identified Phase 2
+buttons keep their label/44-point assertions. DEBUG fixture routes are labelled QA
+metadata and are never enabled on ordinary/Release launches.
+[Human Visual QA boards](qa/phase-2/README.md) and the run's `phase-2-books-visual-qa`
+artifact retain the captures. The boards were inspected: long text wraps, forms
+scroll vertically, Dark prompts are legible and completion remains explicit.
+This inspection is not human visual approval or complete Phase 12 certification.
 All existing Phase 0/1 test thresholds and accessibility audits remain unchanged.
+
+Required coverage maps to `BooksCoreTests` (official flow/reread, Format isolation,
+DNF, unknown progress/manual finish, percentage bounds/no conversion, provider
+priority, duplicate identity, conflict replay/resolution and durable reopen),
+`BooksAtomicTests` (rollback, user provenance, completed-reading filters, uncertain
+identity and ISBN edition reuse), and `ProviderTests` (real adapter decoding,
+discarded external format, real language records and offline library operation).
+The pre-existing domain, shared UI, migration and RLS tests remain in the full suite.
+
+### Corrective QA evidence
+
+- Initial populated-field replacement left the caret at the beginning, producing
+  `400257` instead of `400`. The saved screenshot established invalid fixture input,
+  not an automatic-finish defect. The test now positions the caret at the end and
+  asserts the exact live input. No acceptance assertion was removed.
+- The keyboard obscured the progress save target on compact devices. A native
+  `Done` command dismisses focus, retains Manrope and has a 44-point target.
+- Navigation text had a 44-point outer layout reservation but the live accessibility
+  button retained its 22-point text height. The target now belongs to its label and
+  content shape; the test still requires 44 points and reports identity/label/frame.
+- Empty field prompts used the system placeholder color, visibly too faint in Dark
+  captures. Books forms now use the approved secondary-text semantic token.
+- Read filters now match a completed reading rather than an active reread's metadata.
+- CI #106 first demonstrates the complete official UI flow. CI #110 then passes
+  all four Books Core UI tests after the target corrections, with captured
+  `+74 pages`, explicit finish confirmation and `Read`.
 
 ## Limits / TBDs and deviations
 
@@ -78,6 +131,15 @@ All existing Phase 0/1 test thresholds and accessibility audits remain unchanged
   18 contrast detections, 9 undersized targets. The earlier 107 nil-element Dynamic
   Type diagnostic history remains in PHASE_0_STATUS. No false positive is established,
   no finding suppressed. Phase 12/manual native inspection remains required.
+- Final CI #110 reproduces those 147 audit findings plus the single background-
+  coverage assertion below (148 foundation failures total). Default and largest-size
+  foundation stages both ran. Their results are not relabelled as passing.
+- Full foundation runs also report an additional Dark Accessibility
+  XXXL landscape background-coverage assertion: 0.2143 versus the unchanged >0.25
+  threshold, on Home. The capture shows a black region and clipped landscape
+  content. This is separately reported from the 147 audit findings; no false-positive
+  conclusion or complete landscape acceptance is claimed. No preview layout or
+  audit threshold has been changed to obtain a pass. Manual native inspection is open.
 - Physical device / spoken VoiceOver / complete Phase 12 acceptance is not claimed.
 - No Favorite filter is fabricated before Phase 3 Favorite data exists. Series filter
   uses a user-entered series name, not a Phase 4 series engine. Journal/Series/
@@ -91,4 +153,8 @@ All existing Phase 0/1 test thresholds and accessibility audits remain unchanged
 - No StoryGraph import, backup/restore, onboarding, notifications, AI, listening-time
   progress or future completion side effects. Challenge TBD content remains untouched.
 
-Phase 2 implementation is awaiting automated and human visual review. Do not merge.
+Phase 2 Books Core is implemented and its required functional/visual acceptance
+tests pass. Overall CI remains red because the retained foundation audit and the
+separately documented landscape assertion are unresolved. Human visual review and
+acceptance of the explicitly recorded limitations remain required before merge.
+No merge or Phase 3 work has been performed or authorized.
