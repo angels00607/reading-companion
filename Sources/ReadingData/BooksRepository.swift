@@ -275,7 +275,8 @@ extension LocalStore: BooksRepository {
             var value = try reading(readingID, db: db)
             guard value.revision == revision else { throw DomainError.staleRevision }
             value.startDate = start; if value.status == .read { value.finishDate = finish }
-            value.rating = rating; value.primaryGenre = genre?.isEmpty == true ? nil : genre
+            let normalizedGenre = genre?.trimmingCharacters(in: .whitespacesAndNewlines)
+            value.rating = rating; value.primaryGenre = normalizedGenre?.isEmpty == true ? nil : normalizedGenre
             if let format { try ReadingRules.setJournalFormat(format, origin: .user, reading: &value) }
             else { value.journalFormat = nil }
             value.revision += 1; try save(value, db: db)

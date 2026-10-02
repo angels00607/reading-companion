@@ -63,6 +63,7 @@ struct BooksScreen<Content: View>: View {
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.visible, for: .navigationBar)
+            .scrollDismissesKeyboard(.interactively)
             #endif
     }
 }

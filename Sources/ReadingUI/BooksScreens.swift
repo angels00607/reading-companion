@@ -7,6 +7,7 @@ import UIKit
 
 public struct BooksHome: View {
     @EnvironmentObject private var model: BooksModel
+    @ScaledMetric(relativeTo: .body) private var cardHeight: CGFloat = 320
     public init() {}
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -19,10 +20,12 @@ public struct BooksHome: View {
                 ScrollView(.horizontal) {
                     HStack(alignment: .top, spacing: 16) {
                         ForEach(active) { record in
-                            VStack(alignment: .leading, spacing: 12) {
+                            ScrollView {
+                              VStack(alignment: .leading, spacing: 12) {
                                 BooksRow(record: record)
                                 if let reading = record.active { ReadingProgressBar(displayProgress(reading.progress)); NavigationLink("Update Progress") { BookPageScreen(bookID: record.id) }.frame(minHeight: 44) }
-                            }.frame(width: 270)
+                              }
+                            }.frame(width: 270, height: cardHeight, alignment: .top)
                         }
                     }
                 }
