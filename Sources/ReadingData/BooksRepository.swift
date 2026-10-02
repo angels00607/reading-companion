@@ -81,9 +81,11 @@ extension LocalStore: BooksRepository {
         return try JSONDecoder().decode(ReadingDate.self, from: JSONEncoder().encode(string))
     }
     public func add(work: WorkCandidate, edition: EditionCandidate? = nil, choice: DuplicateChoice = .review) throws -> UUID {
+        try queue.write { db in try addRecord(work: work, edition: edition, choice: choice, db: db) }
+    }
+    private func addRecord(work: WorkCandidate, edition: EditionCandidate?, choice: DuplicateChoice, db: Database) throws -> UUID {
         let title = try BooksRules.validatedText(work.title), author = try BooksRules.validatedText(work.author)
         if let pages = edition?.pageCount, pages <= 0 { throw DomainError.invalidProgress }
-        return try queue.write { db in
             let exact = try String.fetchAll(db, sql: "SELECT DISTINCT book_id FROM provider_links WHERE owner_id=? AND provider=? AND reference=?", arguments: [ownerID.uuidString,work.provider,work.reference])
             let isbn = try String.fetchAll(db, sql: "SELECT DISTINCT book_id FROM editions WHERE owner_id=? AND ((isbn13 IS NOT NULL AND isbn13=?) OR (isbn10 IS NOT NULL AND isbn10=?))", arguments: [ownerID.uuidString,edition?.isbn13,edition?.isbn10])
             let similar = try String.fetchAll(db, sql: "SELECT id FROM books WHERE owner_id=? AND title=? COLLATE NOCASE AND author=? COLLATE NOCASE AND deleted_at IS NULL", arguments: [ownerID.uuidString,title,author])
@@ -110,32 +112,38 @@ extension LocalStore: BooksRepository {
             if let edition {
                 let existing = try String.fetchOne(db, sql: "SELECT edition_id FROM provider_links WHERE owner_id=? AND book_id=? AND provider=? AND reference=?", arguments: [ownerID.uuidString,id.uuidString,edition.provider,edition.reference])
                 if existing == nil {
-                    let eid = UUID()
+                    let matched = try String.fetchOne(db, sql: "SELECT id FROM editions WHERE owner_id=? AND book_id=? AND ((isbn13 IS NOT NULL AND isbn13=?) OR (isbn10 IS NOT NULL AND isbn10=?))", arguments: [ownerID.uuidString,id.uuidString,edition.isbn13,edition.isbn10])
+                    let eid = matched.flatMap(UUID.init(uuidString:)) ?? UUID()
+                    if matched == nil {
                     try db.execute(sql: "INSERT INTO editions(id,owner_id,book_id,language,page_count,edition_title,isbn10,isbn13,cover_ref,publisher) VALUES(?,?,?,?,?,?,?,?,?,?)", arguments: [eid.uuidString,ownerID.uuidString,id.uuidString,edition.language,edition.pageCount,edition.title,edition.isbn10,edition.isbn13,edition.coverReference,edition.publisher])
-                    try db.execute(sql: "INSERT INTO provider_links(owner_id,book_id,edition_id,provider,reference) VALUES(?,?,?,?,?)", arguments: [ownerID.uuidString,id.uuidString,eid.uuidString,edition.provider,edition.reference])
                     for field in ["language","page_count","edition_title","isbn10","isbn13","cover_ref","publisher"] { try provenance(id: eid, type: "edition", field: field, source: edition.provider, reference: edition.reference, db: db) }
+                    }
+                    try db.execute(sql: "INSERT INTO provider_links(owner_id,book_id,edition_id,provider,reference) VALUES(?,?,?,?,?)", arguments: [ownerID.uuidString,id.uuidString,eid.uuidString,edition.provider,edition.reference])
                 }
             }
             try command(id: id, kind: "catalog.snapshot", revision: 0, payload: catalog(id, db: db), db: db)
             return id
-        }
     }
     public func start(bookID: UUID, editionID: UUID?, mode: ProgressMode = .page, date: ReadingDate?) throws -> UUID {
-        try queue.write { db in
+        try queue.write { db in try startRecord(bookID: bookID, editionID: editionID, mode: mode, date: date, db: db) }
+    }
+    private func startRecord(bookID: UUID, editionID: UUID?, mode: ProgressMode, date: ReadingDate?, db: Database) throws -> UUID {
             let record = try catalog(bookID, db: db)
             guard record.active == nil else { throw BooksError.activeReadingExists }
             let edition = record.editions.first { $0.id == editionID }
             if editionID != nil && edition == nil { throw BooksError.missingRecord }
             var reading = ReadingInstance(bookID: bookID, progress: try mode == .page ? .pages(current: 0, total: edition?.pageCount) : .percentage())
             reading.editionID = editionID; reading.startDate = date
-            try db.execute(sql: "INSERT INTO readings(id,owner_id,book_id,edition_id,status,progress_mode,current_page,total_pages,start_date) VALUES(?,?,?,?,?,?,?,?,?)", arguments: [reading.id.uuidString,ownerID.uuidString,bookID.uuidString,editionID?.uuidString,reading.status.rawValue,mode.rawValue,reading.progress.currentPage,reading.progress.totalPages,date?.isoString])
+            if try Int.fetchOne(db, sql: "SELECT user_overridden FROM field_provenance WHERE owner_id=? AND entity_id=? AND entity_type='book' AND field='genreSuggestion'", arguments: [ownerID.uuidString,bookID.uuidString]) == 1 { reading.primaryGenre = record.genreSuggestion }
+            try db.execute(sql: "INSERT INTO readings(id,owner_id,book_id,edition_id,status,progress_mode,current_page,total_pages,start_date,primary_genre) VALUES(?,?,?,?,?,?,?,?,?,?)", arguments: [reading.id.uuidString,ownerID.uuidString,bookID.uuidString,editionID?.uuidString,reading.status.rawValue,mode.rawValue,reading.progress.currentPage,reading.progress.totalPages,date?.isoString,reading.primaryGenre])
             try db.execute(sql: "UPDATE library_memberships SET wants_to_read=0 WHERE owner_id=? AND book_id=?", arguments: [ownerID.uuidString,bookID.uuidString])
             try command(id: reading.id, kind: "reading.start", revision: 0, payload: reading, db: db)
             return reading.id
-        }
     }
     public func recordCompleted(bookID: UUID, editionID: UUID?, date: ReadingDate?, rating: Rating) throws -> UUID {
-        try queue.write { db in
+        try queue.write { db in try completedRecord(bookID: bookID, editionID: editionID, date: date, rating: rating, db: db) }
+    }
+    private func completedRecord(bookID: UUID, editionID: UUID?, date: ReadingDate?, rating: Rating, db: Database) throws -> UUID {
             let record = try catalog(bookID, db: db)
             guard record.active == nil else { throw BooksError.activeReadingExists }
             if editionID != nil && !record.editions.contains(where: { $0.id == editionID }) { throw BooksError.missingRecord }
@@ -146,6 +154,32 @@ extension LocalStore: BooksRepository {
             try db.execute(sql: "UPDATE library_memberships SET wants_to_read=0 WHERE owner_id=? AND book_id=?", arguments: [ownerID.uuidString,bookID.uuidString])
             try command(id: value.id, kind: "reading.completed_record", revision: 0, payload: value, db: db)
             return value.id
+    }
+    public func addWithIntent(work: WorkCandidate, edition: EditionCandidate?, choice: DuplicateChoice, intent: LibraryAddition, manualValues: [BookField: String]) throws -> UUID {
+        try queue.write { db in
+            let id = try addRecord(work: work, edition: edition, choice: choice, db: db)
+            if work.provider == "manual", !manualValues.isEmpty {
+                try editBook(bookID: id, values: manualValues.mapValues { $0.isEmpty ? nil : $0 }, revision: catalog(id, db: db).revision, db: db)
+            }
+            let record = try catalog(id, db: db)
+            let selectedEditionID: UUID?
+            if let edition {
+                selectedEditionID = try String.fetchOne(db, sql: "SELECT edition_id FROM provider_links WHERE owner_id=? AND book_id=? AND provider=? AND reference=?", arguments: [ownerID.uuidString,id.uuidString,edition.provider,edition.reference]).flatMap(UUID.init(uuidString:))
+            } else { selectedEditionID = nil }
+            let readingID: UUID?
+            switch intent {
+            case .toRead:
+                try db.execute(sql: "UPDATE library_memberships SET wants_to_read=1 WHERE owner_id=? AND book_id=?", arguments: [ownerID.uuidString,id.uuidString]); readingID = nil
+                try command(id: id, kind: "library.intent", revision: record.revision, payload: catalog(id, db: db), db: db)
+            case .currentlyReading(let mode, let date): readingID = try startRecord(bookID: id, editionID: selectedEditionID, mode: mode, date: date, db: db)
+            case .alreadyRead(let date, let rating): readingID = try completedRecord(bookID: id, editionID: selectedEditionID, date: date, rating: rating, db: db)
+            }
+            if let readingID, work.provider == "manual", let genre = manualValues[.genreSuggestion], !genre.isEmpty {
+                var value = try reading(readingID, db: db); value.primaryGenre = genre; value.revision += 1
+                try save(value, db: db); try provenance(id: readingID, type: "reading", field: "primary_genre", source: "manual", reference: nil, db: db)
+                try command(id: readingID, kind: "reading.edit", revision: 0, payload: value, db: db)
+            }
+            return id
         }
     }
     public func providerWorks(bookID: UUID) throws -> [WorkCandidate] {
@@ -203,7 +237,9 @@ extension LocalStore: BooksRepository {
         try db.execute(sql: "UPDATE readings SET status=?,progress_mode=?,current_page=?,total_pages=?,progress_percentage=?,start_date=?,finish_date=?,rating_state=?,rating_whole=?,journal_format=?,primary_genre=?,revision=? WHERE owner_id=? AND id=?", arguments: [reading.status.rawValue,reading.progress.mode.rawValue,reading.progress.currentPage,reading.progress.totalPages,reading.progress.percentage,reading.startDate?.isoString,reading.finishDate?.isoString,ratingState,rating,reading.journalFormat?.rawValue,reading.primaryGenre,reading.revision,ownerID.uuidString,reading.id.uuidString])
     }
     public func edit(bookID: UUID, values: [BookField: String?], revision: Int) throws {
-        try queue.write { db in
+        try queue.write { db in try editBook(bookID: bookID, values: values, revision: revision, db: db) }
+    }
+    private func editBook(bookID: UUID, values: [BookField: String?], revision: Int, db: Database) throws {
             guard try catalog(bookID, db: db).revision == revision else { throw DomainError.staleRevision }
             for (field,value) in values {
                 let normalized = value?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -214,17 +250,24 @@ extension LocalStore: BooksRepository {
             }
             try db.execute(sql: "UPDATE books SET revision=revision+1 WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,bookID.uuidString])
             try command(id: bookID, kind: "book.edit", revision: revision, payload: catalog(bookID, db: db), db: db)
-        }
     }
     public func editEdition(_ edition: Edition, revision: Int) throws {
+        try queue.write { db in try editEdition(edition, revision: revision, db: db) }
+    }
+    private func editEdition(_ edition: Edition, revision: Int, db: Database) throws {
         if let pages = edition.pageCount, pages <= 0 { throw DomainError.invalidProgress }
-        try queue.write { db in
             guard try catalog(edition.bookID, db: db).revision == revision else { throw DomainError.staleRevision }
             guard try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM editions WHERE owner_id=? AND id=? AND book_id=?", arguments: [ownerID.uuidString,edition.id.uuidString,edition.bookID.uuidString]) == 1 else { throw BooksError.missingRecord }
             try db.execute(sql: "UPDATE editions SET language=?,page_count=?,edition_title=?,isbn10=?,isbn13=?,cover_ref=?,publisher=?,revision=revision+1 WHERE owner_id=? AND id=?", arguments: [edition.language,edition.pageCount,edition.title,edition.isbn10,edition.isbn13,edition.coverReference,edition.publisher,ownerID.uuidString,edition.id.uuidString])
             for field in ["language","page_count","edition_title","isbn10","isbn13","cover_ref","publisher"] { try provenance(id: edition.id, type: "edition", field: field, source: "manual", reference: nil, db: db) }
             try db.execute(sql: "UPDATE books SET revision=revision+1 WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,edition.bookID.uuidString])
             try command(id: edition.bookID, kind: "edition.edit", revision: revision, payload: edition, db: db)
+    }
+    public func editInfo(bookID: UUID, values: [BookField: String?], edition: Edition?, revision: Int) throws {
+        try queue.write { db in
+            if let edition, edition.bookID != bookID { throw BooksError.missingRecord }
+            try editBook(bookID: bookID, values: values, revision: revision, db: db)
+            if let edition { try editEdition(edition, revision: revision + 1, db: db) }
         }
     }
     public func editReading(readingID: UUID, start: ReadingDate?, finish: ReadingDate?, rating: Rating, genre: String?, format: JournalFormat?, revision: Int) throws {
@@ -290,7 +333,7 @@ extension LocalStore: BooksRepository {
             // Queue remains durable; the conflict command is superseded by an explicit resolution command.
             try db.execute(sql: "UPDATE outbox SET state='pending' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,observationID.uuidString])
             try save(reading, db: db)
-            try command(id: readingID, kind: "reading.resolve", revision: revision, payload: reading, db: db)
+            try command(id: readingID, kind: "reading.resolve", revision: revision, payload: self.reading(readingID, db: db), db: db)
         }
     }
     private func provenance(id: UUID, type: String, field: String, source: String, reference: String?, db: Database) throws {

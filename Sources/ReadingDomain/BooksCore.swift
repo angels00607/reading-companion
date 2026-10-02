@@ -66,6 +66,11 @@ public struct LibraryFilters: Sendable {
     public init() {}
 }
 public enum DuplicateChoice: Sendable { case review, reuse(UUID), addAnyway }
+public enum LibraryAddition: Sendable {
+    case toRead
+    case currentlyReading(mode: ProgressMode, date: ReadingDate?)
+    case alreadyRead(date: ReadingDate?, rating: Rating)
+}
 public struct CatalogRecord: Codable, Equatable, Identifiable, Sendable {
     public var id: UUID { book.id }
     public let book: Book
@@ -88,6 +93,7 @@ public struct CatalogRecord: Codable, Equatable, Identifiable, Sendable {
     public var completedCount: Int { readings.filter { $0.status == .read }.count }
     public var statusLabel: String {
         if active != nil { return "Currently Reading" }
+        if wantsToRead { return "To Read" }
         if completedCount > 0 { return completedCount > 1 ? "Read \(completedCount)×" : "Read" }
         if latest?.status == .dnf { return "DNF" }
         return wantsToRead ? "To Read" : "In Library"
@@ -129,6 +135,7 @@ public protocol BooksRepository: Sendable {
     func library(query: String, view: LibraryView, sort: LibrarySort, filters: LibraryFilters, limit: Int, offset: Int) throws -> [CatalogRecord]
     func record(id: UUID) throws -> CatalogRecord
     func add(work: WorkCandidate, edition: EditionCandidate?, choice: DuplicateChoice) throws -> UUID
+    func addWithIntent(work: WorkCandidate, edition: EditionCandidate?, choice: DuplicateChoice, intent: LibraryAddition, manualValues: [BookField: String]) throws -> UUID
     func start(bookID: UUID, editionID: UUID?, mode: ProgressMode, date: ReadingDate?) throws -> UUID
     func recordCompleted(bookID: UUID, editionID: UUID?, date: ReadingDate?, rating: Rating) throws -> UUID
     func providerWorks(bookID: UUID) throws -> [WorkCandidate]
@@ -138,6 +145,7 @@ public protocol BooksRepository: Sendable {
     func resume(readingID: UUID, revision: Int) throws
     func edit(bookID: UUID, values: [BookField: String?], revision: Int) throws
     func editEdition(_ edition: Edition, revision: Int) throws
+    func editInfo(bookID: UUID, values: [BookField: String?], edition: Edition?, revision: Int) throws
     func editReading(readingID: UUID, start: ReadingDate?, finish: ReadingDate?, rating: Rating, genre: String?, format: JournalFormat?, revision: Int) throws
     func reviewProvider(bookID: UUID, work: WorkCandidate) throws
     func proposals(bookID: UUID) throws -> [MetadataReview]

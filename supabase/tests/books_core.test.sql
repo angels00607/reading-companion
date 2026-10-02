@@ -1,5 +1,6 @@
 begin;
-select plan(9);
+create extension if not exists pgtap with schema extensions;
+select plan(11);
 select has_column('public','books','cover_ref','Cover override column exists');
 select has_column('public','editions','edition_title','Edition title is independent');
 select has_column('public','readings','primary_genre','Primary Genre belongs to reading');
@@ -9,5 +10,14 @@ select ok(not has_table_privilege('anon','public.provider_links','SELECT'),'Anon
 select ok(not has_table_privilege('authenticated','public.provider_links','INSERT'),'Raw writes remain forbidden');
 select ok(has_table_privilege('authenticated','public.provider_links','SELECT'),'Authenticated reads pass through RLS');
 select ok(not exists(select 1 from information_schema.columns where table_schema='public' and table_name='editions' and column_name='journal_format'),'Edition never provides user Format');
+insert into auth.users(id,email) values ('00000000-0000-0000-0000-000000000081','books1@example.invalid'),('00000000-0000-0000-0000-000000000082','books2@example.invalid');
+insert into public.books(owner_id,id,title,author) values ('00000000-0000-0000-0000-000000000082','10000000-0000-0000-0000-000000000082','Private','Author');
+insert into public.provider_links(owner_id,book_id,provider,reference) values ('00000000-0000-0000-0000-000000000082','10000000-0000-0000-0000-000000000082','fixture','private-work');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000081',true);
+select is((select count(*)::integer from public.provider_links),0,'Other owner provider identities are hidden');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000082',true);
+select is((select count(*)::integer from public.provider_links),1,'Owner can read provider identities');
+reset role;
 select * from finish();
 rollback;

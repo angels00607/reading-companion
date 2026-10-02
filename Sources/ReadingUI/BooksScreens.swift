@@ -171,22 +171,11 @@ struct AddBookScreen: View {
             // Validate all input before creating anything.
             let date = try BooksModel.parseDate(state == "Already Read" ? finishDate : startDate)
             let selectedRating: Rating = rating == "No rating" ? .noRating : try .validatedStars(Int(rating)!)
-            let id = try model.repository.add(work: candidate, edition: edition, choice: choice)
-            if work.provider == "manual", !extras.isEmpty {
-                let record = try model.repository.record(id: id)
-                try model.repository.edit(bookID: id, values: extras.mapValues { $0.isEmpty ? nil : $0 }, revision: record.revision)
-            }
-            if state != "To Read" {
-                let record = try model.repository.record(id: id)
-                if record.active == nil {
-                    if state == "Already Read" {
-                        _ = try model.repository.recordCompleted(bookID: id, editionID: record.editions.first?.id, date: date, rating: selectedRating)
-                    } else { _ = try model.repository.start(bookID: id, editionID: record.editions.first?.id, mode: mode, date: date) }
-                }
-            }
+            let intent: LibraryAddition = state == "To Read" ? .toRead : state == "Already Read" ? .alreadyRead(date: date, rating: selectedRating) : .currentlyReading(mode: mode, date: date)
+            let id = try model.repository.addWithIntent(work: candidate, edition: edition, choice: choice, intent: intent, manualValues: extras)
             added = id; model.error = nil; model.version += 1
         } catch BooksError.duplicateNeedsReview(let ids) { duplicates = ids.compactMap { try? model.repository.record(id: $0) } }
-        catch { model.error = "Could not complete Add Book. Any saved library record remains available; no existing reading was overwritten. \(error.localizedDescription)" }
+        catch { model.error = "Could not add this book. Existing local data has not changed. \(error.localizedDescription)" }
     }
 }
 
@@ -207,7 +196,7 @@ struct ManualAddScreen: View {
             BooksField(label: "Title", value: $title); BooksField(label: "Author", value: $author)
             DisclosureGroup("Optional book information") {
                 VStack(spacing: 12) {
-                    BooksField(label: "Total pages", value: $pages); BooksField(label: "Primary Genre suggestion", value: $genre)
+                    BooksField(label: "Total pages", value: $pages); BooksField(label: "Primary Genre", value: $genre)
                     BooksField(label: "Series name", value: $series); BooksField(label: "ISBN", value: $isbn)
                     CoverEditor(reference: $cover)
                 }.padding(.vertical, 12)
@@ -217,7 +206,8 @@ struct ManualAddScreen: View {
                     let t = try BooksRules.validatedText(title), a = try BooksRules.validatedText(author)
                     let total = try BooksModel.optionalPages(pages)
                     candidate = WorkCandidate(provider: "manual", reference: UUID().uuidString, title: t, author: a, coverReference: cover.isEmpty ? nil : cover)
-                    edition = EditionCandidate(provider: "manual", reference: UUID().uuidString, title: t, isbn13: isbn.isEmpty ? nil : isbn, pageCount: total)
+                    if !cover.isEmpty, model.coverURL(cover) == nil { throw BooksError.invalidMetadata }
+                    edition = EditionCandidate(provider: "manual", reference: UUID().uuidString, title: t, isbn10: isbn.count == 10 ? isbn : nil, isbn13: isbn.isEmpty || isbn.count == 10 ? nil : isbn, pageCount: total)
                     showAdd = true
                 }
             }

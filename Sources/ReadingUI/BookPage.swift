@@ -233,6 +233,7 @@ struct EditReadingScreen: View {
                 if model.perform({
                     let selected: Rating = rating == "Unknown" ? .unknown : rating == "No rating" ? .noRating : try .validatedStars(Int(rating)!)
                     try model.repository.editReading(readingID: reading.id, start: BooksModel.parseDate(start), finish: BooksModel.parseDate(finish), rating: selected, genre: genre, format: JournalFormat(rawValue: format), revision: reading.revision)
+                    return ()
                 }) != nil { dismiss() }
             }
             BooksErrorMessage()
@@ -282,12 +283,14 @@ struct EditBookInfoScreen: View {
                     _ = try BooksRules.validatedText(title); _ = try BooksRules.validatedText(author)
                     let total = try BooksModel.optionalPages(pages)
                     if !cover.isEmpty, model.coverURL(cover) == nil { throw BooksError.invalidMetadata }
-                    try model.repository.edit(bookID: record.id, values: [.title:title,.author:author,.cover:cover,.synopsis:synopsis,.series:series,.genreSuggestion:genre], revision: record.revision)
+                    var selectedEdition: Edition?
                     if var edition = record.editions.first(where: { $0.id == editionID }) {
                         edition.title = editionTitle.isEmpty ? nil : editionTitle; edition.language = language.isEmpty ? nil : language
                         edition.pageCount = total; edition.isbn10 = isbn10.isEmpty ? nil : isbn10; edition.isbn13 = isbn13.isEmpty ? nil : isbn13; edition.publisher = publisher.isEmpty ? nil : publisher
-                        try model.repository.editEdition(edition, revision: record.revision + 1)
+                        selectedEdition = edition
                     }
+                    try model.repository.editInfo(bookID: record.id, values: [.title:title,.author:author,.cover:cover,.synopsis:synopsis,.series:series,.genreSuggestion:genre], edition: selectedEdition, revision: record.revision)
+                    return ()
                 }) != nil { dismiss() }
             }
             BooksErrorMessage()

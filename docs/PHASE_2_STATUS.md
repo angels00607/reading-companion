@@ -84,9 +84,10 @@ All existing Phase 0/1 test thresholds and accessibility audits remain unchanged
   Challenges/Stats tabs retain the approved Phase 1 preview shell.
 - Genre is a nullable per-reading user choice; managing/deleting the full genre
   catalogue belongs to later Settings work. Unknown remains valid.
-- Add-state steps and Book/Edition edit steps currently commit as individual durable
-  commands; a later step error reports saved local state explicitly, not a false
-  rollback or success. This must be assessed in final validation and review.
+- Add with its selected intent and optional manual facts commits atomically with
+  its commands; Book/Edition corrections also commit in one transaction. Failure
+  rolls back the full operation. User-entered Manual Add genre is preserved for
+  the user's reading; external genre categories cannot determine that override.
 - No StoryGraph import, backup/restore, onboarding, notifications, AI, listening-time
   progress or future completion side effects. Challenge TBD content remains untouched.
 
