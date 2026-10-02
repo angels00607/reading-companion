@@ -15,6 +15,7 @@ let package = Package(
                 resources: [.copy("Resources/local_v1.sql"), .copy("Resources/local_v2.sql")]),
         .target(name: "ReadingUI", dependencies: ["ReadingDomain"]),
         .testTarget(name: "ReadingDomainTests", dependencies: ["ReadingDomain"]),
-        .testTarget(name: "ReadingDataTests", dependencies: ["ReadingData", "ReadingDomain", .product(name: "GRDB", package: "GRDB.swift")])
+        .testTarget(name: "ReadingDataTests", dependencies: ["ReadingData", "ReadingDomain", .product(name: "GRDB", package: "GRDB.swift")]),
+        .testTarget(name: "ReadingUITests", dependencies: ["ReadingUI"])
     ]
 )

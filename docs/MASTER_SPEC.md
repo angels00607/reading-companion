@@ -526,7 +526,7 @@ Book covers are the richest visual elements.
 
 ### Color source palette
 
-Blue: - Frosted Berry `#E4F3F4` - Blueberry Cream `#91C9E2` - Ripe Blue
+Blue: - Frosted Berry `#E7EAF6` - Blueberry Cream `#9EB7D8` - Ripe Blue
 `#4F81AA` - Berry Peel `#143D5B` - Midnight Jam `#030B19`
 
 Plum/Berry: - Blush Mist `#ECD0EC` - Dusty Mauve `#BA71A2` - Berry
@@ -537,30 +537,34 @@ exception colors.
 
 ### Light tokens
 
--   background `#F8FAFB`
+-   background `#F5EEF8`
 -   surface `#FFFFFF`
--   surface-blue `#E4F3F4`
+-   surface-blue `#E7EAF6`
 -   surface-plum `#ECD0EC`
 -   text-primary `#030B19`
 -   text-secondary `#4F6272`
 -   border `#DCE6EA`
 -   primary `#143D5B`
--   primary-soft `#91C9E2`
+-   primary-soft `#9EB7D8`
 -   secondary `#7E2A53`
 -   secondary-soft `#BA71A2`
 
 ### Dark tokens
 
 -   background `#030B19`
--   surface approx `#0D1B2A`
+-   surface `#151728`
 -   surface-raised attenuated Berry Peel
 -   text-primary `#F5F8FA`
 -   text-secondary `#AFC3CF`
 -   border `#24445B`
--   primary `#91C9E2`
+-   primary `#A9BCE3`
+-   surface-blue `#242B49`
 -   primary-strong `#4F81AA`
 -   secondary `#BA71A2`
 -   secondary-strong `#7E2A53`
+
+Dark surface `#151728` was selected in the final Phase 1 human A/B review and is
+authoritative. Dark background remains `#030B19`.
 
 ### Typography
 
@@ -771,4 +775,3 @@ before coding.
   confirmation of completion alone is insufficient: ambiguous cases return Unknown.
   Active, Completed, explicit Abandoned and override precedence retain their locked meanings.
 - No listening-time/playback behavior, feature screens or Phase 1 implementation.
-
