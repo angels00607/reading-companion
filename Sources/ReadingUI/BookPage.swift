@@ -216,7 +216,11 @@ struct EditReadingScreen: View {
     @EnvironmentObject var model: BooksModel
     @Environment(\.dismiss) var dismiss
     let reading: ReadingInstance
-    @State private var start = "", finish = "", genre = "", format = "Unknown", rating = "Unknown"
+    @State private var start = ""
+    @State private var finish = ""
+    @State private var genre = ""
+    @State private var format = "Unknown"
+    @State private var rating = "Unknown"
     var body: some View {
         BooksScreen("Edit Reading") {
             BooksField(label: "Start date (YYYY-MM-DD or unknown)", value: $start)
@@ -244,9 +248,19 @@ struct EditBookInfoScreen: View {
     @EnvironmentObject var model: BooksModel
     @Environment(\.dismiss) var dismiss
     let record: CatalogRecord
-    @State private var title = "", author = "", cover = "", synopsis = "", series = "", genre = ""
+    @State private var title = ""
+    @State private var author = ""
+    @State private var cover = ""
+    @State private var synopsis = ""
+    @State private var series = ""
+    @State private var genre = ""
     @State private var editionID: UUID?
-    @State private var editionTitle = "", language = "", pages = "", isbn10 = "", isbn13 = "", publisher = ""
+    @State private var editionTitle = ""
+    @State private var language = ""
+    @State private var pages = ""
+    @State private var isbn10 = ""
+    @State private var isbn13 = ""
+    @State private var publisher = ""
     var body: some View {
         BooksScreen("Edit Book Info") {
             BooksField(label: "Title", value: $title); BooksField(label: "Author", value: $author)

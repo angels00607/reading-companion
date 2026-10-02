@@ -36,7 +36,7 @@ extension LocalStore: BooksRepository {
             case .recentlyFinished, .oldest: sql += " ORDER BY \(finished) IS NULL,\(finished)" + (sort == .recentlyFinished ? " DESC" : "") + ",b.id"
             case .rating: sql += " ORDER BY (SELECT MAX(r.rating_whole) FROM readings r WHERE r.owner_id=b.owner_id AND r.book_id=b.id AND r.status='read') DESC,b.id"
             }
-            sql += " LIMIT ? OFFSET ?"; args += [max(1, min(limit, 200)).databaseValue, max(0, offset).databaseValue]
+            sql += " LIMIT ? OFFSET ?"; args += [max(1, limit).databaseValue, max(0, offset).databaseValue]
             return try String.fetchAll(db, sql: sql, arguments: StatementArguments(args)).map { try catalog(UUID(uuidString: $0)!, db: db) }
         }
     }

@@ -117,6 +117,9 @@ public struct Provenance: Codable, Equatable, Sendable {
     public let sourceReference: String?
     public let evidenceFingerprint: String?
     public let userOverridden: Bool
+    public init(origin: MutationOrigin, sourceReference: String?, evidenceFingerprint: String?, userOverridden: Bool) {
+        self.origin = origin; self.sourceReference = sourceReference; self.evidenceFingerprint = evidenceFingerprint; self.userOverridden = userOverridden
+    }
 }
 public struct ProposedChange<Value: Equatable & Sendable>: Equatable, Sendable {
     public let current: Value

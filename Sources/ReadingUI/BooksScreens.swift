@@ -192,7 +192,13 @@ struct AddBookScreen: View {
 
 struct ManualAddScreen: View {
     @EnvironmentObject var model: BooksModel
-    @State private var title = "", author = "", pages = "", genre = "", series = "", isbn = "", cover = ""
+    @State private var title = ""
+    @State private var author = ""
+    @State private var pages = ""
+    @State private var genre = ""
+    @State private var series = ""
+    @State private var isbn = ""
+    @State private var cover = ""
     @State private var candidate: WorkCandidate?
     @State private var edition: EditionCandidate?
     @State private var showAdd = false
@@ -233,7 +239,12 @@ struct MyBooksScreen: View {
     @State private var view = LibraryView.all
     @State private var sort = LibrarySort.recentlyAdded
     @State private var query = ""
-    @State private var status = "All", year = "", genre = "", rating = "", format = "All", series = "All"
+    @State private var status = "All"
+    @State private var year = ""
+    @State private var genre = ""
+    @State private var rating = ""
+    @State private var format = "All"
+    @State private var series = "All"
     @State private var records: [CatalogRecord] = []
     @State private var limit = 50
     var body: some View {

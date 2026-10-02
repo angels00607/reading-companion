@@ -16,9 +16,11 @@ public actor OpenLibraryProvider: BooksCatalogProvider {
         parts.queryItems = query.isEmpty ? nil : query
         guard let url = parts.url else { throw ProviderError.invalidReference }
         if let data = cache[url.absoluteString] { return data }
-        let wait = max(0, 1.1 - Date().timeIntervalSince(lastRequest))
+        let now = Date()
+        let slot = max(now.timeIntervalSince1970, lastRequest.timeIntervalSince1970 + 1.1)
+        let wait = slot - now.timeIntervalSince1970
+        lastRequest = Date(timeIntervalSince1970: slot)
         if wait > 0 { try await Task.sleep(for: .seconds(wait)) }
-        lastRequest = Date()
         var request = URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 20)
         request.setValue("ReadingCompanion/Phase2 (+https://github.com/angels00607/reading-companion)", forHTTPHeaderField: "User-Agent")
         let (data,response) = try await session.data(for: request)

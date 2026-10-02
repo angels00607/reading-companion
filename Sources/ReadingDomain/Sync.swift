@@ -62,6 +62,9 @@ public struct MetadataCandidate: Sendable {
     public let language: String?
     public let pageCount: Int?
     public let provenance: Provenance
+    public init(providerID: String, title: String?, author: String?, language: String?, pageCount: Int?, provenance: Provenance) {
+        self.providerID = providerID; self.title = title; self.author = author; self.language = language; self.pageCount = pageCount; self.provenance = provenance
+    }
     // Journal Format is intentionally absent from external contracts.
 }
 public protocol SummaryAssistant: Sendable {

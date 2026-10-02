@@ -36,11 +36,18 @@ public struct EditionCandidate: Codable, Equatable, Identifiable, Sendable {
     }
     // Binding and format are deliberately absent from every external candidate.
 }
-public protocol BooksCatalogProvider: Sendable {
-    var key: String { get }
+public protocol BooksCatalogProvider: BookMetadataProvider {
     func searchWorks(query: String) async throws -> [WorkCandidate]
     func editions(for work: WorkCandidate) async throws -> [EditionCandidate]
     func refresh(work: WorkCandidate) async throws -> WorkCandidate
+}
+public extension BooksCatalogProvider {
+    func search(query: String, preferredLanguage: String) async throws -> [MetadataCandidate] {
+        try await searchWorks(query: query).map { work in
+            MetadataCandidate(providerID: work.reference, title: work.title, author: work.author, language: nil, pageCount: nil,
+                provenance: Provenance(origin: .provider, sourceReference: work.provider + ":" + work.reference, evidenceFingerprint: nil, userOverridden: false))
+        }
+    }
 }
 public enum LibraryView: String, CaseIterable, Sendable { case all = "All", toRead = "To Read", read = "Read" }
 public enum LibrarySort: String, CaseIterable, Sendable {
