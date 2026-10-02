@@ -23,7 +23,7 @@ public struct BooksHome: View {
                             ScrollView {
                               VStack(alignment: .leading, spacing: 12) {
                                 BooksRow(record: record)
-                                if let reading = record.active { ReadingProgressBar(displayProgress(reading.progress)); NavigationLink("Update Progress") { BookPageScreen(bookID: record.id) }.frame(minHeight: 44) }
+                                if let reading = record.active { ReadingProgressBar(displayProgress(reading.progress)); NavigationLink { BookPageScreen(bookID: record.id) } label: { Text("Update Progress").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) } }
                               }
                             }.frame(width: 270, height: cardHeight, alignment: .top)
                         }
@@ -61,8 +61,8 @@ struct GlobalSearchScreen: View {
     var body: some View {
         BooksScreen("Global Search") {
             BooksField(label: "Search title or author", value: $query)
-            NavigationLink("Manual Add") { ManualAddScreen() }.frame(minHeight: 44).accessibilityIdentifier("books.manual")
-            NavigationLink("My Books") { MyBooksScreen() }.frame(minHeight: 44)
+            NavigationLink { ManualAddScreen() } label: { Text("Manual Add").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }.accessibilityIdentifier("books.manual")
+            NavigationLink { MyBooksScreen() } label: { Text("My Books").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }
             Text("Your library").accessibilityAddTraits(.isHeader)
             ForEach(local) { BooksRow(record: $0) }
             if local.count == localLimit { AppButton("More local results", kind: .secondary) { localLimit += 50; loadLocal() } }
@@ -114,7 +114,7 @@ struct EditionSelectionScreen: View {
                     }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(.vertical, 8)
                 }.accessibilityIdentifier("books.edition." + edition.reference)
             }
-            if !loading { NavigationLink("Add without an edition") { AddBookScreen(work: work, edition: nil) }.frame(minHeight: 44) }
+            if !loading { NavigationLink { AddBookScreen(work: work, edition: nil) } label: { Text("Add without an edition").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) } }
             Text("Up to 200 available edition records are loaded. An absent language or edition is not evidence that it does not exist.").font(DesignTokens.functionalFont(size: 13))
         }.task {
             do { editions = try await model.provider.editions(for: work) } catch { unavailable = true }
@@ -155,7 +155,7 @@ struct AddBookScreen: View {
                 Text("Adding as Already Read explicitly records completion. Unknown dates and progress remain unknown.")
             }
             Text("Format is not inferred or requested when adding a book.").font(DesignTokens.functionalFont(size: 13))
-            if let added { NavigationLink("Open Book") { BookPageScreen(bookID: added) }.frame(minHeight: 44).accessibilityIdentifier("books.openAdded") }
+            if let added { NavigationLink { BookPageScreen(bookID: added) } label: { Text("Open Book").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }.accessibilityIdentifier("books.openAdded") }
             else {
                 AppButton(state == "Already Read" ? "Confirm Already Read" : "Add Book") { add(.review) }.disabled(saving).accessibilityIdentifier("books.add")
                 if !duplicates.isEmpty {

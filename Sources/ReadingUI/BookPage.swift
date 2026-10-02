@@ -45,7 +45,7 @@ struct BookPageScreen: View {
                 if let rating = record.latest?.rating { Text(ratingLabel(rating)) }
                 Text("External Book Synopsis").accessibilityAddTraits(.isHeader)
                 Text(record.synopsis ?? "No summary available")
-                NavigationLink("Reading History") { ReadingHistoryScreen(bookID: bookID) }.frame(minHeight: 44).accessibilityIdentifier("books.history")
+                NavigationLink { ReadingHistoryScreen(bookID: bookID) } label: { Text("Reading History").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }.accessibilityIdentifier("books.history")
                 AppButton("Edit Book Info", kind: .secondary) { action = .info }.accessibilityIdentifier("books.info")
                 if let source = (try? model.repository.providerWorks(bookID: bookID))?.first(where: { $0.provider == model.provider.key }) {
                     AppButton(refreshing ? "Checking metadata…" : "Check external metadata", kind: .tertiary) {

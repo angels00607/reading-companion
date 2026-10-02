@@ -42,8 +42,8 @@ final class BooksCoreAcceptanceTests: XCTestCase {
             if route == "Finish confirmation" { XCTAssertTrue(app.buttons["books.confirmFinish"].waitForExistence(timeout: 10)) }
             for button in app.buttons.allElementsBoundByIndex where button.identifier.hasPrefix("books.") && button.isHittable {
                 XCTAssertFalse(button.label.isEmpty)
-                XCTAssertGreaterThanOrEqual(button.frame.width,44)
-                XCTAssertGreaterThanOrEqual(button.frame.height,44)
+                XCTAssertGreaterThanOrEqual(button.frame.width,44,"\(route): \(button.identifier) [\(button.label)] \(button.frame)")
+                XCTAssertGreaterThanOrEqual(button.frame.height,44,"\(route): \(button.identifier) [\(button.label)] \(button.frame)")
             }
             capture(app,style + "-" + category + "-" + route + "-top")
             app.swipeUp(); capture(app,style + "-" + category + "-" + route + "-lower")
