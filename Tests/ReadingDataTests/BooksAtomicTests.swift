@@ -1,8 +1,23 @@
 import XCTest
 import ReadingData
 import ReadingDomain
+import GRDB
 
 final class BooksAtomicTests: XCTestCase {
+    func testCorrectionsDuringExternalAddHaveUserProvenance() async throws {
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        let s = try LocalStore(path: path, ownerID: UUID())
+        let work = WorkCandidate(provider: "external", reference: "work", title: "Supplied", author: "Author")
+        let id = try s.addWithIntent(work: work, edition: nil, choice: .review, intent: .toRead, manualValues: [.title:"User corrected"])
+        XCTAssertEqual(try s.record(id: id).book.title,"User corrected")
+        let db = try DatabaseQueue(path: path)
+        try await db.read { db in
+            XCTAssertEqual(try String.fetchOne(db, sql: "SELECT source FROM field_provenance WHERE entity_id=? AND field='title'", arguments: [id.uuidString]), "manual")
+            XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT user_overridden FROM field_provenance WHERE entity_id=? AND field='title'", arguments: [id.uuidString]), 1)
+            XCTAssertEqual(try String.fetchOne(db, sql: "SELECT source FROM field_provenance WHERE entity_id=? AND field='author'", arguments: [id.uuidString]), "external")
+        }
+    }
     func testSlightlyDifferentMetadataNeedsReviewWithoutAutomaticMerge() throws {
         let s = try LocalStore(path: ":memory:", ownerID: UUID())
         _ = try s.add(work: WorkCandidate(provider: "one", reference: "one", title: "Emma", author: "Jane Austen"))

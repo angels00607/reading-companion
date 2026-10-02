@@ -162,7 +162,7 @@ extension LocalStore: BooksRepository {
     public func addWithIntent(work: WorkCandidate, edition: EditionCandidate?, choice: DuplicateChoice, intent: LibraryAddition, manualValues: [BookField: String]) throws -> UUID {
         try queue.write { db in
             let id = try addRecord(work: work, edition: edition, choice: choice, db: db)
-            if work.provider == "manual", !manualValues.isEmpty {
+            if !manualValues.isEmpty {
                 try editBook(bookID: id, values: manualValues.mapValues { $0.isEmpty ? nil : $0 }, revision: catalog(id, db: db).revision, db: db)
             }
             let record = try catalog(id, db: db)

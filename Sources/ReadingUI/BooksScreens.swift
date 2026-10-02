@@ -176,7 +176,10 @@ struct AddBookScreen: View {
             let date = try BooksModel.parseDate(state == "Already Read" ? finishDate : startDate)
             let selectedRating: Rating = rating == "No rating" ? .noRating : try .validatedStars(Int(rating)!)
             let intent: LibraryAddition = state == "To Read" ? .toRead : state == "Already Read" ? .alreadyRead(date: date, rating: selectedRating) : .currentlyReading(mode: mode, date: date)
-            let id = try model.repository.addWithIntent(work: candidate, edition: edition, choice: choice, intent: intent, manualValues: extras)
+            var manualValues = extras
+            if title != work.title { manualValues[.title] = title }
+            if author != work.author { manualValues[.author] = author }
+            let id = try model.repository.addWithIntent(work: candidate, edition: edition, choice: choice, intent: intent, manualValues: manualValues)
             added = id; model.error = nil; model.version += 1
         } catch BooksError.duplicateNeedsReview(let ids) { duplicates = ids.compactMap { try? model.repository.record(id: $0) } }
         catch { model.error = "Could not add this book. Existing local data has not changed. \(error.localizedDescription)" }
