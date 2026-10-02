@@ -72,7 +72,8 @@ does not dispatch future Journal/Challenge/XP consumers in Phase 2.
 
 Automated evidence: [CI #110](https://github.com/angels00607/reading-companion/actions/runs/36987677905)
 on application/test commit `0405605b75c63597705ef363e99645da16575995`.
-The final documentation and QA-board commit changes no application/test source.
+Subsequent commits add documentation/QA boards and preserve repository LF line
+endings; no semantic application/test source changes follow the tested commit.
 
 | Check | Result |
 | --- | --- |
