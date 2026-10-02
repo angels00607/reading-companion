@@ -33,6 +33,19 @@ jobs:
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
           xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/BooksCore.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/BooksCoreAcceptanceTests CODE_SIGNING_ALLOWED=NO test
+      - name: Export Books Core evidence before foundation audits
+        if: always()
+        run: |
+          if [ -d work/BooksCore.xcresult ]; then
+            xcrun xcresulttool export attachments --path work/BooksCore.xcresult --output-path work/books-core-screenshots
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase-2-books-visual-qa
+          path: |
+            work/BooksCore.xcresult
+            work/books-core-screenshots
       - name: Default-size foundation acceptance
         if: always()
         run: |
@@ -60,9 +73,6 @@ jobs:
               xcrun xcresulttool export attachments --path "$result" --output-path "work/acceptance-screenshots/$(basename "$result" .xcresult)"
             fi
           done
-          if [ -d work/BooksCore.xcresult ]; then
-            xcrun xcresulttool export attachments --path work/BooksCore.xcresult --output-path work/books-core-screenshots
-          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

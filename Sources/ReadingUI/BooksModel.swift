@@ -18,6 +18,9 @@ public final class BooksModel: ObservableObject {
         catch DomainError.staleRevision { error = "The record changed. Reload and review before applying this change." }
         catch DomainError.invalidProgress { error = "Enter a valid position: pages must be whole numbers within the known total; percentage must be between 0 and 100." }
         catch BooksError.activeReadingExists { error = "This book already has an active reading. Open it to update progress." }
+        catch BooksError.requiredMetadata { error = "Enter a title and author. Optional metadata may stay unknown." }
+        catch BooksError.invalidMetadata { error = "Check the supplied information. Cover references must be a chosen photo or a valid HTTPS URL." }
+        catch DomainError.invalidDate { error = "Use a valid date in YYYY-MM-DD format, or leave it blank for unknown." }
         catch { self.error = "Could not save this change. Existing local data has not changed. \(error.localizedDescription)" }
         return nil
     }

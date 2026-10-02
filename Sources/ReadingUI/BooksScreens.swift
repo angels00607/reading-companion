@@ -168,6 +168,7 @@ struct AddBookScreen: View {
         }
     }
     private func add(_ choice: DuplicateChoice) {
+        guard added == nil && !saving else { return }
         saving = true; defer { saving = false }
         var candidate = work; candidate.title = title; candidate.author = author
         do {

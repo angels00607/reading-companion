@@ -132,6 +132,7 @@ struct UpdateProgressScreen: View {
     @State private var total = ""
     @State private var increment = ""
     @State private var feedback: String?
+    @State private var submitting = false
     var body: some View {
         BooksScreen("Update Progress") {
             AppBottomSheet(title: reading.progress.mode == .page ? "Page progress" : "Percentage progress") {
@@ -156,6 +157,7 @@ struct UpdateProgressScreen: View {
                     }
                     if let feedback { AppToast(feedback) }
                     AppButton("Save Progress") {
+                        guard !submitting else { return }; submitting = true
                         if let result = model.perform({
                             let value: ReadingProgress
                             if reading.progress.mode == .page {
@@ -173,8 +175,8 @@ struct UpdateProgressScreen: View {
                                 saved(observation.value.suggestsFinishConfirmation)
                             case .requiresReview: model.error = "This observation was retained for review. It did not overwrite current progress."; saved(false)
                             }
-                        }
-                    }.accessibilityIdentifier("books.saveProgress")
+                        } else { submitting = false }
+                    }.disabled(submitting).accessibilityIdentifier("books.saveProgress")
                     BooksErrorMessage()
                 }
             }
