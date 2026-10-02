@@ -114,6 +114,18 @@ public struct MetadataReview: Identifiable, Sendable {
     }
 }
 public enum BooksRules {
+    /// Candidate detection only, never authority to merge records automatically.
+    public static func possibleDuplicate(title: String, author: String, existingTitle: String, existingAuthor: String) -> Bool {
+        func words(_ value: String) -> [String] {
+            value.folding(options: [.caseInsensitive,.diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+                .components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }
+        }
+        let authorWords = words(author).sorted(), otherAuthor = words(existingAuthor).sorted()
+        guard !authorWords.isEmpty, authorWords == otherAuthor else { return false }
+        let a = words(title), b = words(existingTitle)
+        guard !a.isEmpty, !b.isEmpty else { return false }
+        return a == b || a.starts(with: b) || b.starts(with: a)
+    }
     public static func validatedText(_ value: String?) throws -> String {
         guard let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw BooksError.requiredMetadata }
         return value.trimmingCharacters(in: .whitespacesAndNewlines)

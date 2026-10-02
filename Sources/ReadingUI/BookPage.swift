@@ -120,7 +120,7 @@ struct StartReadingScreen: View {
                 if model.perform({ try model.repository.start(bookID: record.id, editionID: editionID, mode: mode, date: BooksModel.parseDate(startDate)) }) != nil { dismiss() }
             }.accessibilityIdentifier("books.confirmStart")
             BooksErrorMessage()
-        }.onAppear { editionID = record.editions.first?.id }
+        }.onAppear { editionID = record.editions.first(where: { $0.language == "en" })?.id ?? record.editions.first?.id }
     }
 }
 

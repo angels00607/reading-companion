@@ -3,6 +3,22 @@ import ReadingData
 import ReadingDomain
 
 final class BooksAtomicTests: XCTestCase {
+    func testSlightlyDifferentMetadataNeedsReviewWithoutAutomaticMerge() throws {
+        let s = try LocalStore(path: ":memory:", ownerID: UUID())
+        _ = try s.add(work: WorkCandidate(provider: "one", reference: "one", title: "Emma", author: "Jane Austen"))
+        XCTAssertThrowsError(try s.add(work: WorkCandidate(provider: "two", reference: "two", title: "Emma: Illustrated Edition", author: "Austen, Jane")))
+        XCTAssertEqual(try s.bookCount(),1)
+    }
+    func testCombinedFiltersAndUnknownPagesLast() throws {
+        let s = try LocalStore(path: ":memory:", ownerID: UUID())
+        let work = WorkCandidate(provider: "manual", reference: "one", title: "A known", author: "Author")
+        let id = try s.addWithIntent(work: work, edition: EditionCandidate(provider: "manual", reference: "edition", pageCount: 300), choice: .review, intent: .alreadyRead(date: try ReadingDate(year: 2026, month: 10, day: 2), rating: .stars(5)), manualValues: [.genreSuggestion:"Fantasy",.series:"A series"])
+        _ = try s.add(work: WorkCandidate(provider: "manual", reference: "two", title: "Z unknown", author: "Author"))
+        XCTAssertEqual(try s.library(sort: .pagesDescending).last?.book.title,"Z unknown")
+        var f = LibraryFilters(); f.year = 2026; f.rating = 5; f.genre = "Fantasy"; f.inSeries = true
+        XCTAssertEqual(try s.library(view: .read, filters: f).map(\.id),[id])
+        f.genre = "Other"; XCTAssertTrue(try s.library(view: .read, filters: f).isEmpty)
+    }
     func testAddIntentRollbackAndManualGenre() throws {
         let s = try LocalStore(path: ":memory:", ownerID: UUID())
         let work = WorkCandidate(provider: "manual", reference: "one", title: "Manual", author: "Author")

@@ -88,7 +88,9 @@ extension LocalStore: BooksRepository {
         if let pages = edition?.pageCount, pages <= 0 { throw DomainError.invalidProgress }
             let exact = try String.fetchAll(db, sql: "SELECT DISTINCT book_id FROM provider_links WHERE owner_id=? AND provider=? AND reference=?", arguments: [ownerID.uuidString,work.provider,work.reference])
             let isbn = try String.fetchAll(db, sql: "SELECT DISTINCT book_id FROM editions WHERE owner_id=? AND ((isbn13 IS NOT NULL AND isbn13=?) OR (isbn10 IS NOT NULL AND isbn10=?))", arguments: [ownerID.uuidString,edition?.isbn13,edition?.isbn10])
-            let similar = try String.fetchAll(db, sql: "SELECT id FROM books WHERE owner_id=? AND title=? COLLATE NOCASE AND author=? COLLATE NOCASE AND deleted_at IS NULL", arguments: [ownerID.uuidString,title,author])
+            let similar = try Row.fetchAll(db, sql: "SELECT id,title,author FROM books WHERE owner_id=? AND deleted_at IS NULL", arguments: [ownerID.uuidString]).filter { row in
+                BooksRules.possibleDuplicate(title: title, author: author, existingTitle: row["title"], existingAuthor: row["author"])
+            }.map { $0["id"] as String }
             let candidates = Array(Set(exact + isbn + similar)).compactMap(UUID.init(uuidString:))
             let id: UUID; let isNew: Bool
             switch choice {
@@ -121,7 +123,8 @@ extension LocalStore: BooksRepository {
                     try db.execute(sql: "INSERT INTO provider_links(owner_id,book_id,edition_id,provider,reference) VALUES(?,?,?,?,?)", arguments: [ownerID.uuidString,id.uuidString,eid.uuidString,edition.provider,edition.reference])
                 }
             }
-            try command(id: id, kind: "catalog.snapshot", revision: 0, payload: catalog(id, db: db), db: db)
+            let snapshot = try catalog(id, db: db)
+            try command(id: id, kind: "catalog.snapshot", revision: snapshot.revision, payload: snapshot, db: db)
             return id
     }
     public func start(bookID: UUID, editionID: UUID?, mode: ProgressMode = .page, date: ReadingDate?) throws -> UUID {

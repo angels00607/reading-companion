@@ -40,6 +40,11 @@ final class BooksCoreAcceptanceTests: XCTestCase {
             if route == "Search Results" { setField(app,"Search title or author","fixture"); XCTAssertTrue(app.buttons["books.external.work-1"].waitForExistence(timeout: 10)) }
             if route == "Edition Selection" { XCTAssertTrue(app.buttons["books.edition.edition-en"].waitForExistence(timeout: 10)) }
             if route == "Finish confirmation" { XCTAssertTrue(app.buttons["books.confirmFinish"].waitForExistence(timeout: 10)) }
+            for button in app.buttons.allElementsBoundByIndex where button.identifier.hasPrefix("books.") && button.isHittable {
+                XCTAssertFalse(button.label.isEmpty)
+                XCTAssertGreaterThanOrEqual(button.frame.width,44)
+                XCTAssertGreaterThanOrEqual(button.frame.height,44)
+            }
             capture(app,style + "-" + category + "-" + route + "-top")
             app.swipeUp(); capture(app,style + "-" + category + "-" + route + "-lower")
             app.terminate()

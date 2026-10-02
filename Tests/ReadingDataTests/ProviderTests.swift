@@ -8,6 +8,7 @@ private final class CatalogFixtureProtocol: URLProtocol, @unchecked Sendable {
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
         let url = request.url!
+        if url.query?.contains("offline") == true { client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet)); return }
         let json: String
         if url.path == "/search.json" {
             json = #"{"docs":[{"key":"/works/OL1W","title":"Fixture","author_name":["Author"],"cover_i":123}]}"#
@@ -21,6 +22,17 @@ private final class CatalogFixtureProtocol: URLProtocol, @unchecked Sendable {
 }
 
 final class ProviderTests: XCTestCase {
+    func testProviderFailureLeavesOfflineLibraryUsable() async throws {
+        let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [CatalogFixtureProtocol.self]
+        let provider = OpenLibraryProvider(session: URLSession(configuration: config))
+        let store = try LocalStore(path: ":memory:", ownerID: UUID())
+        let id = try store.add(work: WorkCandidate(provider: "manual", reference: "offline", title: "Offline book", author: "Author"))
+        do { _ = try await provider.searchWorks(query: "offline"); XCTFail("Expected provider failure") } catch {}
+        XCTAssertEqual(try store.library(query: "Offline").map(\.id),[id])
+        let rid = try store.start(bookID: id, editionID: nil, date: nil)
+        _ = try store.update(readingID: rid, value: .pages(current: 183), revision: 0)
+        XCTAssertEqual(try store.record(id: id).active?.progress.currentPage,183)
+    }
     func testRealAdapterWorkGroupingEditionLanguageAndFormatDiscard() async throws {
         let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [CatalogFixtureProtocol.self]
         let provider = OpenLibraryProvider(session: URLSession(configuration: config))
