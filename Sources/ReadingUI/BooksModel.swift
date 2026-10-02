@@ -10,6 +10,7 @@ public final class BooksModel: ObservableObject {
     @Published public var version = 0
     @Published public var error: String?
     @Published public var feedback: String?
+    @Published public var feedbackReadingID: UUID?
     public init(repository: any BooksRepository, provider: any BooksCatalogProvider, assetDirectory: URL) {
         self.repository = repository; self.provider = provider; self.assetDirectory = assetDirectory
     }
@@ -73,12 +74,27 @@ struct BooksScreen<Content: View>: View {
 struct BooksField: View {
     let label: String
     @Binding var value: String
+    @FocusState private var focused: Bool
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label).font(DesignTokens.functionalFont(size: 14, weight: .medium))
             TextField(label, text: $value, axis: .vertical).textFieldStyle(.roundedBorder)
                 .font(DesignTokens.functionalFont(size: 16)).frame(minHeight: 44)
+                .focused($focused)
                 .accessibilityLabel(label).accessibilityIdentifier("books.field." + label)
+                #if os(iOS)
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        if focused {
+                            Spacer()
+                            Button("Done") { focused = false }
+                                .font(DesignTokens.functionalFont(size: 16))
+                                .frame(minWidth: 44, minHeight: 44)
+                                .accessibilityIdentifier("books.keyboardDone")
+                        }
+                    }
+                }
+                #endif
         }
     }
 }

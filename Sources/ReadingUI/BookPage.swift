@@ -16,7 +16,7 @@ struct BookPageScreen: View {
     var body: some View {
         BooksScreen("Book Page") {
             if let record {
-                if let feedback = model.feedback { AppToast(feedback) }
+                if let feedback = model.feedback, model.feedbackReadingID == record.active?.id { AppToast(feedback) }
                 BookCover(title: record.book.title, width: 108, url: model.coverURL(record.coverReference ?? record.editions.first?.coverReference))
                 Text(record.book.title).font(DesignTokens.functionalFont(size: 28, relativeTo: .largeTitle, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
                 Text(record.book.author).fixedSize(horizontal: false, vertical: true)
@@ -171,7 +171,7 @@ struct UpdateProgressScreen: View {
                         }) {
                             switch result {
                             case .applied(let observation):
-                                if let delta = observation.genuinePageDelta { feedback = (delta >= 0 ? "+" : "") + "\(delta) pages"; model.feedback = feedback }
+                                if let delta = observation.genuinePageDelta { feedback = (delta >= 0 ? "+" : "") + "\(delta) pages"; model.feedback = feedback; model.feedbackReadingID = reading.id }
                                 saved(observation.value.suggestsFinishConfirmation)
                             case .requiresReview: model.error = "This observation was retained for review. It did not overwrite current progress."; saved(false)
                             }
