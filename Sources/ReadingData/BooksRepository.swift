@@ -17,6 +17,7 @@ extension LocalStore: BooksRepository {
             if view == .toRead { sql += " AND m.wants_to_read=1 AND NOT EXISTS(SELECT 1 FROM readings r WHERE r.owner_id=b.owner_id AND r.book_id=b.id AND r.deleted_at IS NULL AND r.status='currently_reading')" }
             if view == .read { sql += " AND EXISTS(SELECT 1 FROM readings r WHERE r.owner_id=b.owner_id AND r.book_id=b.id AND r.deleted_at IS NULL AND r.status='read')" }
             var readingClauses = [String]()
+            if view == .read { readingClauses.append("r.status='read'") }
             if let status = filters.status { readingClauses.append("r.status=?"); args.append(status.rawValue.databaseValue) }
             if let year = filters.year { readingClauses.append("substr(r.finish_date,1,4)=?"); args.append(String(year).databaseValue) }
             if let rating = filters.rating { readingClauses.append("r.rating_whole=?"); args.append(rating.databaseValue) }

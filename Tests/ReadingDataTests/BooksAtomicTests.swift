@@ -18,6 +18,10 @@ final class BooksAtomicTests: XCTestCase {
         var f = LibraryFilters(); f.year = 2026; f.rating = 5; f.genre = "Fantasy"; f.inSeries = true
         XCTAssertEqual(try s.library(view: .read, filters: f).map(\.id),[id])
         f.genre = "Other"; XCTAssertTrue(try s.library(view: .read, filters: f).isEmpty)
+        let reread = try s.start(bookID: id, editionID: nil, date: nil)
+        try s.editReading(readingID: reread, start: nil, finish: nil, rating: .unknown, genre: "Other", format: nil, revision: 0)
+        f.year = nil; f.rating = nil
+        XCTAssertTrue(try s.library(view: .read, filters: f).isEmpty, "Read filters must match a completed reading, not an active reread")
     }
     func testAddIntentRollbackAndManualGenre() throws {
         let s = try LocalStore(path: ":memory:", ownerID: UUID())
