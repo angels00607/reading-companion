@@ -82,5 +82,5 @@ statistics, synchronization workflows, rewards or any other Phase 2+ behavior.
 - Visual QA is performed from the five tab/scenario screenshot artifacts produced by
   CI. Dynamic Type audit findings must be reported separately from functional checks.
 
-Phase 1 is not approved or merged until its dedicated PR receives human review.
-Do not begin Phase 2.
+Phase 1 received final human Visual QA approval and was merged through PR #2.
+Phase 2 has not begun.
