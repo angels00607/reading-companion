@@ -58,7 +58,7 @@ Approximate use: 75% neutrals+blue / 20% plum / 5% semantic exceptions.
   Token              Value
   ------------------ -----------------------
   background         `#030B19`
-  surface            approx `#0D1B2A`
+  surface            `#151728`
   surface-raised     attenuated Berry Peel
   text-primary       `#F5F8FA`
   text-secondary     `#AFC3CF`
@@ -72,9 +72,8 @@ Approximate use: 75% neutrals+blue / 20% plum / 5% semantic exceptions.
 Dark mode is Midnight Blue, not black. Do not make every card Berry
 Peel.
 
-The authoritative Dark `surface` remains `#0D1B2A`. Candidate `#151728`
-is presentation-only and pending human A/B approval; it must not be used as
-the production semantic token until that review is complete.
+The authoritative Dark `surface` is `#151728`, approved in the final Phase 1
+human A/B review. Dark background remains Midnight Jam `#030B19`.
 
 ## Typography
 

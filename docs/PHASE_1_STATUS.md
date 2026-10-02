@@ -42,15 +42,28 @@ statistics, synchronization workflows, rewards or any other Phase 2+ behavior.
   presentation. At accessibility sizes the five icons remain visible while visual
   labels are hidden; their accessible names and selected traits remain available.
 - Dark soft-blue tokens move toward periwinkle (`surface-blue #242B49`, primary
-  `#A9BCE3`). The authoritative Dark background and surface remain `#030B19` and
-  `#0D1B2A`. Candidate surface `#151728` is available only in the visual-QA A/B
-  fixture and remains pending human approval.
+  `#A9BCE3`). Final human A/B review approved `#151728` as the authoritative Dark
+  surface; Dark background remains `#030B19`.
 - Static contrast verification against the updated Light Mode background passes:
   text-primary 17.33:1, text-secondary 5.56:1, primary 9.99:1, secondary 7.88:1
   and error 5.76:1.
 - Updated palette checks pass, including 9.47:1 for Light primary on surface-blue,
   7.60:1 for Dark secondary text on surface-blue, and 9.73:1 for Dark secondary
-  text on experimental surface `#151728`.
+  text on surface `#151728`.
+- All text/accent tokens actually used over the final Dark surface `#151728` pass
+  their applicable text threshold: text-primary 16.61:1, text-secondary 9.73:1,
+  primary 9.27:1, secondary 5.04:1 and error 10.44:1. Decorative border and
+  fill tokens are not used to carry text meaning on this surface.
+- Final human Visual QA is approved. CI #90 reported one additional contrast audit
+  detection in the Dark Accessibility XXXL landscape scenario: the existing
+  AttentionRow title was partially occluded by the tab bar. Its semantic text/background
+  contrast is 18.47:1 (`#F5F8FA` on `#030B19`; 16.31:1 over the former `#0D1B2A`
+  tab surface) against a 4.5:1 threshold. This is a historical landscape-layout
+  limitation whose detection changed, not a new semantic-color regression.
+- Known accessibility findings remain unsuppressed: Dynamic Type adaptability,
+  potential clipping, contrast audit detections and undersized interaction targets
+  continue to be reported by the foundation audit. Landscape/orientation policy
+  remains deferred; Phase 1 does not introduce a new orientation design.
 - Local `swift build`: passed.
 - Local SQLite migration/invariant suite: 16 tests passed.
 - Initial CI run 36899019449 confirmed Swift/UI/domain/data tests, iOS build,

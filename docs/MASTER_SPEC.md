@@ -552,7 +552,7 @@ exception colors.
 ### Dark tokens
 
 -   background `#030B19`
--   surface approx `#0D1B2A`
+-   surface `#151728`
 -   surface-raised attenuated Berry Peel
 -   text-primary `#F5F8FA`
 -   text-secondary `#AFC3CF`
@@ -563,9 +563,8 @@ exception colors.
 -   secondary `#BA71A2`
 -   secondary-strong `#7E2A53`
 
-The optional Dark surface `#151728` is an experimental Phase 1 visual-QA
-candidate only. The authoritative Dark surface remains `#0D1B2A` pending human
-A/B approval.
+Dark surface `#151728` was selected in the final Phase 1 human A/B review and is
+authoritative. Dark background remains `#030B19`.
 
 ### Typography
 
