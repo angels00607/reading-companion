@@ -210,7 +210,7 @@ struct ReadingHistoryScreen: View {
         }.sheet(item: $selected) { reading in NavigationStack { EditReadingScreen(reading: reading) } }
     }
 }
-extension ReadingInstance: @retroactive Identifiable {}
+extension ReadingInstance: Identifiable {}
 
 struct EditReadingScreen: View {
     @EnvironmentObject var model: BooksModel

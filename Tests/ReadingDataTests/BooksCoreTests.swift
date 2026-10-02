@@ -134,7 +134,7 @@ final class BooksCoreTests: XCTestCase {
         XCTAssertTrue(try reopened.record(id: id).readings.isEmpty)
         let pending = try await reopened.pending(ownerID: owner); XCTAssertEqual(pending.count, 2)
         let db = try DatabaseQueue(path: path.path)
-        try db.read { db in
+        try await db.read { db in
             XCTAssertEqual(try String.fetchOne(db, sql: "SELECT source FROM field_provenance WHERE field='title'"), "fixture")
             XCTAssertEqual(try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM journal_components"), 0)
             try db.checkForeignKeys()
