@@ -30,7 +30,7 @@ public struct JournalHome: View {
                 .accessibilityIdentifier("journal.startSession")
             NavigationLink("Review journal corrections") { JournalCorrections() }
                 .frame(minHeight: 44).accessibilityIdentifier("journal.corrections")
-        }.onAppear(perform: reload)
+        }.padding(.bottom, 64).onAppear(perform: reload)
             .journalSessionPresentation(isPresented: $session) { JournalSession() }
     }
     private func label(_ state: JournalComponentStatus) -> String { state == .ready ? "Ready" : state == .copied ? "Copied" : "Pending" }

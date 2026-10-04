@@ -16,7 +16,7 @@ final class JournalAcceptanceTests: XCTestCase {
                 if ready.exists { ready.tap(); capture(app, "Light-Book-Review-Ready"); app.navigationBars.buttons.firstMatch.tap() }
                 let pending = app.buttons.containing(.staticText, identifier: "A Pending Review").firstMatch
                 if pending.exists { pending.tap(); capture(app, "Light-Book-Review-incomplete"); app.swipeUp(); capture(app, "Light-Favorite-Quotes"); app.navigationBars.buttons.firstMatch.tap() }
-                let corrections = app.staticTexts["Review journal corrections"]
+                let corrections = app.buttons["journal.corrections"]
                 for _ in 0..<6 where !corrections.isHittable { app.swipeUp() }
                 XCTAssertTrue(corrections.isHittable); corrections.tap()
                 XCTAssertTrue(app.staticTexts["Summary"].waitForExistence(timeout: 5)); capture(app, "Light-Journal-Correction")
