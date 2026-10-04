@@ -32,6 +32,7 @@ final class BooksCoreAcceptanceTests: XCTestCase {
     @MainActor func testCompactAccessibilityVisualQA() throws { try visualQA(style: "Light", category: "UICTContentSizeCategoryAccessibilityXXXL") }
     @MainActor private func visualQA(style: String, category: String) throws {
         let routes = ["Global Search","Search Results","Edition Selection","Manual Add","My Books","To Read","Currently Reading","Update Progress Page","Update Progress Percentage","Finish confirmation","DNF","Reading History","Edit Book Info"]
+        let correctionEvidence = Set(["Search Results","Edition Selection","Manual Add","My Books","To Read","Reading History","Edit Book Info"])
         for route in routes {
             let app = XCUIApplication()
             app.launchArguments = ["-phase2-fixture","-phase2-screen",route,"-phase0-appearance",style,"-UIPreferredContentSizeCategoryName",category]
@@ -45,8 +46,10 @@ final class BooksCoreAcceptanceTests: XCTestCase {
                 XCTAssertGreaterThanOrEqual(button.frame.width,44,"\(route): \(button.identifier) [\(button.label)] \(button.frame)")
                 XCTAssertGreaterThanOrEqual(button.frame.height,44,"\(route): \(button.identifier) [\(button.label)] \(button.frame)")
             }
-            capture(app,style + "-" + category + "-" + route + "-top")
-            app.swipeUp(); capture(app,style + "-" + category + "-" + route + "-lower")
+            if correctionEvidence.contains(route) {
+                capture(app,style + "-" + category + "-" + route + "-top")
+                app.swipeUp(); capture(app,style + "-" + category + "-" + route + "-lower")
+            }
             app.terminate()
         }
     }

@@ -61,18 +61,22 @@ struct GlobalSearchScreen: View {
     var body: some View {
         BooksScreen("Global Search") {
             BooksField(label: "Search title or author", value: $query)
-            NavigationLink { ManualAddScreen() } label: { Text("Manual Add").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }.accessibilityIdentifier("books.manual")
-            NavigationLink { MyBooksScreen() } label: { Text("My Books").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }
-            Text("Your library").accessibilityAddTraits(.isHeader)
+            NavigationLink { MyBooksScreen() } label: {
+                BooksNavigationLabel("My Books", symbol: "books.vertical", detail: "Browse your saved books")
+            }.buttonStyle(.plain)
+            NavigationLink { ManualAddScreen() } label: {
+                BooksNavigationLabel("Add a book manually", symbol: "plus", detail: "When search does not find the right book", emphasized: false)
+            }.buttonStyle(.plain).accessibilityIdentifier("books.manual")
+            BooksSectionHeader("Your library", detail: "Matches already saved on this device")
             ForEach(local) { BooksRow(record: $0) }
             if local.count == localLimit { AppButton("More local results", kind: .secondary) { localLimit += 50; loadLocal() } }
             if !query.isEmpty && local.isEmpty { Text("No local matches") }
-            Text("External catalogue").accessibilityAddTraits(.isHeader)
+            BooksSectionHeader("Book catalogue", detail: "More results to add to your library")
             if loading { SkeletonRow() }
-            if unavailable { OfflineBanner(); Text("External search is unavailable. Your library and Manual Add remain usable.") }
+            if unavailable { OfflineBanner(); Text("Catalogue search is unavailable. Your library and manual entry remain usable.") }
             ForEach(external) { work in
                 NavigationLink { EditionSelectionScreen(work: work) } label: {
-                    BookRow(book: PreviewBook(id: work.id, title: work.title ?? "Title unknown", author: work.author ?? "Author unknown", detail: "External metadata candidate · " + work.provider, coverURL: model.coverURL(work.coverReference)))
+                    BookRow(book: PreviewBook(id: work.id, title: work.title ?? "Title unknown", author: work.author ?? "Author unknown", detail: "Catalogue result", coverURL: model.coverURL(work.coverReference)))
                 }.buttonStyle(.plain).accessibilityIdentifier("books.external." + work.reference)
             }
             BooksErrorMessage()
@@ -93,6 +97,7 @@ struct GlobalSearchScreen: View {
 
 struct EditionSelectionScreen: View {
     @EnvironmentObject var model: BooksModel
+    @Environment(\.colorScheme) private var scheme
     let work: WorkCandidate
     @State private var editions: [EditionCandidate] = []
     @State private var loading = true
@@ -102,17 +107,11 @@ struct EditionSelectionScreen: View {
             Text(work.title ?? "Title unknown").font(DesignTokens.functionalFont(size: 22, relativeTo: .title2, weight: .semiBold))
             Text("English editions appear first. Languages are shown only from actual catalogue records.")
             if loading { SkeletonRow() }
-            if unavailable { StatePresentation(kind: .offline, title: "Editions unavailable", message: "Add without edition metadata or use Manual Add.") }
+            if unavailable { StatePresentation(kind: .offline, title: "Editions unavailable", message: "Add without edition details or use Manual Add.") }
             ForEach(editions) { edition in
                 NavigationLink { AddBookScreen(work: work, edition: edition) } label: {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(edition.title ?? work.title ?? "Title unknown")
-                        Text(edition.language ?? "Language unknown")
-                        Text(edition.pageCount.map { "\($0) pages" } ?? "Pages unknown")
-                        if let isbn = edition.isbn13 ?? edition.isbn10 { Text("ISBN " + isbn) }
-                        if let publisher = edition.publisher { Text(publisher) }
-                    }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(.vertical, 8)
-                }.accessibilityIdentifier("books.edition." + edition.reference)
+                    EditionChoiceLabel(edition: edition, fallbackTitle: work.title ?? "Title unknown")
+                }.buttonStyle(.plain).accessibilityIdentifier("books.edition." + edition.reference)
             }
             if !loading { NavigationLink { AddBookScreen(work: work, edition: nil) } label: { Text("Add without an edition").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) } }
             Text("Up to 200 available edition records are loaded. An absent language or edition is not evidence that it does not exist.").font(DesignTokens.functionalFont(size: 13))
@@ -200,13 +199,18 @@ struct ManualAddScreen: View {
     @State private var showAdd = false
     var body: some View {
         BooksScreen("Manual Add") {
-            BooksField(label: "Title", value: $title); BooksField(label: "Author", value: $author)
-            DisclosureGroup("Optional book information") {
-                VStack(spacing: 12) {
+            BooksFormSection("Required information") {
+                BooksField(label: "Title", value: $title)
+                BooksField(label: "Author", value: $author)
+            }
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 12) {
                     BooksField(label: "Total pages", value: $pages); BooksField(label: "Primary Genre", value: $genre)
                     BooksField(label: "Series name", value: $series); BooksField(label: "ISBN", value: $isbn)
                     CoverEditor(reference: $cover)
                 }.padding(.vertical, 12)
+            } label: {
+                BooksDisclosureLabel("Optional book information", detail: "Edition, genre, series and cover")
             }.frame(minHeight: 44)
             AppButton("Continue") {
                 _ = model.perform {
@@ -248,7 +252,7 @@ struct MyBooksScreen: View {
         BooksScreen("My Books") {
             AppSegmentedControl(options: LibraryView.allCases.map { ($0,$0.rawValue) }, selection: $view)
             BooksField(label: "Search your books", value: $query)
-            DisclosureGroup("Sort and filters") {
+            DisclosureGroup {
                 Picker("Sort", selection: $sort) { ForEach(allowedSorts, id: \.self) { Text($0.rawValue).tag($0) } }.frame(minHeight: 44)
                 if view == .all { Picker("Reading status", selection: $status) { ForEach(["All","Currently Reading","Read","DNF"], id: \.self) { Text($0).tag($0) } }.frame(minHeight: 44) }
                 if view == .read {
@@ -256,6 +260,8 @@ struct MyBooksScreen: View {
                     Picker("Format", selection: $format) { Text("All").tag("All"); ForEach(JournalFormat.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0.rawValue) } }.frame(minHeight: 44)
                     Picker("Series", selection: $series) { ForEach(["All","Series","Standalone"], id: \.self) { Text($0).tag($0) } }.frame(minHeight: 44)
                 }
+            } label: {
+                BooksDisclosureLabel("Sort and filters", symbol: "line.3.horizontal.decrease.circle")
             }.frame(minHeight: 44)
             ForEach(records) { BooksRow(record: $0) }
             if records.isEmpty { StatePresentation(kind: .empty, title: "No books here yet", message: "Search or manually add a book. Unknown information can stay unknown.") }
@@ -278,6 +284,102 @@ struct MyBooksScreen: View {
         if view == .all { f.status = status == "Currently Reading" ? .currentlyReading : status == "Read" ? .read : status == "DNF" ? .dnf : nil }
         if view == .read { f.year = Int(year); f.rating = Int(rating); f.genre = genre.isEmpty ? nil : genre; f.format = JournalFormat(rawValue: format); f.inSeries = series == "All" ? nil : series == "Series" }
         records = (try? model.repository.library(query: query, view: view, sort: sort, filters: f, limit: limit, offset: 0)) ?? []
+    }
+}
+
+private struct BooksSectionHeader: View {
+    @Environment(\.colorScheme) private var scheme
+    let title: String
+    let detail: String?
+    init(_ title: String, detail: String? = nil) { self.title = title; self.detail = detail }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title).font(DesignTokens.functionalFont(size: 19, relativeTo: .headline, weight: .semiBold))
+                .accessibilityAddTraits(.isHeader)
+            if let detail { Text(detail).font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
+        }.padding(.top, DesignTokens.Spacing.small)
+    }
+}
+
+private struct BooksNavigationLabel: View {
+    @Environment(\.colorScheme) private var scheme
+    let title: String; let symbol: String; let detail: String; let emphasized: Bool
+    init(_ title: String, symbol: String, detail: String, emphasized: Bool = true) {
+        self.title = title; self.symbol = symbol; self.detail = detail; self.emphasized = emphasized
+    }
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol).frame(width: 24).foregroundStyle(DesignTokens.primary(scheme)).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(DesignTokens.functionalFont(size: 16, relativeTo: .body, weight: .semiBold))
+                Text(detail).font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme))
+            }.fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right").foregroundStyle(DesignTokens.secondaryText(scheme)).accessibilityHidden(true)
+        }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(12)
+            .background(emphasized ? DesignTokens.blueSurface(scheme) : DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.buttonRadius))
+            .overlay(RoundedRectangle(cornerRadius: DesignTokens.buttonRadius).stroke(DesignTokens.border(scheme)))
+    }
+}
+
+struct BooksDisclosureLabel: View {
+    @Environment(\.colorScheme) private var scheme
+    let title: String; let symbol: String; let detail: String?
+    init(_ title: String, symbol: String = "info.circle", detail: String? = nil) { self.title = title; self.symbol = symbol; self.detail = detail }
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: symbol).foregroundStyle(DesignTokens.primary(scheme)).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(DesignTokens.functionalFont(size: 16, relativeTo: .body, weight: .semiBold))
+                if let detail { Text(detail).font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
+            }.fixedSize(horizontal: false, vertical: true)
+        }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(.vertical, 8)
+    }
+}
+
+struct BooksFormSection<Content: View>: View {
+    @Environment(\.colorScheme) private var scheme
+    let title: String; @ViewBuilder let content: Content
+    init(_ title: String, @ViewBuilder content: () -> Content) { self.title = title; self.content = content() }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold)).accessibilityAddTraits(.isHeader)
+            content
+        }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
+            .background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
+            .overlay(RoundedRectangle(cornerRadius: DesignTokens.cardRadius).stroke(DesignTokens.border(scheme)))
+    }
+}
+
+private struct EditionChoiceLabel: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
+    let edition: EditionCandidate; let fallbackTitle: String
+    private var metadata: [String] {
+        [edition.language.map(languageName) ?? "Language unknown", edition.pageCount.map { "\($0) pages" } ?? "Pages unknown", edition.publisher].compactMap { $0 }
+    }
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(edition.title ?? fallbackTitle).font(DesignTokens.functionalFont(size: 17, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
+                if typeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 4) { ForEach(metadata, id: \.self) { Text($0) } }
+                } else {
+                    Text(metadata.joined(separator: " · ")).fixedSize(horizontal: false, vertical: true)
+                }
+                if let isbn = edition.isbn13 ?? edition.isbn10 {
+                    Text("ISBN " + isbn).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 4)
+            Image(systemName: "chevron.right").foregroundStyle(DesignTokens.secondaryText(scheme)).accessibilityHidden(true)
+        }.font(DesignTokens.functionalFont(size: 14, relativeTo: .subheadline)).foregroundStyle(DesignTokens.text(scheme))
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(16)
+            .background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
+            .overlay(RoundedRectangle(cornerRadius: DesignTokens.cardRadius).stroke(DesignTokens.border(scheme)))
+    }
+    private func languageName(_ code: String) -> String {
+        switch code.lowercased() { case "en", "eng": "English"; case "fr", "fre", "fra": "French"; default: code }
     }
 }
 

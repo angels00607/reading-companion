@@ -28,7 +28,7 @@ struct BookPageScreen: View {
                     AppButton("Finish Book", kind: .secondary) { confirmFinish = true }.accessibilityIdentifier("books.finish")
                     AppButton("Mark DNF", kind: .tertiary) { _ = model.perform { try model.repository.markDNF(readingID: reading.id, revision: reading.revision) }; reload() }
                     ForEach(reading.progressObservations.filter(\.requiresReview), id: \.id) { observation in
-                        DataChangeReview(field: "Progress conflict", current: displayProgress(reading.progress).label, proposed: displayProgress(observation.value).label, source: "Retained observation", accept: {
+                        DataChangeReview(field: "Progress conflict", current: displayProgress(reading.progress).label, proposed: displayProgress(observation.value).label, source: "Saved progress update", accept: {
                             _ = model.perform { try model.repository.resolveProgress(readingID: reading.id, observationID: observation.id, apply: true, revision: reading.revision) }; reload()
                         }, keep: {
                             _ = model.perform { try model.repository.resolveProgress(readingID: reading.id, observationID: observation.id, apply: false, revision: reading.revision) }; reload()
@@ -43,16 +43,16 @@ struct BookPageScreen: View {
                     AppButton(record.completedCount > 0 ? "Start Reread" : "Start Reading") { action = .start }.accessibilityIdentifier("books.start")
                 }
                 if let rating = record.latest?.rating { Text(ratingLabel(rating)) }
-                Text("External Book Synopsis").accessibilityAddTraits(.isHeader)
+                Text("Synopsis").accessibilityAddTraits(.isHeader)
                 Text(record.synopsis ?? "No summary available")
                 NavigationLink { ReadingHistoryScreen(bookID: bookID) } label: { Text("Reading History").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) }.accessibilityIdentifier("books.history")
                 AppButton("Edit Book Info", kind: .secondary) { action = .info }.accessibilityIdentifier("books.info")
                 if let source = (try? model.repository.providerWorks(bookID: bookID))?.first(where: { $0.provider == model.provider.key }) {
-                    AppButton(refreshing ? "Checking metadata…" : "Check external metadata", kind: .tertiary) {
+                    AppButton(refreshing ? "Checking for updates…" : "Check for book updates", kind: .tertiary) {
                         refreshing = true
                         Task {
                             do { let fresh = try await model.provider.refresh(work: source); _ = model.perform { try model.repository.reviewProvider(bookID: bookID, work: fresh) }; reload() }
-                            catch { model.error = "External metadata unavailable. Your local data has not changed." }
+                            catch { model.error = "Book information is unavailable. Your saved information has not changed." }
                             refreshing = false
                         }
                     }.disabled(refreshing)
@@ -173,7 +173,7 @@ struct UpdateProgressScreen: View {
                             case .applied(let observation):
                                 if let delta = observation.genuinePageDelta { feedback = (delta >= 0 ? "+" : "") + "\(delta) pages"; model.feedback = feedback; model.feedbackReadingID = reading.id }
                                 saved(observation.value.suggestsFinishConfirmation)
-                            case .requiresReview: model.error = "This observation was retained for review. It did not overwrite current progress."; saved(false)
+                            case .requiresReview: model.error = "This progress update was saved for review. It did not overwrite current progress."; saved(false)
                             }
                         } else { submitting = false }
                     }.disabled(submitting).accessibilityIdentifier("books.saveProgress")
@@ -189,22 +189,36 @@ struct UpdateProgressScreen: View {
 
 struct ReadingHistoryScreen: View {
     @EnvironmentObject var model: BooksModel
+    @Environment(\.colorScheme) private var scheme
     let bookID: UUID
     @State private var selected: ReadingInstance?
     var body: some View {
         BooksScreen("Reading History") {
             if let record = try? model.repository.record(id: bookID) {
-                ForEach(record.readings, id: \.id) { reading in
-                    VStack(alignment: .leading, spacing: 8) {
-                        StatusChip(reading.status == .read ? "Read" : reading.status == .dnf ? "DNF" : "Currently Reading", symbol: "book")
-                        Text("Start: " + (reading.startDate?.isoString ?? "Unknown")); Text("Finish: " + (reading.finishDate?.isoString ?? "Unknown"))
-                        ReadingProgressBar(displayProgress(reading.progress)); Text(ratingLabel(reading.rating))
-                        Text("Primary Genre: " + (reading.primaryGenre ?? "Unknown"))
-                        AppButton("Edit this reading", kind: .secondary) { selected = reading }
+                ForEach(Array(record.readings.enumerated()), id: \.element.id) { index, reading in
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            Text("Reading #\(record.readings.count - index)")
+                                .font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold))
+                            Spacer(minLength: 4)
+                            StatusChip(reading.status == .read ? "Read" : reading.status == .dnf ? "DNF" : "Currently Reading", symbol: "book")
+                        }
+                        VStack(alignment: .leading, spacing: 5) {
+                            Label("Started: " + (reading.startDate?.isoString ?? "Unknown"), systemImage: "calendar")
+                            Label("Finished: " + (reading.finishDate?.isoString ?? "Unknown"), systemImage: "checkmark.circle")
+                            Label("Format: " + (reading.journalFormat?.rawValue.capitalized ?? "Unknown"), systemImage: "book.closed")
+                            Label("Primary Genre: " + (reading.primaryGenre ?? "Unknown"), systemImage: "tag")
+                        }.font(DesignTokens.functionalFont(size: 14, relativeTo: .subheadline)).foregroundStyle(DesignTokens.secondaryText(scheme))
+                        ReadingProgressBar(displayProgress(reading.progress))
+                        Text(ratingLabel(reading.rating))
                         ForEach(reading.progressObservations, id: \.id) { observation in
                             Text(displayProgress(observation.value).label + (observation.requiresReview ? " · Requires review" : ""))
+                                .font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme))
                         }
-                    }.padding(.vertical, 12)
+                        AppButton("Edit this reading", kind: .secondary) { selected = reading }
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
+                        .background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
+                        .overlay(RoundedRectangle(cornerRadius: DesignTokens.cardRadius).stroke(DesignTokens.border(scheme)))
                 }
                 if record.readings.isEmpty { Text("No reading history yet") }
             }
@@ -228,7 +242,7 @@ struct EditReadingScreen: View {
             BooksField(label: "Start date (YYYY-MM-DD or unknown)", value: $start)
             if reading.status == .read { BooksField(label: "Finish date (YYYY-MM-DD or unknown)", value: $finish) }
             BooksField(label: "Primary Genre", value: $genre)
-            Text("One user-selected Primary Genre belongs to this reading. Provider categories are separate suggestions.")
+            Text("One user-selected Primary Genre belongs to this reading. Catalogue categories remain separate suggestions.")
             Picker("Rating", selection: $rating) { ForEach(["Unknown","No rating","1","2","3","4","5"], id: \.self) { Text($0).tag($0) } }.frame(minHeight: 44)
             Picker("Format — your choice only", selection: $format) { Text("Unknown").tag("Unknown"); ForEach(JournalFormat.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0.rawValue) } }.frame(minHeight: 44)
             AppButton("Save Reading Info") {
@@ -266,18 +280,29 @@ struct EditBookInfoScreen: View {
     @State private var publisher = ""
     var body: some View {
         BooksScreen("Edit Book Info") {
-            BooksField(label: "Title", value: $title); BooksField(label: "Author", value: $author)
-            CoverEditor(reference: $cover)
-            BooksField(label: "External Book Synopsis", value: $synopsis)
-            BooksField(label: "Series name", value: $series)
-            BooksField(label: "Genre suggestion (not Primary Genre)", value: $genre)
+            BooksFormSection("Book details") {
+                BooksField(label: "Title", value: $title)
+                BooksField(label: "Author", value: $author)
+                BooksField(label: "Synopsis", value: $synopsis)
+                BooksField(label: "Series name", value: $series)
+                BooksField(label: "Genre suggestion (not Primary Genre)", value: $genre)
+            }
+            DisclosureGroup {
+                CoverEditor(reference: $cover).padding(.vertical, 12)
+            } label: {
+                BooksDisclosureLabel("Cover", symbol: "photo", detail: "Choose a photo or use an HTTPS URL")
+            }.frame(minHeight: 44)
             Text("Primary Genre, Format, dates and personal rating are edited per reading in Reading History.")
             if !record.editions.isEmpty {
-                DisclosureGroup("Edition information") {
-                    Picker("Edition", selection: $editionID) { ForEach(record.editions, id: \.id) { Text($0.title ?? "Edition").tag(Optional($0.id)) } }.frame(minHeight: 44)
-                    BooksField(label: "Edition title", value: $editionTitle); BooksField(label: "Language", value: $language)
-                    BooksField(label: "Edition pages", value: $pages); BooksField(label: "ISBN-10", value: $isbn10); BooksField(label: "ISBN-13", value: $isbn13); BooksField(label: "Publisher", value: $publisher)
-                    Text("Editing edition pages does not rewrite previous reading observations or their denominators.")
+                DisclosureGroup {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Picker("Edition", selection: $editionID) { ForEach(record.editions, id: \.id) { Text($0.title ?? "Edition").tag(Optional($0.id)) } }.frame(minHeight: 44)
+                        BooksField(label: "Edition title", value: $editionTitle); BooksField(label: "Language", value: $language)
+                        BooksField(label: "Edition pages", value: $pages); BooksField(label: "ISBN-10", value: $isbn10); BooksField(label: "ISBN-13", value: $isbn13); BooksField(label: "Publisher", value: $publisher)
+                        Text("Editing edition pages does not rewrite previous saved progress or totals.")
+                    }.padding(.vertical, 12)
+                } label: {
+                    BooksDisclosureLabel("Edition information", symbol: "books.vertical", detail: "Language, pages, ISBN and publisher")
                 }.frame(minHeight: 44)
             }
             AppButton("Save Book Info") {
