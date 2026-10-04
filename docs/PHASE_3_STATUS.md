@@ -57,13 +57,14 @@ Local validation completed:
 - Books schema regression tests: 3 tests pass.
 - Xcode project generation: pass.
 
-The complete Swift/XCTest suite, iOS simulator build, Supabase migration/RLS tests,
-official Journal acceptance flow and visual captures run in CI because the local
-machine exposes Command Line Tools rather than the full Xcode SDK. Phase 3 adds
+CI #37237643919 passes the complete 58-test Swift/XCTest suite, iOS simulator build,
+Supabase migration/RLS tests, SQLite checks, official Journal acceptance flow and
+Journal visual capture run. Phase 3 adds
 domain/data coverage for readiness, exact capacities, idempotent completion,
 Favorite/Quote decisions, Ready/Copied separation and Corrections. CI produces
 Light Standard, Dark Standard and Accessibility XXXL captures in the
-`phase-3-journal-visual-qa` artifact. Human approval is not claimed.
+`phase-3-journal-visual-qa` artifact. Labelled contact sheets and their source
+captures are in `docs/qa/phase-3/`. Human approval is not claimed.
 
 The existing Foundation accessibility audit remains unfiltered with unchanged
 thresholds. Its previously documented Phase 1/2 findings, physical-device review,
