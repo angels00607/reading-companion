@@ -28,6 +28,24 @@ jobs:
           with open(os.environ['GITHUB_ENV'], 'a') as env:
               env.write('READING_SIMULATOR_ID=' + phone['udid'] + '\n')
           PY
+      - name: Journal acceptance and Human Visual QA
+        run: |
+          xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Journal.xcresult -only-testing:FoundationAcceptanceTests/JournalAcceptanceTests CODE_SIGNING_ALLOWED=NO test
+      - name: Export Journal evidence
+        if: always()
+        run: |
+          if [ -d work/Journal.xcresult ]; then
+            xcrun xcresulttool export attachments --path work/Journal.xcresult --output-path work/journal-screenshots
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase-3-journal-visual-qa
+          path: |
+            work/Journal.xcresult
+            work/journal-screenshots
       - name: Books Core acceptance and Human Visual QA
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
@@ -46,23 +64,6 @@ jobs:
           path: |
             work/BooksCore.xcresult
             work/books-core-screenshots
-      - name: Journal acceptance and Human Visual QA
-        run: |
-          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Journal.xcresult -only-testing:FoundationAcceptanceTests/JournalAcceptanceTests CODE_SIGNING_ALLOWED=NO test
-      - name: Export Journal evidence
-        if: always()
-        run: |
-          if [ -d work/Journal.xcresult ]; then
-            xcrun xcresulttool export attachments --path work/Journal.xcresult --output-path work/journal-screenshots
-          fi
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: phase-3-journal-visual-qa
-          path: |
-            work/Journal.xcresult
-            work/journal-screenshots
       - name: Default-size foundation acceptance
         if: always()
         run: |
