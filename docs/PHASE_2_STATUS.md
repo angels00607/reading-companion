@@ -135,12 +135,28 @@ The pre-existing domain, shared UI, migration and RLS tests remain in the full s
 - Final CI #110 reproduces those 147 audit findings plus the single background-
   coverage assertion below (148 foundation failures total). Default and largest-size
   foundation stages both ran. Their results are not relabelled as passing.
-- Full foundation runs also report an additional Dark Accessibility
-  XXXL landscape background-coverage assertion: 0.2143 versus the unchanged >0.25
-  threshold, on Home. The capture shows a black region and clipped landscape
-  content. This is separately reported from the 147 audit findings; no false-positive
-  conclusion or complete landscape acceptance is claimed. No preview layout or
-  audit threshold has been changed to obtain a pass. Manual native inspection is open.
+- Full foundation runs also report a Dark Accessibility XXXL landscape background-
+  coverage assertion: 0.2143 versus the unchanged >0.25 threshold, on Home. The
+  same assertion and exact 0.21428571428571427 measurement are present in the
+  pre-Phase-2 Phase 1 CI #88, #90 and final CI #92 logs. The Phase 1 final capture
+  and CI #110 capture are both 1334 x 750 pixels and have the same 584 x 750-pixel
+  black strip (x=750...1333), the same 438,000 black pixels and the same 227,072
+  Dark-background pixels.
+- This test launches the Phase 1 `FoundationShell` diagnostics route before rotating
+  the simulator; it does not instantiate the Phase 2 `BooksHome` release route.
+  In CI #110, XCTest reports a 667 x 375-point landscape window and full-window
+  `ScrollView`, while the exported 1334 x 750 bitmap contains rendered application
+  pixels only through x=749. The concrete cause is therefore the QA host/export
+  presentation retaining the portrait-width backing after rotation, not safe-area
+  handling, fixed-height content, scroll sizing, background attachment, or the
+  Phase 2 navigation/content layout. This is a pre-existing Phase 1 QA-capture
+  limitation, also consistent with the landscape export limitation recorded in
+  `PHASE_0_STATUS.md`; Phase 2 did not introduce it.
+- No Release/native layout evidence reproduces the uncovered region: the native
+  accessibility hierarchy spans the full landscape window. Physical-device visual
+  acceptance is still not claimed. No UI code, preview layout, audit threshold,
+  assertion, suppression, or filter was changed to make this metric pass, and no
+  replacement capture was generated because the rendered layout did not change.
 - Physical device / spoken VoiceOver / complete Phase 12 acceptance is not claimed.
 - No Favorite filter is fabricated before Phase 3 Favorite data exists. Series filter
   uses a user-entered series name, not a Phase 4 series engine. Journal/Series/
@@ -155,7 +171,10 @@ The pre-existing domain, shared UI, migration and RLS tests remain in the full s
   progress or future completion side effects. Challenge TBD content remains untouched.
 
 Phase 2 Books Core is implemented and its required functional/visual acceptance
-tests pass. Overall CI remains red because the retained foundation audit and the
-separately documented landscape assertion are unresolved. Human visual review and
-acceptance of the explicitly recorded limitations remain required before merge.
+tests pass. CI #116 at the final implementation commit passes Swift tests, iOS build,
+all four Books Core UI tests, evidence export, SQLite tests (including the Books
+schema) and Supabase checks. Overall CI remains red because the retained foundation
+audit and the separately documented historical QA-export landscape assertion remain
+visible and unsuppressed. With no new Phase 2 regression identified, the implementation
+is ready for human visual approval; acceptance remains required before merge.
 No merge or Phase 3 work has been performed or authorized.
