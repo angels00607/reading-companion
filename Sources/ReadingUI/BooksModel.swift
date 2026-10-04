@@ -6,13 +6,14 @@ import ReadingDomain
 public final class BooksModel: ObservableObject {
     public let repository: any BooksRepository
     public let provider: any BooksCatalogProvider
+    public let journalRepository: (any JournalRepository)?
     public let assetDirectory: URL
     @Published public var version = 0
     @Published public var error: String?
     @Published public var feedback: String?
     @Published public var feedbackReadingID: UUID?
-    public init(repository: any BooksRepository, provider: any BooksCatalogProvider, assetDirectory: URL) {
-        self.repository = repository; self.provider = provider; self.assetDirectory = assetDirectory
+    public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL) {
+        self.repository = repository; self.journalRepository = journalRepository; self.provider = provider; self.assetDirectory = assetDirectory
     }
     @discardableResult public func perform<T>(_ body: () throws -> T) -> T? {
         do { let value = try body(); error = nil; version += 1; return value }
