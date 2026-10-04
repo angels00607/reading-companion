@@ -190,6 +190,7 @@ struct UpdateProgressScreen: View {
 struct ReadingHistoryScreen: View {
     @EnvironmentObject var model: BooksModel
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     let bookID: UUID
     @State private var selected: ReadingInstance?
     var body: some View {
@@ -197,11 +198,17 @@ struct ReadingHistoryScreen: View {
             if let record = try? model.repository.record(id: bookID) {
                 ForEach(Array(record.readings.enumerated()), id: \.element.id) { index, reading in
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Text("Reading #\(record.readings.count - index)")
-                                .font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold))
-                            Spacer(minLength: 4)
-                            StatusChip(reading.status == .read ? "Read" : reading.status == .dnf ? "DNF" : "Currently Reading", symbol: "book")
+                        if typeSize.isAccessibilitySize {
+                            VStack(alignment: .leading, spacing: 8) {
+                                readingHeading(record.readings.count - index)
+                                readingStatus(reading)
+                            }
+                        } else {
+                            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                readingHeading(record.readings.count - index)
+                                Spacer(minLength: 4)
+                                readingStatus(reading)
+                            }
                         }
                         VStack(alignment: .leading, spacing: 5) {
                             Label("Started: " + (reading.startDate?.isoString ?? "Unknown"), systemImage: "calendar")
@@ -224,6 +231,12 @@ struct ReadingHistoryScreen: View {
             }
             BooksErrorMessage()
         }.sheet(item: $selected) { reading in NavigationStack { EditReadingScreen(reading: reading) } }
+    }
+    private func readingHeading(_ number: Int) -> some View {
+        Text("Reading #\(number)").font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold))
+    }
+    private func readingStatus(_ reading: ReadingInstance) -> some View {
+        StatusChip(reading.status == .read ? "Read" : reading.status == .dnf ? "DNF" : "Currently Reading", symbol: "book")
     }
 }
 extension ReadingInstance: Identifiable {}

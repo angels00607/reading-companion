@@ -324,16 +324,26 @@ private struct BooksNavigationLabel: View {
 
 struct BooksDisclosureLabel: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     let title: String; let symbol: String; let detail: String?
     init(_ title: String, symbol: String = "info.circle", detail: String? = nil) { self.title = title; self.symbol = symbol; self.detail = detail }
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: symbol).foregroundStyle(DesignTokens.primary(scheme)).accessibilityHidden(true)
+        Group {
+            if typeSize.isAccessibilitySize {
+                labelText
+            } else {
+                HStack(spacing: 10) {
+                    Image(systemName: symbol).foregroundStyle(DesignTokens.primary(scheme)).accessibilityHidden(true)
+                    labelText
+                }
+            }
+        }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(.vertical, 8)
+    }
+    private var labelText: some View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(DesignTokens.functionalFont(size: 16, relativeTo: .body, weight: .semiBold))
                 if let detail { Text(detail).font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
             }.fixedSize(horizontal: false, vertical: true)
-        }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(.vertical, 8)
     }
 }
 
