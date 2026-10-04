@@ -20,7 +20,8 @@ final class JournalAcceptanceTests: XCTestCase {
                 for _ in 0..<6 where !corrections.isHittable { app.swipeUp() }
                 XCTAssertTrue(corrections.isHittable); corrections.tap()
                 XCTAssertTrue(app.staticTexts["Summary"].waitForExistence(timeout: 5)); capture(app, "Light-Journal-Correction")
-                if app.buttons["Mark corrected"].exists { app.buttons["Mark corrected"].tap(); capture(app, "Light-Journal-Correction-resolved") }
+                let resolve = app.buttons["Mark corrected"].firstMatch
+                if resolve.exists { resolve.tap(); capture(app, "Light-Journal-Correction-resolved") }
                 app.navigationBars.buttons.firstMatch.tap()
                 for _ in 0..<4 where !app.buttons["journal.startSession"].isHittable { app.swipeDown() }
                 if app.buttons["journal.startSession"].isHittable { app.buttons["journal.startSession"].tap(); XCTAssertTrue(app.buttons["journal.copied"].waitForExistence(timeout: 5)); capture(app, "Light-Journal-Session") }

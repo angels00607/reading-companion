@@ -69,7 +69,7 @@ struct ReadingCompanionApp: App {
         try store.setFavorite(bookID: first, decision: .selected)
         try store.saveQuote(JournalQuote(bookID: first, readingID: reading, text: "A representative quote for visual review.", source: "p. 184", includeInJournal: true))
         try store.markBookReviewCopied(readingID: reading)
-        try store.saveBookReview(readingID: reading, draft: BookReviewDraft(summary: "A corrected summary that now differs from the version copied on paper.", pageCount: 384, rating: .stars(4), format: .hardcover, start: try ReadingDate(year: 2026, month: 9, day: 4), finish: try ReadingDate(year: 2026, month: 9, day: 28)))
+        try store.saveBookReview(readingID: reading, draft: BookReviewDraft(summary: "A corrected summary that now differs from the version copied on paper.", pageCount: 384, rating: .stars(5), format: .hardcover, start: try ReadingDate(year: 2026, month: 9, day: 4), finish: try ReadingDate(year: 2026, month: 9, day: 28)))
         let second = try store.add(work: WorkCandidate(provider: "qa", reference: "journal-2", title: "A Pending Review", author: "Morgan Reader"))
         let secondReading = try store.start(bookID: second, editionID: nil, date: nil)
         try store.finish(readingID: secondReading, confirmed: true, date: nil, revision: 0)
