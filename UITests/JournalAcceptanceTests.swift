@@ -13,9 +13,9 @@ final class JournalAcceptanceTests: XCTestCase {
             app.swipeUp(); capture(app, "\(appearance)-\(size)-Inbox-lower")
             if appearance == "Light" && size == "UICTContentSizeCategoryL" {
                 let ready = app.buttons.containing(.staticText, identifier: "Ready for the Next Journal Session").firstMatch
-                if ready.exists { ready.tap(); capture(app, "Light-Book-Review-Ready"); app.navigationBars.buttons.firstMatch.tap() }
+                if ready.exists { ready.tap(); waitForAnimations(); capture(app, "Light-Book-Review-Ready"); app.navigationBars.buttons.firstMatch.tap(); waitForAnimations() }
                 let pending = app.buttons.containing(.staticText, identifier: "A Pending Review").firstMatch
-                if pending.exists { pending.tap(); capture(app, "Light-Book-Review-incomplete"); app.swipeUp(); capture(app, "Light-Favorite-Quotes"); app.navigationBars.buttons.firstMatch.tap() }
+                if pending.exists { pending.tap(); waitForAnimations(); capture(app, "Light-Book-Review-incomplete"); app.swipeUp(); capture(app, "Light-Favorite-Quotes"); app.navigationBars.buttons.firstMatch.tap(); waitForAnimations() }
                 let corrections = app.buttons["journal.corrections"]
                 for _ in 0..<6 where !corrections.isHittable { app.swipeUp() }
                 XCTAssertTrue(corrections.isHittable); corrections.tap()
@@ -32,4 +32,5 @@ final class JournalAcceptanceTests: XCTestCase {
     @MainActor private func capture(_ app: XCUIApplication, _ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = "Phase3-" + name; attachment.lifetime = .keepAlways; add(attachment)
     }
+    @MainActor private func waitForAnimations() { RunLoop.current.run(until: Date().addingTimeInterval(0.6)) }
 }
