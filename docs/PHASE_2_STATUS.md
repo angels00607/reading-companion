@@ -126,6 +126,39 @@ The pre-existing domain, shared UI, migration and RLS tests remain in the full s
   all four Books Core UI tests after the target corrections, with captured
   `+74 pages`, explicit finish confirmation and `Read`.
 
+### Human Visual QA correction pass
+
+- Global Search now gives search first priority, distinguishes saved-library and
+  catalogue sections, and presents My Books and manual entry as deliberate,
+  secondary navigation actions while retaining local-first behavior.
+- Choose Edition uses selectable bordered surface rows with a title hierarchy,
+  grouped language/page/publisher details, optional ISBN and a visible disclosure
+  affordance. Rows have no fixed height and metadata stacks at accessibility sizes.
+- Manual Add and Edit Book Info now share restrained form sections and explicit
+  disclosure labels for optional, cover and edition information. My Books uses the
+  same actionable disclosure language for Sort and filters.
+- Reading History groups each reading separately, numbers the occurrences, and
+  groups existing dates, Format, Primary Genre, progress, rating and actions. Its
+  heading/status arrangement stacks at accessibility sizes.
+- User-facing wording changed from `External Book Synopsis` to `Synopsis`,
+  `External metadata candidate` to `Catalogue result`, `Check external metadata`
+  to `Check for book updates`, `Retained observation` to `Saved progress update`,
+  and exposed provider/observation phrasing in related help and error text was
+  replaced with reader-facing catalogue/progress wording. Provenance storage and
+  priority are unchanged.
+- CI #121 reruns Swift tests, the iOS build, the official Books Core flow, all
+  thirteen UI/accessibility routes with unchanged 44-point assertions, SQLite and
+  Supabase. Its visual artifact contains 47 captures: five official-flow milestones
+  plus top/lower evidence for the seven corrected screens in Light Standard, Dark
+  Standard and Accessibility XXXL. The targeted boards are in
+  `docs/qa/phase-2-corrections/` and were inspected for hierarchy, wrapping,
+  disclosure affordances, Dark surfaces and accessibility reflow. Books Core passes
+  all four UI tests; the unfiltered Foundation stages continue to report the same
+  documented total of 148 findings (145 default plus 3 largest-size), unsuppressed.
+- No palette, shared Phase 1 component, persistence, domain, provider, sync or
+  Books Core product behavior changed. No Foundation finding or threshold was
+  suppressed. Physical-device/VoiceOver review remains a Phase 12 limitation.
+
 ## Limits / TBDs and deviations
 
 - Phase 1 baseline CI #92 retains 147 findings: 90 Dynamic Type, 30 potential clipping,
