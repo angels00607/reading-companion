@@ -57,7 +57,7 @@ Local validation completed:
 - Books schema regression tests: 3 tests pass.
 - Xcode project generation: pass.
 
-CI #37237643919 passes the complete 58-test Swift/XCTest suite, iOS simulator build,
+CI #37238428991 passes the complete 58-test Swift/XCTest suite, iOS simulator build,
 Supabase migration/RLS tests, SQLite checks, official Journal acceptance flow and
 Journal visual capture run. Phase 3 adds
 domain/data coverage for readiness, exact capacities, idempotent completion,

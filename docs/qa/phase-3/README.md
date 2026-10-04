@@ -1,7 +1,7 @@
 # Phase 3 Journal — Human Visual QA
 
 These boards are review material, not design approval. They were generated from
-CI run [#37237643919](https://github.com/angels00607/reading-companion/actions/runs/37237643919)
+CI run [#37238428991](https://github.com/angels00607/reading-companion/actions/runs/37238428991)
 on an iPhone SE (3rd generation). The original captures remain in `captures/` and
 in the run's `phase-3-journal-visual-qa` artifact.
 
