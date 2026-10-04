@@ -44,7 +44,7 @@ final class JournalTests: XCTestCase {
         try store.setFavorite(bookID: book, decision: .none)
         XCTAssertEqual(try store.favoriteDecision(bookID: book), .none)
         try store.setNoQuote(readingID: reading, value: true)
-        XCTAssertEqual(try store.journalEntry(readingID: reading).components[.quote], .none)
+        XCTAssertEqual(try store.journalEntry(readingID: reading).components[.quote], JournalComponentStatus.none)
         let physical = JournalQuote(bookID: book, readingID: reading, text: "First", source: "p. 4", includeInJournal: true)
         try store.saveQuote(physical)
         try store.saveQuote(JournalQuote(bookID: book, readingID: reading, text: "Second", source: nil, includeInJournal: false))
