@@ -58,6 +58,18 @@ public struct Edition: Codable, Equatable, Sendable {
     public let bookID: UUID
     public var language: String?
     public var pageCount: Int?
+    public var title: String?
+    public var isbn10: String?
+    public var isbn13: String?
+    public var coverReference: String?
+    public var publisher: String?
+    public init(id: UUID = UUID(), bookID: UUID, language: String? = nil, pageCount: Int? = nil,
+                title: String? = nil, isbn10: String? = nil, isbn13: String? = nil,
+                coverReference: String? = nil, publisher: String? = nil) {
+        self.id = id; self.bookID = bookID; self.language = language; self.pageCount = pageCount
+        self.title = title; self.isbn10 = isbn10; self.isbn13 = isbn13
+        self.coverReference = coverReference; self.publisher = publisher
+    }
 }
 public struct LibraryMembership: Codable, Equatable, Sendable {
     public let bookID: UUID
@@ -66,16 +78,18 @@ public struct LibraryMembership: Codable, Equatable, Sendable {
 }
 public enum ReadingStatus: String, Codable, Sendable { case currentlyReading = "currently_reading", read, dnf }
 public enum JournalFormat: String, Codable, CaseIterable, Sendable { case paperback, hardcover, ebook, audiobook }
-public enum Rating: Equatable, Sendable {
+public enum Rating: Codable, Equatable, Sendable {
     case unknown, noRating, stars(Int)
     public static func validatedStars(_ value: Int) throws -> Self {
         guard (1...5).contains(value) else { throw DomainError.invalidRating }
         return .stars(value)
     }
 }
-public struct ReadingInstance: Equatable, Sendable {
+public struct ReadingInstance: Codable, Equatable, Sendable {
     public let id: UUID
     public let bookID: UUID
+    public var editionID: UUID?
+    public var primaryGenre: String?
     public var status: ReadingStatus
     public internal(set) var progress: ReadingProgress
     public internal(set) var progressObservations: [ProgressObservation] = []
@@ -89,7 +103,12 @@ public struct ReadingInstance: Equatable, Sendable {
                 progress: ReadingProgress, historical: Bool = false) {
         self.id = id; self.bookID = bookID; self.status = status; self.progress = progress
         self.historical = historical; revision = 0
+        editionID = nil; primaryGenre = nil
         rating = .unknown
+    }
+    /// Persistence hydration only: immutable observation values are never rewritten.
+    public func restoringObservations(_ observations: [ProgressObservation]) -> Self {
+        var copy = self; copy.progressObservations = observations; return copy
     }
 }
 public enum MutationOrigin: String, Codable, Sendable { case user, historicalImport, restore, provider }
@@ -98,6 +117,9 @@ public struct Provenance: Codable, Equatable, Sendable {
     public let sourceReference: String?
     public let evidenceFingerprint: String?
     public let userOverridden: Bool
+    public init(origin: MutationOrigin, sourceReference: String?, evidenceFingerprint: String?, userOverridden: Bool) {
+        self.origin = origin; self.sourceReference = sourceReference; self.evidenceFingerprint = evidenceFingerprint; self.userOverridden = userOverridden
+    }
 }
 public struct ProposedChange<Value: Equatable & Sendable>: Equatable, Sendable {
     public let current: Value

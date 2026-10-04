@@ -56,6 +56,11 @@ public struct ProgressObservation: Codable, Equatable, Sendable {
     public let previous: ReadingProgress?
     public let recordedAt: Date
     public let requiresReview: Bool
+    public init(id: UUID, readingID: UUID, expectedRevision: Int, value: ReadingProgress,
+                previous: ReadingProgress?, recordedAt: Date, requiresReview: Bool) {
+        self.id = id; self.readingID = readingID; self.expectedRevision = expectedRevision
+        self.value = value; self.previous = previous; self.recordedAt = recordedAt; self.requiresReview = requiresReview
+    }
     /// Unknown for percentage, unresolved conflicts, or missing prior page position.
     public var genuinePageDelta: Int? {
         guard !requiresReview, value.mode == .page, previous?.mode == .page,
