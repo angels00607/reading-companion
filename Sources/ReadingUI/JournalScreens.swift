@@ -88,7 +88,7 @@ private struct JournalSession: View {
 
 private struct JournalCorrections: View {
     @EnvironmentObject var model: BooksModel; @State private var rows: [JournalCorrection] = []
-    var body: some View { BooksScreen("Journal Corrections") { if rows.isEmpty { StatePresentation(kind: .empty, title: "No corrections", message: "Changes made after copying will appear here.") }; ForEach(rows) { row in VStack(alignment: .leading) { Text(row.field).font(.headline); Text("Copied: \(row.previousValue)"); Text("Current: \(row.currentValue)"); AppButton("Mark corrected", kind: .secondary) { resolve(row) } } } }.onAppear(perform: load) }
+    var body: some View { BooksScreen("Journal Corrections") { if rows.isEmpty { StatePresentation(kind: .empty, title: "No corrections", message: "Changes made after copying will appear here.") }; ForEach(rows) { row in VStack(alignment: .leading, spacing: 8) { HStack { Text(row.field).font(.headline); Spacer(); StatusChip(row.resolved ? "Resolved" : "Pending", symbol: row.resolved ? "checkmark" : "pencil", tone: row.resolved ? .special : .neutral) }; Text("Copied: \(row.previousValue)"); Text("Current: \(row.currentValue)"); if !row.resolved { AppButton("Mark corrected", kind: .secondary) { resolve(row) } } } } }.onAppear(perform: load) }
     private func load() { rows = (try? model.journalRepository?.corrections()) ?? [] }
     private func resolve(_ row: JournalCorrection) { _ = model.perform { try model.journalRepository?.resolveCorrection(id: row.id) }; load() }
 }

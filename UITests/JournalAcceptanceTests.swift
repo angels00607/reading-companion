@@ -12,10 +12,16 @@ final class JournalAcceptanceTests: XCTestCase {
             capture(app, "\(appearance)-\(size)-Inbox")
             app.swipeUp(); capture(app, "\(appearance)-\(size)-Inbox-lower")
             if appearance == "Light" && size == "UICTContentSizeCategoryL" {
+                let ready = app.buttons.containing(.staticText, identifier: "Ready for the Next Journal Session").firstMatch
+                if ready.exists { ready.tap(); capture(app, "Light-Book-Review-Ready"); app.navigationBars.buttons.firstMatch.tap() }
                 let pending = app.buttons.containing(.staticText, identifier: "A Pending Review").firstMatch
                 if pending.exists { pending.tap(); capture(app, "Light-Book-Review-incomplete"); app.swipeUp(); capture(app, "Light-Favorite-Quotes"); app.navigationBars.buttons.firstMatch.tap() }
-                for _ in 0..<4 where !app.buttons["journal.corrections"].isHittable { app.swipeUp() }
-                if app.buttons["journal.corrections"].isHittable { app.buttons["journal.corrections"].tap(); capture(app, "Light-Journal-Correction"); app.navigationBars.buttons.firstMatch.tap() }
+                let corrections = app.staticTexts["Review journal corrections"]
+                for _ in 0..<6 where !corrections.isHittable { app.swipeUp() }
+                XCTAssertTrue(corrections.isHittable); corrections.tap()
+                XCTAssertTrue(app.staticTexts["Summary"].waitForExistence(timeout: 5)); capture(app, "Light-Journal-Correction")
+                if app.buttons["Mark corrected"].exists { app.buttons["Mark corrected"].tap(); capture(app, "Light-Journal-Correction-resolved") }
+                app.navigationBars.buttons.firstMatch.tap()
                 for _ in 0..<4 where !app.buttons["journal.startSession"].isHittable { app.swipeDown() }
                 if app.buttons["journal.startSession"].isHittable { app.buttons["journal.startSession"].tap(); XCTAssertTrue(app.buttons["journal.copied"].waitForExistence(timeout: 5)); capture(app, "Light-Journal-Session") }
             }
