@@ -60,7 +60,7 @@ private struct BookReviewEditor: View {
             BooksField(label: "Summary", value: $summary)
             Text("Summary assistant unavailable — write or edit your own summary.").font(.footnote)
             BooksField(label: "Pages", value: $pages)
-            Picker("Rating", selection: $rating) { Text("Choose rating").tag(0); ForEach(1...5, id: \.self) { Text("\($0) stars").tag($0) } }
+            Picker("Rating", selection: $rating) { Text("Choose rating").tag(0); Text("No rating").tag(-1); ForEach(1...5, id: \.self) { Text("\($0) stars").tag($0) } }
             Picker("Journal format", selection: $format) { Text("Choose format").tag(""); Text("Paperback").tag("paperback"); Text("Hardcover").tag("hardcover"); Text("Ebook").tag("ebook"); Text("Audiobook").tag("audiobook") }
             AppButton("Save Book Review") { saveReview() }.accessibilityIdentifier("journal.saveReview")
             Text("Favorite").font(.headline)
@@ -69,9 +69,9 @@ private struct BookReviewEditor: View {
             Toggle("Include in physical journal", isOn: $physical)
             HStack { AppButton("Save Quote", kind: .secondary) { saveQuote() }; AppButton("No quote", kind: .tertiary) { setNoQuote() } }
             BooksErrorMessage()
-        }.onAppear { summary = item.entry.summary ?? ""; pages = item.entry.pageCount.map(String.init) ?? ""; if case .stars(let stars) = item.reading.rating { rating = stars }; format = item.reading.journalFormat?.rawValue ?? ""; favorite = (try? model.journalRepository?.favoriteDecision(bookID: item.book.id)) ?? .pending }
+        }.onAppear { summary = item.entry.summary ?? ""; pages = item.entry.pageCount.map(String.init) ?? ""; switch item.reading.rating { case .stars(let stars): rating = stars; case .noRating: rating = -1; case .unknown: rating = 0 }; format = item.reading.journalFormat?.rawValue ?? ""; favorite = (try? model.journalRepository?.favoriteDecision(bookID: item.book.id)) ?? .pending }
     }
-    private func saveReview() { guard let repo = model.journalRepository, let chosen = JournalFormat(rawValue: format), rating > 0 else { model.error = "Choose a rating and journal format."; return }; _ = model.perform { try repo.saveBookReview(readingID: item.reading.id, draft: BookReviewDraft(summary: summary, pageCount: try BooksModel.optionalPages(pages), rating: .stars(rating), format: chosen, start: item.reading.startDate, finish: item.reading.finishDate)); try repo.setFavorite(bookID: item.book.id, decision: favorite) }; reload() }
+    private func saveReview() { guard let repo = model.journalRepository, let chosen = JournalFormat(rawValue: format), rating != 0 else { model.error = "Choose a rating or No rating, and a journal format."; return }; let selectedRating: Rating = rating == -1 ? .noRating : .stars(rating); _ = model.perform { try repo.saveBookReview(readingID: item.reading.id, draft: BookReviewDraft(summary: summary, pageCount: try BooksModel.optionalPages(pages), rating: selectedRating, format: chosen, start: item.reading.startDate, finish: item.reading.finishDate)); try repo.setFavorite(bookID: item.book.id, decision: favorite) }; reload() }
     private func saveQuote() { guard let repo = model.journalRepository else { return }; _ = model.perform { try repo.saveQuote(JournalQuote(bookID: item.book.id, readingID: item.reading.id, text: quote, source: source, includeInJournal: physical)) } }
     private func setNoQuote() { guard let repo = model.journalRepository else { return }; _ = model.perform { try repo.setNoQuote(readingID: item.reading.id, value: true) } }
 }
