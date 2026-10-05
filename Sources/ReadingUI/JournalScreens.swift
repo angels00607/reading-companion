@@ -4,6 +4,7 @@ import ReadingDomain
 public struct JournalHome: View {
     @EnvironmentObject private var model: BooksModel
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var inbox: [JournalInboxItem] = []
     @State private var usage: JournalUsage?
     @State private var session = false
@@ -12,7 +13,7 @@ public struct JournalHome: View {
         VStack(alignment: .leading, spacing: 16) {
             if let usage {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("My Journal · Volume \(usage.volume.number)").font(DesignTokens.journalAccent(size: 20)).fixedSize(horizontal: false, vertical: true)
+                    Text("My Journal · Volume \(usage.volume.number)").font(typeSize.isAccessibilitySize ? DesignTokens.functionalFont(size: 20, relativeTo: .title3, weight: .semiBold) : DesignTokens.journalAccent(size: 20)).fixedSize(horizontal: false, vertical: true)
                     Text("\(usage.bookReviews) of \(JournalRules.bookReviewCapacity) book reviews")
                         .font(DesignTokens.functionalFont(size: 17, relativeTo: .headline, weight: .semiBold))
                     ReadingProgressBar(.pages(current: usage.bookReviews, total: JournalRules.bookReviewCapacity), showsLabel: false)
