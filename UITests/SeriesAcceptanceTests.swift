@@ -26,7 +26,7 @@ final class SeriesAcceptanceTests: XCTestCase {
             if size == "UICTContentSizeCategoryL" {
                 let attention = app.buttons.containing(.staticText, identifier: "Review position").firstMatch
                 for _ in 0..<5 where !attention.isHittable { app.swipeUp() }
-                if attention.isHittable { attention.tap(); XCTAssertTrue(app.staticTexts["CURRENT"].waitForExistence(timeout: 5)); capture(app, "\(appearance)-Current-Proposed"); app.buttons["Keep"].tap(); capture(app, "\(appearance)-Rejected-Suppressed") }
+                if attention.isHittable { attention.tap(); XCTAssertTrue(app.buttons["Keep"].waitForExistence(timeout: 5)); capture(app, "\(appearance)-Current-Proposed"); app.buttons["Keep"].tap(); capture(app, "\(appearance)-Rejected-Suppressed") }
                 for _ in 0..<14 { app.swipeUp() }
                 capture(app, "\(appearance)-Timeline-End-25")
             }
