@@ -19,8 +19,10 @@ final class SeriesAcceptanceTests: XCTestCase {
                 app.buttons["All"].tap()
             }
             app.swipeUp(); capture(app, "\(appearance)-\(size)-List-lower")
+            app.terminate(); app.launch(); XCUIDevice.shared.orientation = .portrait
+            XCTAssertTrue(tab.waitForExistence(timeout: 10)); tab.tap()
+            XCTAssertTrue(app.textFields["series.search"].waitForExistence(timeout: 5))
             let row = app.buttons.containing(.staticText, identifier: "The Extremely Long Chronicle of the Moonlit Archive and Its Keepers").firstMatch
-            for _ in 0..<4 where !row.isHittable { app.swipeDown() }
             XCTAssertTrue(row.waitForExistence(timeout: 5)); row.tap()
             XCTAssertTrue(app.staticTexts["Timeline"].waitForExistence(timeout: 5))
             let progress = app.otherElements["series.progress"].firstMatch
