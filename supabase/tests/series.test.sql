@@ -1,0 +1,12 @@
+begin;
+select plan(8);
+select has_table('public','series');
+select has_table('public','series_entries');
+select has_table('public','series_rejections');
+select is((select relrowsecurity from pg_class where oid='public.series'::regclass),true,'series RLS active');
+select is((select relrowsecurity from pg_class where oid='public.series_entries'::regclass),true,'entries RLS active');
+select is((select relrowsecurity from pg_class where oid='public.series_rejections'::regclass),true,'rejections RLS active');
+select has_index('public','series_name_idx');
+select has_index('public','series_entry_order_idx');
+select * from finish();
+rollback;

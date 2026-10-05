@@ -71,6 +71,22 @@ public enum SeriesRules {
     public static func trackerPages(entryCount: Int) -> Int {
         max(1, (entryCount + 19) / 20)
     }
+    public static func ordered(_ entries: [SeriesEntry]) -> [SeriesEntry] {
+        entries.sorted { $0.position == $1.position ? $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending : $0.position < $1.position }
+    }
+    public static func confirmedEntries(_ entries: [SeriesEntry]) -> [SeriesEntry] {
+        entries.filter { $0.publication == .published || $0.publication == .announced }
+    }
+    public static func confirmedTotal(_ entries: [SeriesEntry]) -> Int { confirmedEntries(entries).count }
+    public static func nextBook(_ entries: [SeriesEntry]) -> SeriesEntry? {
+        ordered(entries).first { $0.included && !$0.isRead && $0.publication == .published }
+    }
+    public static func trackerMapping(entries: [SeriesEntry]) -> SeriesTrackerMapping {
+        let count = entries.filter(\.includedInTracker).count
+        if count <= 5 { return .init(type: .type1, entryCount: count, continuationPages: 0) }
+        if count <= 10 { return .init(type: .type2, entryCount: count, continuationPages: 0) }
+        return .init(type: .type3, entryCount: count, continuationPages: max(0, (count - 1) / 20))
+    }
 }
 public struct XPAward: Equatable, Sendable {
     public let semanticKey: String

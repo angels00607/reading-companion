@@ -4,7 +4,7 @@ import sqlite3
 import unittest
 
 SCHEMA = pathlib.Path(__file__).resolve().parents[1] / "Sources/ReadingData/Resources/local_v1.sql"
-UPGRADES = [SCHEMA.with_name(f"local_v{version}.sql") for version in (2, 3, 4)]
+UPGRADES = [SCHEMA.with_name(f"local_v{version}.sql") for version in (2, 3, 4, 5)]
 
 
 def upgrade(db):
@@ -157,6 +157,16 @@ class LocalSchemaTests(unittest.TestCase):
         self.db.execute(f"INSERT INTO data_change_proposals {columns} VALUES('u','p','b','book','title','1','2','v1','kept')")
         self.rejected(f"INSERT INTO data_change_proposals {columns} VALUES('u','q','b','book','title','1','2','v1','pending')")
         self.db.execute(f"INSERT INTO data_change_proposals {columns} VALUES('u','q','b','book','title','1','3','v2','pending')")
+
+    def test_series_fractional_unlimited_and_rejection_constraints(self):
+        self.db.execute("INSERT INTO series(owner_id,id,name,evidence_json,updated_at) VALUES('u','s','Series','{}','now')")
+        for index in range(25):
+            position = '1.5' if index == 1 else str(index + 1)
+            self.db.execute("INSERT INTO series_entries(owner_id,id,series_id,title,position,kind,publication,release_precision) VALUES(?,?,?,?,?,'main','published','unknown')", ('u',f'e{index}','s',f'Book {index}',position))
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM series_entries WHERE series_id='s'").fetchone()[0],25)
+        self.db.execute("INSERT INTO series_rejections VALUES('u','s','position','A/X','now')")
+        self.rejected("INSERT INTO series_rejections VALUES('u','s','position','A/X','later')")
+        self.db.execute("INSERT INTO series_rejections VALUES('u','s','position','A/Y','later')")
 
 
 if __name__ == "__main__":

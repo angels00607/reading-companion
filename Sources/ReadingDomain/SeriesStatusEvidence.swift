@@ -1,5 +1,5 @@
 /// Each non-nil fact must have reliable evidence; nil means unknown, not false.
-public struct SeriesStatusEvidence: Equatable, Sendable {
+public struct SeriesStatusEvidence: Codable, Equatable, Sendable {
     public var hasUnreadIncludedPublished: Bool?
     public var allIncludedPublishedRead: Bool?
     public var allIncludedConfirmedRead: Bool?

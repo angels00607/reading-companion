@@ -1,4 +1,4 @@
-name: Phase 3 Journal
+name: Phase 4 Series
 on:
   push:
   pull_request:
@@ -46,6 +46,24 @@ jobs:
           path: |
             work/Journal.xcresult
             work/journal-screenshots
+      - name: Series acceptance and Human Visual QA
+        run: |
+          xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Series.xcresult -only-testing:FoundationAcceptanceTests/SeriesAcceptanceTests CODE_SIGNING_ALLOWED=NO test
+      - name: Export Series evidence
+        if: always()
+        run: |
+          if [ -d work/Series.xcresult ]; then
+            xcrun xcresulttool export attachments --path work/Series.xcresult --output-path work/series-screenshots
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase-4-series-visual-qa
+          path: |
+            work/Series.xcresult
+            work/series-screenshots
       - name: Books Core acceptance and Human Visual QA
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
