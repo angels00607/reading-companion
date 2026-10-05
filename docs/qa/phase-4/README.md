@@ -7,9 +7,9 @@ They use the CI-rendered compact iPhone captures from the reviewed Phase 4 branc
 
 | Board | Appearance | Dynamic Type | Representative states |
 | --- | --- | --- | --- |
-| `board-light-standard.png` | Light | Standard | list; selected/unselected status filters; alphabetical sort; long Series name; Series Page; Next Book; tracker; Needs Attention; fractional main/related timeline; Current/Proposed; rejected/suppressed; entry 25 |
-| `board-dark-standard.png` | Dark | Standard | the same primary list, page, timeline, review, suppression, and >20-entry states in the locked Dark palette |
-| `board-light-accessibility-xxxl.png` | Light | Accessibility XXXL | compact-width list and Series Page with vertical expansion, long Series names, status/progress wrapping, scrolling, and preserved type size |
+| `board-light-standard.png` | Light | Standard | revised editorial rows; `X of Y read`; selected/unselected filters; long Series name; grouped Progress/Status/Next Book; fractional timeline; Current/Proposed; entry 25 |
+| `board-dark-standard.png` | Dark | Standard | the same corrected list, page, timeline, review, and >20-entry states in the locked Dark palette |
+| `board-light-accessibility-xxxl.png` | Light | Accessibility XXXL | corrected rows and Series Page with vertical expansion, preserved type size, long names, `X of Y read`, status provenance, and scrolling |
 
 ## Required-state checklist
 
@@ -28,7 +28,8 @@ They use the CI-rendered compact iPhone captures from the reviewed Phase 4 branc
 | Next Book | Series Page panels |
 | Future release state | Waiting fixture in list plus future-entry acceptance fixture; exact/year/unknown preservation is covered by automated tests |
 | Unknown release / final total | Timeline `Release unknown` and list/page `Final total unknown` |
-| >20-entry Series | Series Page `Page 1 of 25` and Timeline End · Entry 25 panels |
+| Revised Series progress wording | List and Series Page panels: `1 of 25 read`, `2 of 3 read`, and `3 of 3 read` |
+| >20-entry Series | Series Page `1 of 25 read` and Timeline End · Entry 25 panels |
 | Physical tracker mapping | Series Page continuation summary and timeline inclusion toggles |
 | Needs Attention | Series Page / Timeline panels |
 | Current vs Proposed | Standard Current vs Proposed panels |
@@ -42,3 +43,11 @@ They use the CI-rendered compact iPhone captures from the reviewed Phase 4 branc
 The complete original screenshots and XCTest result bundle are retained by CI in
 the `phase-4-series-visual-qa` artifact. The historical Foundation accessibility
 audit remains separate, visible, and unsuppressed.
+
+## Correction-pass decision
+
+The displayed fraction is digital Series-entry progress, not a reading page and
+not a physical Journal page. The correction therefore uses `X of Y read` beside
+`Y confirmed entries`. Physical tracker page capacity remains confined to the
+separately labelled Physical Series Tracker section. The underlying counts and
+tracker mapping are unchanged.

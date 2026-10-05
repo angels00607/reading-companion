@@ -100,6 +100,35 @@ the rejected/suppressed result. CI also retains the original captures in the
 `phase-4-series-visual-qa` artifact. These are review materials; human visual
 approval is not claimed.
 
+### Focused visual correction pass
+
+Following functional approval and the first human visual review, the Series list
+now uses restrained editorial surfaces, subtle borders, clearer vertical spacing,
+and grouped progress/Next Book information. It remains typographic and contains
+no Series artwork. The Series Page now presents conceptual PROGRESS and STATUS
+groups before the existing dedicated NEXT BOOK treatment. Effective status is the
+primary status value; automatic derivation or user override is secondary
+provenance. Timeline rows retain their exact decimal positions and metadata while
+using increased spacing and separators to clarify each semantic unit. The shared
+Current/Proposed review direction is unchanged, as are all approved colors and
+Dynamic Type sizes.
+
+The former `Page X of Y` label came from reusing the Book reading-progress
+component, but the values are counts of read confirmed Series entries. They are
+not physical Journal pages: physical page capacity belongs only to the separately
+labelled Series Tracker mapping. Phase 4 now uses a Series-specific progress bar
+with reader-facing `X of Y read` wording and a `Series progress` accessibility
+label. The count calculation, confirmed-total rules, and tracker mapping are
+unchanged.
+
+Correction-pass CI run `37316284598` passes Swift tests, iOS build, SQLite,
+Supabase/RLS, Journal regression, Books Core regression, and the Phase 4 Series
+acceptance/capture stage. The test explicitly verifies `1 of 25 read`. Updated
+Light Standard, Dark Standard, and Accessibility XXXL boards were inspected and
+replace the earlier boards in `docs/qa/phase-4/`. The remaining red Foundation
+audit stages are intentionally unfiltered historical findings; their thresholds
+and reporting are unchanged.
+
 ## Known limits, genuine TBDs, and accessibility
 
 - Provider-specific production Series ingestion and ambiguous cross-provider
