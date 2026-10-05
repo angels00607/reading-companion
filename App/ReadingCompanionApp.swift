@@ -13,7 +13,7 @@ struct ReadingCompanionApp: App {
                 if isFoundationQA { FoundationShell() }
                 else if let model {
                     if let route = visualQARoute { BooksVisualQA(route: route).environmentObject(model) }
-                    else { FoundationShell(homeContent: AnyView(BooksHome()), journalContent: AnyView(JournalHome())).environmentObject(model) }
+                    else { FoundationShell(homeContent: AnyView(BooksHome()), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome())).environmentObject(model) }
                 }
                 else if let storageError { StatePresentation(kind: .error, title: "Library unavailable", message: storageError) }
                 else { SkeletonRow() }
@@ -52,14 +52,47 @@ struct ReadingCompanionApp: App {
                 owner = value
             } else { owner = UUID(); try owner.uuidString.write(to: identity, atomically: true, encoding: .utf8) }
             #if DEBUG
-            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture")
+            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture")
             #else
             let qa = false
             #endif
             let store = try LocalStore(path: qa ? ":memory:" : root.appendingPathComponent(owner.uuidString + ".sqlite").path, ownerID: owner)
             if ProcessInfo.processInfo.arguments.contains("-phase3-fixture") { try seedJournalQA(store) }
-            model = BooksModel(repository: store, journalRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
+            if ProcessInfo.processInfo.arguments.contains("-phase4-fixture") { try seedSeriesQA(store) }
+            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
         } catch { storageError = "Could not open the local database. Existing files have not been reset or deleted." }
+    }
+    private func seedSeriesQA(_ store: LocalStore) throws {
+        let fixtures: [(String, SeriesStatus?, SeriesStatusEvidence, Bool)] = [
+            ("The Extremely Long Chronicle of the Moonlit Archive and Its Keepers", nil, .init(hasUnreadIncludedPublished: true), false),
+            ("Waiting for the Final Volume", nil, .init(allIncludedPublishedRead: true, hasAnnouncedOrExpectedFutureEntry: true), false),
+            ("A Completed Trilogy", nil, .init(allIncludedConfirmedRead: true, confirmedComplete: true), true),
+            ("The Uncertain Cycle", nil, .init(allIncludedPublishedRead: true), false),
+            ("A Series Left Behind", .abandoned, .init(hasUnreadIncludedPublished: true), false)
+        ]
+        for (index, fixture) in fixtures.enumerated() {
+            let id = UUID(); let series = ReadingSeries(id: id, ownerID: store.ownerID, name: fixture.0, author: "Taylor Reader", userStatusOverride: fixture.1, evidence: fixture.2, finalTotalKnown: fixture.3)
+            let count = index == 0 ? 25 : 3
+            var entries = [SeriesEntry]()
+            for number in 1...count {
+                let fractional = number == 2 ? Decimal(string: "1.5")! : Decimal(number)
+                let future = index == 1 && number == count
+                let title = number == 2 ? "A Very Long Related Book Title That Must Wrap Without Losing Its Meaning" : "Volume \(number)"
+                let bookID: UUID?
+                if future { bookID = nil }
+                else {
+                    let book = try store.add(work: WorkCandidate(provider: "qa-series", reference: "\(index)-\(number)", title: title, author: "Taylor Reader"), choice: .addAnyway)
+                    bookID = book
+                    if index == 2 || index == 1 || (index == 0 && number == 1) {
+                        let reading = try store.start(bookID: book, editionID: nil, date: nil)
+                        try store.finish(readingID: reading, confirmed: true, date: nil, revision: 0)
+                    }
+                }
+                entries.append(SeriesEntry(seriesID: id, bookID: bookID, title: title, position: fractional, kind: number == 2 ? .related : .main, publication: future ? .announced : .published, release: future ? .year(2028) : .unknown, isRead: index == 1 || index == 2 || (index == 0 && number == 1)))
+            }
+            try store.saveSeries(series, entries: entries)
+            if index == 0 { try store.propose(seriesID: id, field: "Position", current: "1.5", proposed: "2.5", source: "Catalogue update", evidenceFingerprint: "qa-position-v1") }
+        }
     }
     private func seedJournalQA(_ store: LocalStore) throws {
         let first = try store.add(work: WorkCandidate(provider: "qa", reference: "journal-1", title: "The Very Long Title of a Book Remembered in a Handwritten Journal", author: "Alexandra Example"))

@@ -1,0 +1,10 @@
+begin;
+select plan(6);
+select has_table('public','series','series table exists');
+select has_table('public','series_entries','series entries table exists');
+select has_table('public','series_rejections','series rejections table exists');
+select is((select relrowsecurity from pg_class where oid='public.series'::regclass),true,'series RLS active');
+select is((select relrowsecurity from pg_class where oid='public.series_entries'::regclass),true,'entries RLS active');
+select is((select relrowsecurity from pg_class where oid='public.series_rejections'::regclass),true,'rejections RLS active');
+select * from finish();
+rollback;

@@ -12,8 +12,9 @@ public struct FoundationShell: View {
     @State private var selectedTab: MainTab = .home
     private let homeContent: AnyView?
     private let journalContent: AnyView?
-    public init() { homeContent = nil; journalContent = nil }
-    public init(homeContent: AnyView, journalContent: AnyView? = nil) { self.homeContent = homeContent; self.journalContent = journalContent }
+    private let seriesContent: AnyView?
+    public init() { homeContent = nil; journalContent = nil; seriesContent = nil }
+    public init(homeContent: AnyView, journalContent: AnyView? = nil, seriesContent: AnyView? = nil) { self.homeContent = homeContent; self.journalContent = journalContent; self.seriesContent = seriesContent }
     public var body: some View {
         NavigationStack {
             ScrollView {
@@ -21,6 +22,7 @@ public struct FoundationShell: View {
                     header
                     if let homeContent, selectedTab == .home { homeContent }
                     else if let journalContent, selectedTab == .journal { journalContent }
+                    else if let seriesContent, selectedTab == .series { seriesContent }
                     else { Phase1PreviewScreen(tab: selectedTab) }
                 }
                     .padding(.horizontal, DesignTokens.margin).padding(.bottom, 24)
