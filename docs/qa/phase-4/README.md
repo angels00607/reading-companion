@@ -9,7 +9,7 @@ They use the CI-rendered compact iPhone captures from the reviewed Phase 4 branc
 | --- | --- | --- | --- |
 | `board-light-standard.png` | Light | Standard | list; selected/unselected status filters; alphabetical sort; long Series name; Series Page; Next Book; tracker; Needs Attention; fractional main/related timeline; Current/Proposed; rejected/suppressed; entry 25 |
 | `board-dark-standard.png` | Dark | Standard | the same primary list, page, timeline, review, suppression, and >20-entry states in the locked Dark palette |
-| `board-light-accessibility-xxxl.png` | Light | Accessibility XXXL | compact-width list and Series Page with vertical reflow, long Series/Book names, timeline, fractional position, and tracker controls |
+| `board-light-accessibility-xxxl.png` | Light | Accessibility XXXL | compact-width list and Series Page with vertical expansion, long Series names, status/progress wrapping, scrolling, and preserved type size |
 
 ## Required-state checklist
 

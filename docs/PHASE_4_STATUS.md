@@ -81,6 +81,14 @@ acceptance flow. The flow demonstrates normal Series → ordered timeline → Ne
 Book boundary; Waiting and Unknown evidence; external review and identical-evidence
 suppression; and a 25-entry Series with Type 3 continuation and an intact entry 25.
 
+CI run `37307134322` passes Swift tests, the iOS build, SQLite, Supabase,
+Journal regression, Books Core regression, and the complete Series acceptance/
+capture stage. The native job remains red only because the deliberately unfiltered
+Foundation audits report their documented contrast, Dynamic Type, clipping, hit
+area findings and the pre-existing Dark Accessibility XXXL landscape background
+coverage result of 0.2143 against the unchanged >0.25 threshold. No Phase 4
+acceptance assertion fails and no audit was suppressed or weakened.
+
 ## Human Visual QA
 
 The labelled review boards and source-capture checklist are in
