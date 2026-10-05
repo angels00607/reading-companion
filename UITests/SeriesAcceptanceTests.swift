@@ -10,6 +10,12 @@ final class SeriesAcceptanceTests: XCTestCase {
             XCTAssertTrue(tab.waitForExistence(timeout: 10)); tab.tap()
             XCTAssertTrue(app.textFields["series.search"].waitForExistence(timeout: 5))
             capture(app, "\(appearance)-\(size)-List")
+            if size == "UICTContentSizeCategoryL" {
+                app.buttons["Waiting"].tap()
+                app.buttons["series.sort"].tap(); app.buttons["Alphabetical"].tap()
+                capture(app, "\(appearance)-Search-Filter-Sort")
+                app.buttons["All"].tap()
+            }
             app.swipeUp(); capture(app, "\(appearance)-\(size)-List-lower")
             app.swipeDown()
             let row = app.buttons.containing(.staticText, identifier: "The Extremely Long Chronicle of the Moonlit Archive and Its Keepers").firstMatch
@@ -19,7 +25,10 @@ final class SeriesAcceptanceTests: XCTestCase {
             app.swipeUp(); capture(app, "\(appearance)-\(size)-Timeline")
             if size == "UICTContentSizeCategoryL" {
                 let attention = app.buttons.containing(.staticText, identifier: "Review position").firstMatch
-                if attention.exists { attention.tap(); XCTAssertTrue(app.staticTexts["CURRENT"].waitForExistence(timeout: 5)); capture(app, "\(appearance)-Current-Proposed"); app.buttons["Keep"].tap() }
+                for _ in 0..<5 where !attention.isHittable { app.swipeUp() }
+                if attention.isHittable { attention.tap(); XCTAssertTrue(app.staticTexts["CURRENT"].waitForExistence(timeout: 5)); capture(app, "\(appearance)-Current-Proposed"); app.buttons["Keep"].tap(); capture(app, "\(appearance)-Rejected-Suppressed") }
+                for _ in 0..<14 { app.swipeUp() }
+                capture(app, "\(appearance)-Timeline-End-25")
             }
             app.terminate()
         }
