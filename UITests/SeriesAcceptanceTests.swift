@@ -23,6 +23,8 @@ final class SeriesAcceptanceTests: XCTestCase {
             let row = app.buttons.containing(.staticText, identifier: "The Extremely Long Chronicle of the Moonlit Archive and Its Keepers").firstMatch
             XCTAssertTrue(row.waitForExistence(timeout: 5)); row.tap()
             XCTAssertTrue(app.staticTexts["Timeline"].waitForExistence(timeout: 5))
+            let progress = app.otherElements["series.progress"].firstMatch
+            XCTAssertTrue(progress.waitForExistence(timeout: 5)); XCTAssertEqual(progress.value as? String, "1 of 25 read")
             capture(app, "\(appearance)-\(size)-Series-Page")
             app.swipeUp(); capture(app, "\(appearance)-\(size)-Timeline")
             if size == "UICTContentSizeCategoryL" {
