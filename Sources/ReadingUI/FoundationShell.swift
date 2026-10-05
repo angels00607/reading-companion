@@ -11,14 +11,16 @@ public struct FoundationShell: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var selectedTab: MainTab = .home
     private let homeContent: AnyView?
-    public init() { homeContent = nil }
-    public init(homeContent: AnyView) { self.homeContent = homeContent }
+    private let journalContent: AnyView?
+    public init() { homeContent = nil; journalContent = nil }
+    public init(homeContent: AnyView, journalContent: AnyView? = nil) { self.homeContent = homeContent; self.journalContent = journalContent }
     public var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     header
                     if let homeContent, selectedTab == .home { homeContent }
+                    else if let journalContent, selectedTab == .journal { journalContent }
                     else { Phase1PreviewScreen(tab: selectedTab) }
                 }
                     .padding(.horizontal, DesignTokens.margin).padding(.bottom, 24)

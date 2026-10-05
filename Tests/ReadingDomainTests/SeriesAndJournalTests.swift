@@ -36,4 +36,17 @@ final class SeriesAndJournalTests: XCTestCase {
         XCTAssertFalse(JournalRules.inCompletionFlow(status:.dnf))
         XCTAssertFalse(JournalRules.mayGenerateCompletionWork(status:.read,origin:.historicalImport))
     }
+    func testBookReviewReadinessRequiresExplicitRatingFormatAndSummary() {
+        XCTAssertFalse(JournalRules.bookReviewReady(summary: "Review", rating: .unknown, format: .paperback))
+        XCTAssertFalse(JournalRules.bookReviewReady(summary: "  ", rating: .stars(4), format: .paperback))
+        XCTAssertFalse(JournalRules.bookReviewReady(summary: "Review", rating: .stars(4), format: nil))
+        XCTAssertTrue(JournalRules.bookReviewReady(summary: "Review", rating: .noRating, format: .ebook))
+    }
+    func testJournalCapacityRulesAreAuthoritative() {
+        XCTAssertEqual(JournalRules.bookReviewCapacity, 100)
+        XCTAssertEqual(JournalRules.readingLogPerPage, 20)
+        XCTAssertEqual(JournalRules.favoriteCapacity, 150)
+        XCTAssertEqual(JournalRules.favoritesPerPage, 15)
+        XCTAssertEqual(JournalRules.quotesPerPage, 6)
+    }
 }

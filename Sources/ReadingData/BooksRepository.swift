@@ -42,7 +42,7 @@ extension LocalStore: BooksRepository {
         }
     }
     public func record(id: UUID) throws -> CatalogRecord { try queue.read { try catalog(id, db: $0) } }
-    private func catalog(_ id: UUID, db: Database) throws -> CatalogRecord {
+    func catalog(_ id: UUID, db: Database) throws -> CatalogRecord {
         guard let row = try Row.fetchOne(db, sql: "SELECT b.*,m.wants_to_read FROM books b JOIN library_memberships m ON b.owner_id=m.owner_id AND b.id=m.book_id WHERE b.owner_id=? AND b.id=? AND b.deleted_at IS NULL", arguments: [ownerID.uuidString,id.uuidString]) else { throw BooksError.missingRecord }
         let editions = try Row.fetchAll(db, sql: "SELECT * FROM editions WHERE owner_id=? AND book_id=? ORDER BY rowid DESC", arguments: [ownerID.uuidString,id.uuidString]).map { row in
             Edition(id: UUID(uuidString: row["id"])!, bookID: id, language: row["language"], pageCount: row["page_count"], title: row["edition_title"], isbn10: row["isbn10"], isbn13: row["isbn13"], coverReference: row["cover_ref"], publisher: row["publisher"])
@@ -50,7 +50,7 @@ extension LocalStore: BooksRepository {
         let readings = try String.fetchAll(db, sql: "SELECT id FROM readings WHERE owner_id=? AND book_id=? AND deleted_at IS NULL ORDER BY rowid DESC", arguments: [ownerID.uuidString,id.uuidString]).map { try reading(UUID(uuidString: $0)!, db: db) }
         return CatalogRecord(book: Book(id: id, ownerID: ownerID, title: row["title"], author: row["author"]), editions: editions, readings: readings, wantsToRead: row["wants_to_read"], coverReference: row["cover_ref"], synopsis: row["synopsis"], seriesName: row["series_name"], genreSuggestion: row["genre_suggestion"], revision: row["revision"])
     }
-    private func reading(_ id: UUID, db: Database) throws -> ReadingInstance {
+    func reading(_ id: UUID, db: Database) throws -> ReadingInstance {
         guard let row = try Row.fetchOne(db, sql: "SELECT * FROM readings WHERE owner_id=? AND id=? AND deleted_at IS NULL", arguments: [ownerID.uuidString,id.uuidString]) else { throw BooksError.missingRecord }
         let mode: String = row["progress_mode"]
         let progress: ReadingProgress = try mode == "page" ? .pages(current: row["current_page"], total: row["total_pages"]) : .percentage(row["progress_percentage"])
@@ -151,10 +151,11 @@ extension LocalStore: BooksRepository {
             let record = try catalog(bookID, db: db)
             guard record.active == nil else { throw BooksError.activeReadingExists }
             if editionID != nil && !record.editions.contains(where: { $0.id == editionID }) { throw BooksError.missingRecord }
-            var value = ReadingInstance(bookID: bookID, status: .read, progress: try .pages())
+            var value = ReadingInstance(bookID: bookID, status: .read, progress: try .pages(), historical: true)
             value.editionID = editionID; value.finishDate = date; value.rating = rating
-            try db.execute(sql: "INSERT INTO readings(id,owner_id,book_id,edition_id,status,progress_mode) VALUES(?,?,?,?,'read','page')", arguments: [value.id.uuidString,ownerID.uuidString,bookID.uuidString,editionID?.uuidString])
+            try db.execute(sql: "INSERT INTO readings(id,owner_id,book_id,edition_id,status,progress_mode,historical) VALUES(?,?,?,?,'read','page',1)", arguments: [value.id.uuidString,ownerID.uuidString,bookID.uuidString,editionID?.uuidString])
             try save(value, db: db)
+            try createJournalCompletionWork(reading: value, db: db)
             try db.execute(sql: "UPDATE library_memberships SET wants_to_read=0 WHERE owner_id=? AND book_id=?", arguments: [ownerID.uuidString,bookID.uuidString])
             try command(id: value.id, kind: "reading.completed_record", revision: 0, payload: value, db: db)
             return value.id
@@ -211,10 +212,14 @@ extension LocalStore: BooksRepository {
         }
     }
     public func finish(readingID: UUID, confirmed: Bool, date: ReadingDate?, revision: Int) throws {
-        try mutate(readingID, revision: revision, kind: "reading.finish") { reading in
+        try queue.write { db in
+            var reading = try reading(readingID, db: db)
+            guard reading.revision == revision else { throw DomainError.staleRevision }
             guard !reading.progressObservations.contains(where: \.requiresReview) else { throw DomainError.staleRevision }
-            _ = try ReadingRules.finish(&reading, confirmed: confirmed, date: date, expectedRevision: revision)
-            // Phase 3+ effect consumers are deliberately not dispatched here.
+            let effects = try ReadingRules.finish(&reading, confirmed: confirmed, date: date, expectedRevision: revision)
+            try save(reading, db: db)
+            if effects.journalInbox { try createJournalCompletionWork(reading: reading, db: db) }
+            try command(id: readingID, kind: "reading.finish", revision: revision, payload: reading, db: db)
         }
     }
     public func markDNF(readingID: UUID, revision: Int) throws { try mutate(readingID, revision: revision, kind: "reading.dnf") { try ReadingRules.markDNF(&$0) } }
@@ -349,6 +354,6 @@ extension LocalStore: BooksRepository {
         if generation == nil { generation = UUID().uuidString; try db.execute(sql: "INSERT INTO sync_state(owner_id,generation) VALUES(?,?)", arguments: [ownerID.uuidString,generation]) }
         try enqueue(MutationEnvelope(id: mutationID, ownerID: ownerID, entityID: id, expectedRevision: revision, generation: UUID(uuidString: generation!)!, kind: kind, payload: JSONEncoder().encode(payload)), db: db)
     }
-    private func stamp(_ value: Date = Date()) -> String { ISO8601DateFormatter().string(from: value) }
+    func stamp(_ value: Date = Date()) -> String { ISO8601DateFormatter().string(from: value) }
     private func json(_ value: String?) throws -> String { String(data: try JSONEncoder().encode(value), encoding: .utf8)! }
 }

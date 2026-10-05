@@ -4,14 +4,14 @@ import sqlite3
 import unittest
 
 SCHEMA = pathlib.Path(__file__).resolve().parents[1] / "Sources/ReadingData/Resources/local_v1.sql"
-UPGRADE = SCHEMA.with_name("local_v2.sql")
+UPGRADES = [SCHEMA.with_name(f"local_v{version}.sql") for version in (2, 3, 4)]
 
 
 def upgrade(db):
     db.commit()
     db.execute("PRAGMA foreign_keys=OFF")
     try:
-        db.executescript("BEGIN;\n" + UPGRADE.read_text())
+        db.executescript("BEGIN;\n" + "\n".join(path.read_text() for path in UPGRADES))
         if db.execute("PRAGMA foreign_key_check").fetchall():
             raise sqlite3.IntegrityError("Migration broke foreign keys")
         db.commit()
@@ -153,9 +153,10 @@ class LocalSchemaTests(unittest.TestCase):
         self.assertEqual(self.db.execute("PRAGMA integrity_check").fetchone()[0], "ok")
 
     def test_rejection_evidence_uniqueness(self):
-        self.db.execute("INSERT INTO data_change_proposals VALUES('u','p','b','book','title','1','2','v1','kept')")
-        self.rejected("INSERT INTO data_change_proposals VALUES('u','q','b','book','title','1','2','v1','pending')")
-        self.db.execute("INSERT INTO data_change_proposals VALUES('u','q','b','book','title','1','3','v2','pending')")
+        columns = "(owner_id,id,entity_id,entity_type,field,current_json,proposed_json,evidence_fingerprint,status)"
+        self.db.execute(f"INSERT INTO data_change_proposals {columns} VALUES('u','p','b','book','title','1','2','v1','kept')")
+        self.rejected(f"INSERT INTO data_change_proposals {columns} VALUES('u','q','b','book','title','1','2','v1','pending')")
+        self.db.execute(f"INSERT INTO data_change_proposals {columns} VALUES('u','q','b','book','title','1','3','v2','pending')")
 
 
 if __name__ == "__main__":
