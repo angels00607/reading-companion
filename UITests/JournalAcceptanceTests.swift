@@ -20,11 +20,18 @@ final class JournalAcceptanceTests: XCTestCase {
                 for _ in 0..<6 where !corrections.isHittable { app.swipeUp() }
                 XCTAssertTrue(corrections.isHittable); corrections.tap()
                 XCTAssertTrue(app.staticTexts["Summary"].waitForExistence(timeout: 5)); capture(app, "Light-Journal-Correction")
-                let resolve = app.buttons["Mark corrected"].firstMatch
+                let resolve = app.buttons["I've corrected my journal"].firstMatch
                 if resolve.exists { resolve.tap(); capture(app, "Light-Journal-Correction-resolved") }
                 app.navigationBars.buttons.firstMatch.tap()
                 for _ in 0..<4 where !app.buttons["journal.startSession"].isHittable { app.swipeDown() }
                 if app.buttons["journal.startSession"].isHittable { app.buttons["journal.startSession"].tap(); XCTAssertTrue(app.buttons["journal.copied"].waitForExistence(timeout: 5)); capture(app, "Light-Journal-Session") }
+            }
+            if appearance == "Light" && size == "UICTContentSizeCategoryAccessibilityXXXL" {
+                let ready = app.buttons.containing(.staticText, identifier: "Ready for the Next Journal Session").firstMatch
+                if ready.exists { ready.tap(); waitForAnimations(); capture(app, "AccessibilityXXXL-Book-Review-Ready"); app.navigationBars.buttons.firstMatch.tap(); waitForAnimations() }
+                let session = app.buttons["journal.startSession"]
+                for _ in 0..<6 where !session.isHittable { app.swipeUp() }
+                if session.isHittable { session.tap(); XCTAssertTrue(app.buttons["journal.copied"].waitForExistence(timeout: 5)); capture(app, "AccessibilityXXXL-Journal-Session") }
             }
             app.terminate()
         }
