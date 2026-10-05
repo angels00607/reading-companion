@@ -81,7 +81,7 @@ struct ReadingCompanionApp: App {
                 let bookID: UUID?
                 if future { bookID = nil }
                 else {
-                    let book = try store.add(work: WorkCandidate(provider: "qa-series", reference: "\(index)-\(number)", title: title, author: "Taylor Reader"))
+                    let book = try store.add(work: WorkCandidate(provider: "qa-series", reference: "\(index)-\(number)", title: title, author: "Taylor Reader"), choice: .addAnyway)
                     bookID = book
                     if index == 2 || index == 1 || (index == 0 && number == 1) {
                         let reading = try store.start(bookID: book, editionID: nil, date: nil)
