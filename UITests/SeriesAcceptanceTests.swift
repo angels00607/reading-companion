@@ -14,6 +14,8 @@ final class SeriesAcceptanceTests: XCTestCase {
                 app.buttons["Waiting"].tap()
                 app.buttons["series.sort"].tap(); app.buttons["Alphabetical"].tap()
                 capture(app, "\(appearance)-Search-Filter-Sort")
+                app.buttons["Completed"].tap()
+                capture(app, "\(appearance)-Completed-Selected")
                 app.buttons["All"].tap()
             }
             app.swipeUp(); capture(app, "\(appearance)-\(size)-List-lower")
