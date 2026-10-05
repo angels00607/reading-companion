@@ -57,14 +57,26 @@ Local validation completed:
 - Books schema regression tests: 3 tests pass.
 - Xcode project generation: pass.
 
-CI #37238428991 passes the complete 58-test Swift/XCTest suite, iOS simulator build,
+In CI #37280747592, the complete 58-test Swift/XCTest suite, iOS simulator build,
 Supabase migration/RLS tests, SQLite checks, official Journal acceptance flow and
-Journal visual capture run. Phase 3 adds
+Journal visual capture run pass. Phase 3 adds
 domain/data coverage for readiness, exact capacities, idempotent completion,
 Favorite/Quote decisions, Ready/Copied separation and Corrections. CI produces
 Light Standard, Dark Standard and Accessibility XXXL captures in the
 `phase-3-journal-visual-qa` artifact. Labelled contact sheets and their source
 captures are in `docs/qa/phase-3/`. Human approval is not claimed.
+
+The Human Visual QA correction pass is applied without changing the Phase 3
+domain or persistence model. Functional titles and book metadata now use Manrope;
+Papernotes is reserved for restrained Journal identity at standard text sizes.
+The volume summary is a distinct surface with explicit `1 of 100` usage and
+remaining capacity. Inbox status chips live inside their cards and move below
+metadata at accessibility sizes. Book Review is grouped into Review details, Your
+reading, Favorite and Quote sections; the unavailable Summary Assistant remains
+truthful and manual editing remains primary. The focused session presents one
+clear copy card, while Corrections explicitly distinguish copied and current
+values and require an explicit resolution action. Dark semantic colors and the
+approved palette are unchanged.
 
 The existing Foundation accessibility audit remains unfiltered with unchanged
 thresholds. Its previously documented Phase 1/2 findings, physical-device review,
