@@ -31,18 +31,24 @@ private struct SeriesListRow: View {
     let detail: SeriesDetail
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(detail.series.name).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
-                    if let author = detail.series.author { Text(author).foregroundStyle(DesignTokens.secondaryText(scheme)) }
-                }
-                Spacer(minLength: 8); StatusChip(statusName(detail.series.effectiveStatus), symbol: statusSymbol(detail.series.effectiveStatus), tone: detail.series.effectiveStatus == .waiting ? .neutral : .active)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top) { identity; Spacer(minLength: 8); status }
+                VStack(alignment: .leading, spacing: 8) { identity; status }
             }
             Text(totalLabel(detail)).foregroundStyle(DesignTokens.secondaryText(scheme))
             if detail.confirmedTotal > 0 { ReadingProgressBar(.pages(current: detail.readConfirmed, total: detail.confirmedTotal)) }
             if let next = detail.nextBook { Text("Next: \(next.title)").font(DesignTokens.functionalFont(size: 14, weight: .medium)) }
         }.padding(.vertical, 12).overlay(alignment: .bottom) { Divider() }
             .accessibilityElement(children: .combine).accessibilityIdentifier("series.row.\(detail.series.id)")
+    }
+    @ViewBuilder private var identity: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(detail.series.name).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
+            if let author = detail.series.author { Text(author).foregroundStyle(DesignTokens.secondaryText(scheme)) }
+        }
+    }
+    private var status: some View {
+        StatusChip(statusName(detail.series.effectiveStatus), symbol: statusSymbol(detail.series.effectiveStatus), tone: detail.series.effectiveStatus == .waiting ? .neutral : .active)
     }
 }
 
