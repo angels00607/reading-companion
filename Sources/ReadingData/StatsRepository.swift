@@ -30,6 +30,7 @@ extension LocalStore: StatsRepository {
             }
             let firstPage:Int?=obs.first?["previous_page"]
             let coverage = !obs.isEmpty && deltas.count == obs.count && firstPage == 0 && row["progress_mode"] as String == "page"
+            let pageSubtotal=deltas.reduce(0,+)
             let state:String=row["rating_state"]
             let rating:Rating = state == "rated" ? try .validatedStars(row["rating_whole"]) : state == "unrated" ? .noRating : .unknown
             let rawFormat:String?=row["journal_format"]
@@ -37,7 +38,7 @@ extension LocalStore: StatsRepository {
             return StatsReading(id:UUID(uuidString:rid)!,bookID:UUID(uuidString:row["book_id"])!,title:row["title"],author:row["author"],
                 coverReference:bookCover ?? editionCover,status:ReadingStatus(rawValue:row["status"])!,finish:try statsDate(row["finish_date"]),
                 rating:rating,genre:row["primary_genre"],format:rawFormat.flatMap(JournalFormat.init(rawValue:)),
-                observedPages:deltas.isEmpty ? nil : deltas.reduce(0,+),pageCoverageComplete:coverage,
+                observedPages:deltas.isEmpty || pageSubtotal < 0 ? nil : pageSubtotal,pageCoverageComplete:coverage && pageSubtotal >= 0,
                 activityDates:try (byActivity[rid] ?? []).map { try statsDate($0["activity_date"])! })
         }
         let selections=try Row.fetchAll(db,sql:"SELECT * FROM best_book_selections WHERE owner_id=?",arguments:[ownerID.uuidString]).map { row in

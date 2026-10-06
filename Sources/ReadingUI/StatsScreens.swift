@@ -12,12 +12,12 @@ public struct StatsHome: View {
     @State private var volumeStart: Int
     @State private var snapshot: StatsSnapshot?
     @State private var choosePeriod=false
-    public init(period: StatsPeriod? = nil, journal: Bool = false, volumeStart: Int = 2026) {
+    public init(period: StatsPeriod? = nil, journal: Bool = false, volumeStart: Int? = nil) {
         let p=period ?? .month(year:BooksModel.today.year,month:BooksModel.today.month)
         _scope=State(initialValue:p.selectionScope == "month" ? "Month" : p.selectionScope == "year" ? "Year" : "Lifetime")
         _year=State(initialValue:p.year ?? BooksModel.today.year)
         if case let .month(_,m)=p { _month=State(initialValue:m) } else { _month=State(initialValue:BooksModel.today.month) }
-        _journal=State(initialValue:journal); _volumeStart=State(initialValue:volumeStart)
+        _journal=State(initialValue:journal); _volumeStart=State(initialValue:volumeStart ?? min(9995,BooksModel.today.year))
     }
     private var period: StatsPeriod {
         switch scope { case "Month": .month(year:year,month:month); case "Year": .year(year); default: journal ? .volume(startYear:volumeStart) : .lifetime }
@@ -105,6 +105,7 @@ public struct StatsHome: View {
             Text(scope=="Month" ? "Monthly double page" : scope=="Year" ? "Yearly statistics · two pages" : "Lifetime statistics · five-year volume")
                 .font(DesignTokens.functionalFont(size:14)).foregroundStyle(DesignTokens.secondaryText(scheme))
             if scope=="Lifetime" { Text("Choose the five years that match your physical volume. This view does not assign or archive a volume for you.").font(DesignTokens.functionalFont(size:14)) }
+            if s.undatedCompletions>0 { Text("\(s.undatedCompletions) completed readings have no finish date and cannot be assigned to these physical pages.").font(DesignTokens.functionalFont(size:14)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
             VStack(alignment:.leading,spacing:20) {
                 StatsMetric(title:"Books Read",value:s.books.formatted(),detail:"Completed readings, including rereads. DNF excluded.",id:"stats.books")
                 StatsMetric(title:"Pages Read",value:s.pages.display,detail:pageDetail(s),id:"stats.pages")
@@ -113,6 +114,19 @@ public struct StatsHome: View {
                 StatsDistribution(title:"Primary Genres",values:s.genres)
                 StatsDistribution(title:"Formats",values:s.formats)
             }.padding(16).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:14))
+            if scope=="Lifetime" {
+                ForEach(volumeStart...(volumeStart+4),id:\.self) { y in
+                    let annual=StatsRules.snapshot(period:.year(y),readings:s.allReadings,selections:s.selections)
+                    VStack(alignment:.leading,spacing:8) {
+                        Text(String(y)).font(DesignTokens.functionalFont(size:20,relativeTo:.title2,weight:.semiBold)).accessibilityIdentifier("stats.journal.year.\(y)")
+                        Text("\(annual.books) Books Read")
+                        Text("Pages Read: \(annual.pages.display)")
+                        Text("Reading Days: \(annual.readingDays.display)")
+                        Text("Book of Year: \(annual.selection?.readingID == nil ? "Not selected" : annual.selected?.title ?? "Selection retained · book unavailable")").fixedSize(horizontal:false,vertical:true)
+                        if annual.selectionNeedsReview { Text("Book of Year choice needs review; preserved unchanged.") }
+                    }.padding(.vertical,12).overlay(alignment:.bottom) { DesignTokens.border(scheme).frame(height:1) }
+                }
+            }
             Text("Copy the recorded values and their coverage notes. Unknown is a valid entry; there is no duplicate data entry here.").font(DesignTokens.functionalFont(size:14)).foregroundStyle(DesignTokens.secondaryText(scheme))
         }
     }

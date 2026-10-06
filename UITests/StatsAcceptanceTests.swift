@@ -84,6 +84,12 @@ final class StatsAcceptanceTests:XCTestCase {
                         reveal(app,app.staticTexts["Reading over time"]); capture(app,"\(prefix)-\(route)-chart")
                         app.swipeUp(); capture(app,"\(prefix)-\(route)-chart-lower")
                     }
+                    if route=="journal-lifetime" {
+                        for y in [2026,2030] {
+                            reveal(app,app.staticTexts["stats.journal.year.\(y)"]); capture(app,"\(prefix)-journal-lifetime-year-\(y)")
+                            app.swipeUp(); capture(app,"\(prefix)-journal-lifetime-year-\(y)-lower")
+                        }
+                    }
                     if !route.contains("lifetime") {
                         reveal(app,app.staticTexts["stats.best.empty"]); capture(app,"\(prefix)-\(route)-best-unselected")
                     }
@@ -92,6 +98,8 @@ final class StatsAcceptanceTests:XCTestCase {
             }
             for route in ["month","year"] {
                 let app=launch(route,appearance:appearance,size:size,selected:true,yearSelected:route=="year")
+                reveal(app,app.staticTexts[route=="month" ? "Best Book of the Month" : "Book of Year"])
+                capture(app,"\(prefix)-\(route)-best-selected-cover")
                 reveal(app,app.staticTexts["stats.best.title"])
                 capture(app,"\(prefix)-\(route)-best-selected")
                 tap(app,app.buttons["stats.best.choose"])

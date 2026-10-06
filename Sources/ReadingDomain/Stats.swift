@@ -74,6 +74,7 @@ public struct BestBookSelection: Codable, Equatable, Identifiable, Sendable {
 }
 public struct StatsSnapshot: Sendable {
     public let period: StatsPeriod; public let readings: [StatsReading]; public let allReadings: [StatsReading]
+    public let selections: [BestBookSelection]
     public let books: Int; public let pages: StatsQuantity; public let readingDays: StatsQuantity
     public let averageRating: Double?; public let ratedCount: Int; public let noRatingCount: Int; public let unknownRatingCount: Int
     public let genres: [StatsCategory]; public let formats: [StatsCategory]; public let time: [StatsTimePoint]
@@ -85,6 +86,7 @@ public enum StatsError: Error { case invalidPeriod, ineligibleSelection, invalid
 public enum StatsRules {
     public static func snapshot(period: StatsPeriod, readings all: [StatsReading], selections: [BestBookSelection]) -> StatsSnapshot {
         let completed = all.filter { $0.status == .read }
+        let completedByID=Dictionary(grouping:completed,by:\.id).compactMapValues(\.first)
         let items = completed.filter { period.contains($0.finish) }
         let undated = completed.filter { $0.finish == nil }.count
         let knownPages = items.compactMap(\.observedPages)
@@ -108,7 +110,7 @@ public enum StatsRules {
         if case let .year(y) = period {
             let ids = Set(selections.filter { s in
                 s.scope == "month" && s.period.hasPrefix(String(format:"%04d-",y)) &&
-                completed.contains { $0.id == s.readingID && $0.finish.map { String(format:"%04d-%02d",$0.year,$0.month) } == s.period }
+                s.readingID.flatMap { completedByID[$0]?.finish }.map { String(format:"%04d-%02d",$0.year,$0.month) } == s.period
             }.compactMap(\.readingID))
             candidates = items.filter { ids.contains($0.id) }
         } else { candidates = period.selectionScope == "month" ? items : [] }
@@ -119,7 +121,7 @@ public enum StatsRules {
             let ordered=values.filter { $0.finish != nil }.sorted { $0.finish! < $1.finish! }
             return ordered.dropFirst().map(\.id)
         })
-        return StatsSnapshot(period:period,readings:items,allReadings:all,books:items.count,pages:pages,readingDays:activity,
+        return StatsSnapshot(period:period,readings:items,allReadings:all,selections:selections,books:items.count,pages:pages,readingDays:activity,
             averageRating:ratings.isEmpty ? nil : Double(ratings.reduce(0,+))/Double(ratings.count),ratedCount:ratings.count,
             noRatingCount:noRating,unknownRatingCount:items.count-ratings.count-noRating,
             genres:categories(items.map { $0.genre ?? "Unknown" }),formats:categories(items.map { $0.format?.rawValue.capitalized ?? "Unknown" }),
@@ -128,22 +130,24 @@ public enum StatsRules {
     }
     private static func timeline(_ period: StatsPeriod, _ completed: [StatsReading], _ undated: Int) -> [StatsTimePoint] {
         let dated = completed.filter { $0.finish != nil }
-        func point(_ id: String, _ label: String, _ values: [StatsReading]) -> StatsTimePoint {
-            .init(id:id,label:label,count:values.isEmpty && undated > 0 ? nil : values.count)
+        let dates=Dictionary(grouping:dated,by:{ $0.finish!.isoString }).mapValues(\.count)
+        let months=Dictionary(grouping:dated,by:{ String(format:"%04d-%02d",$0.finish!.year,$0.finish!.month) }).mapValues(\.count)
+        let years=Dictionary(grouping:dated,by:{ $0.finish!.year }).mapValues(\.count)
+        func point(_ id: String, _ label: String, _ count: Int) -> StatsTimePoint {
+            .init(id:id,label:label,count:count == 0 && undated > 0 ? nil : count)
         }
         switch period {
         case let .month(y,m):
             var cal=Calendar(identifier:.gregorian); cal.timeZone=TimeZone(secondsFromGMT:0)!
             let date=cal.date(from:DateComponents(year:y,month:m,day:1))!
             return (1...cal.range(of:.day,in:.month,for:date)!.count).map { d in
-                point("\(d)","\(d)",dated.filter { $0.finish?.year==y && $0.finish?.month==m && $0.finish?.day==d })
+                point("\(d)","\(d)",dates[String(format:"%04d-%02d-%02d",y,m,d)] ?? 0)
             }
-        case let .year(y): return (1...12).map { m in point("\(m)",DateFormatter().shortMonthSymbols[m-1],dated.filter { $0.finish?.year==y && $0.finish?.month==m }) }
-        case let .volume(y): return (y...min(9999,y+4)).map { n in point("\(n)","\(n)",dated.filter { $0.finish?.year==n }) }
+        case let .year(y): return (1...12).map { m in point("\(m)",DateFormatter().shortMonthSymbols[m-1],months[String(format:"%04d-%02d",y,m)] ?? 0) }
+        case let .volume(y): return (y...min(9999,y+4)).map { n in point("\(n)","\(n)",years[n] ?? 0) }
         case .lifetime:
-            let years=dated.compactMap { $0.finish?.year }
-            guard let first=years.min(), let last=years.max() else { return [] }
-            return (first...last).map { y in point("\(y)","\(y)",dated.filter { $0.finish?.year==y }) }
+            guard let first=years.keys.min(), let last=years.keys.max() else { return [] }
+            return (first...last).map { y in point("\(y)","\(y)",years[y] ?? 0) }
         }
     }
 }

@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: swift --version
       - name: Targeted Stats Swift tests
-        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') || (github.event_name == 'push' && contains(github.event.head_commit.message, '[phase6-targeted]'))) }}
+        if: ${{ ((github.event_name == 'workflow_dispatch' && (inputs.stage == 'targeted' || inputs.stage == 'qa')) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[phase6-targeted]') || contains(github.event.head_commit.message, '[phase6-qa]')))) }}
         run: swift test --filter Phase6Stats
       - name: Full Swift regression suite
         if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase6-targeted]') && !contains(github.event.head_commit.message, '[phase6-qa]'))) }}
