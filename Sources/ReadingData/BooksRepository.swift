@@ -219,6 +219,7 @@ extension LocalStore: BooksRepository {
             let effects = try ReadingRules.finish(&reading, confirmed: confirmed, date: date, expectedRevision: revision)
             try save(reading, db: db)
             if effects.journalInbox { try createJournalCompletionWork(reading: reading, db: db) }
+            if effects.challengeAnalysis { try createChallengeCompletionWork(reading: reading, db: db) }
             try command(id: readingID, kind: "reading.finish", revision: revision, payload: reading, db: db)
         }
     }

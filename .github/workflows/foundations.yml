@@ -1,4 +1,4 @@
-name: Phase 4 Series
+name: Phase 5 Challenges
 on:
   push:
   pull_request:
@@ -7,7 +7,7 @@ permissions:
 jobs:
   native:
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
       - run: swift --version
@@ -28,7 +28,26 @@ jobs:
           with open(os.environ['GITHUB_ENV'], 'a') as env:
               env.write('READING_SIMULATOR_ID=' + phone['udid'] + '\n')
           PY
+      - name: Challenges acceptance and Human Visual QA
+        run: |
+          xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Challenges.xcresult -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests CODE_SIGNING_ALLOWED=NO test
+      - name: Export Challenges evidence
+        if: always()
+        run: |
+          if [ -d work/Challenges.xcresult ]; then
+            xcrun xcresulttool export attachments --path work/Challenges.xcresult --output-path work/challenges-screenshots
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase-5-challenges-visual-qa
+          path: |
+            work/Challenges.xcresult
+            work/challenges-screenshots
       - name: Journal acceptance and Human Visual QA
+        if: always()
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
@@ -47,6 +66,7 @@ jobs:
             work/Journal.xcresult
             work/journal-screenshots
       - name: Series acceptance and Human Visual QA
+        if: always()
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
@@ -65,6 +85,7 @@ jobs:
             work/Series.xcresult
             work/series-screenshots
       - name: Books Core acceptance and Human Visual QA
+        if: always()
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
@@ -125,6 +146,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: python3 scripts/test_local_schema.py
       - run: python3 scripts/test_books_schema.py
+      - run: python3 scripts/test_challenges_schema.py
   supabase:
     runs-on: ubuntu-latest
     steps:

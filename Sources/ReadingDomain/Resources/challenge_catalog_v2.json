@@ -1,0 +1,5038 @@
+{
+  "A": [
+    {
+      "challenge": "seasonal",
+      "key": "spring.1",
+      "text": "Animal on Cover",
+      "order": 1,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "spring.2",
+      "text": "Flower Shop",
+      "order": 2,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "spring.3",
+      "text": "Character Named after Flower/Plant",
+      "order": 3,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "spring.4",
+      "text": "Colorful Cover",
+      "order": 4,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "spring.5",
+      "text": "Bird on Cover",
+      "order": 5,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.1",
+      "text": "Coastal Town",
+      "order": 6,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.2",
+      "text": "Road Trip",
+      "order": 7,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.3",
+      "text": "Sunglasses on Cover",
+      "order": 8,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.4",
+      "text": "Island",
+      "order": 9,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.5",
+      "text": "Summer Festival",
+      "order": 10,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.1",
+      "text": "Forest on Cover",
+      "order": 11,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.2",
+      "text": "School/University",
+      "order": 12,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.3",
+      "text": "Halloween Elements",
+      "order": 13,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.4",
+      "text": "Cozy Sweater",
+      "order": 14,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.5",
+      "text": "Leaves on Cover",
+      "order": 15,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.1",
+      "text": "Set Somewhere Cold",
+      "order": 16,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.2",
+      "text": "Winter Sport",
+      "order": 17,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.3",
+      "text": "Snowstorm",
+      "order": 18,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.4",
+      "text": "Cozy Winter Cover",
+      "order": 19,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.5",
+      "text": "Cabin",
+      "order": 20,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.1",
+      "text": "Enemies to Lovers",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.2",
+      "text": "Friends to Lovers",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.3",
+      "text": "Fake Dating",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.4",
+      "text": "Marriage of Convenience",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.5",
+      "text": "Forced Proximity",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.6",
+      "text": "Slow Burn",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.7",
+      "text": "Only One Bed",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.8",
+      "text": "Grumpy × Sunshine",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.9",
+      "text": "Found Family",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.10",
+      "text": "Second Chance",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.11",
+      "text": "Forbidden Love",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.12",
+      "text": "Morally Grey Hero",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.13",
+      "text": "Royal Romance",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.14",
+      "text": "Opposites Attract",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.15",
+      "text": "Secret Identity",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.16",
+      "text": "Hidden Powers",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.17",
+      "text": "Academy Setting",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.18",
+      "text": "Fated Mates",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.19",
+      "text": "Arranged Marriage",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.20",
+      "text": "Best Friend’s Brother",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.1",
+      "text": "The Grump",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.2",
+      "text": "Golden Retriever",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.3",
+      "text": "Playboy",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.4",
+      "text": "Morally Grey Hero",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.5",
+      "text": "Protective Hero",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.6",
+      "text": "Strong Heroine",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.7",
+      "text": "Loyal Sidekick",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.8",
+      "text": "Boy Next Door",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.9",
+      "text": "Hopeless Romantic",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.10",
+      "text": "Rival",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.11",
+      "text": "Warrior",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.12",
+      "text": "Healer",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.13",
+      "text": "Trickster",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.14",
+      "text": "Monster with a Heart",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.15",
+      "text": "Single Parent",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.16",
+      "text": "Chosen One",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.17",
+      "text": "Mentor",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.18",
+      "text": "Royal",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.19",
+      "text": "Nerd/Bookworm",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.20",
+      "text": "Introvert",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.1",
+      "text": "New York City",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.2",
+      "text": "London",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.3",
+      "text": "Boston",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.4",
+      "text": "Chicago",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.5",
+      "text": "Los Angeles",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.6",
+      "text": "Paris",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.7",
+      "text": "Seattle",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.8",
+      "text": "San Francisco",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.9",
+      "text": "Toronto",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.10",
+      "text": "Washington, D.C",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.1",
+      "text": "Rome",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.2",
+      "text": "Dublin",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.3",
+      "text": "Barcelona",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.4",
+      "text": "Sydney",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.5",
+      "text": "Tokyo",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.6",
+      "text": "Amsterdam",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.7",
+      "text": "Florence",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.8",
+      "text": "Lisbon",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.9",
+      "text": "Vancouver",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.10",
+      "text": "Edinburgh",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "1.1",
+      "text": "New-to-You Author",
+      "order": 1,
+      "month": 1,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "1.2",
+      "text": "First in Series",
+      "order": 2,
+      "month": 1,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "1.3",
+      "text": "Been Meaning",
+      "order": 3,
+      "month": 1,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "2.1",
+      "text": "Enemies Before Lovers",
+      "order": 4,
+      "month": 2,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "2.2",
+      "text": "City You Love",
+      "order": 5,
+      "month": 2,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "2.3",
+      "text": "Against the Odds",
+      "order": 6,
+      "month": 2,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "3.1",
+      "text": "Genre Never Read",
+      "order": 7,
+      "month": 3,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "3.2",
+      "text": "Wouldn’t Normally Pick",
+      "order": 8,
+      "month": 3,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "3.3",
+      "text": "Judge by Cover",
+      "order": 9,
+      "month": 3,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "4.1",
+      "text": "Flowers Cover",
+      "order": 10,
+      "month": 4,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "4.2",
+      "text": "New Beginnings",
+      "order": 11,
+      "month": 4,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "4.3",
+      "text": "Countryside",
+      "order": 12,
+      "month": 4,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "5.1",
+      "text": "Magical Creature",
+      "order": 13,
+      "month": 5,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "5.2",
+      "text": "Fairytale-Inspired",
+      "order": 14,
+      "month": 5,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "5.3",
+      "text": "Magical Object",
+      "order": 15,
+      "month": 5,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "6.1",
+      "text": "Set by the Sea",
+      "order": 16,
+      "month": 6,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "6.2",
+      "text": "Summer Romance",
+      "order": 17,
+      "month": 6,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "6.3",
+      "text": "Sunny Cover",
+      "order": 18,
+      "month": 6,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "7.1",
+      "text": "Unknown Place",
+      "order": 19,
+      "month": 7,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "7.2",
+      "text": "Quest/Mission",
+      "order": 20,
+      "month": 7,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "7.3",
+      "text": "Wilderness",
+      "order": 21,
+      "month": 7,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "8.1",
+      "text": "TBR >1y",
+      "order": 22,
+      "month": 8,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "8.2",
+      "text": "Older by Favorite Author",
+      "order": 23,
+      "month": 8,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "8.3",
+      "text": "Forgotten TBR",
+      "order": 24,
+      "month": 8,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "9.1",
+      "text": "School/University",
+      "order": 25,
+      "month": 9,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "9.2",
+      "text": "Ambitious Character",
+      "order": 26,
+      "month": 9,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "9.3",
+      "text": "Teaches Something",
+      "order": 27,
+      "month": 9,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "10.1",
+      "text": "Murder Mystery",
+      "order": 28,
+      "month": 10,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "10.2",
+      "text": "Secret Society",
+      "order": 29,
+      "month": 10,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "10.3",
+      "text": "Curse",
+      "order": 30,
+      "month": 10,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "11.1",
+      "text": "Small-Town",
+      "order": 31,
+      "month": 11,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "11.2",
+      "text": "Bookshop/Library",
+      "order": 32,
+      "month": 11,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "11.3",
+      "text": "Comfort Read",
+      "order": 33,
+      "month": 11,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "12.1",
+      "text": "Winter",
+      "order": 34,
+      "month": 12,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "12.2",
+      "text": "Holiday Romance",
+      "order": 35,
+      "month": 12,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "12.3",
+      "text": "Somewhere Cold",
+      "order": 36,
+      "month": 12,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "1",
+      "text": "A",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "2",
+      "text": "B",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "3",
+      "text": "C",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "4",
+      "text": "D",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "5",
+      "text": "E",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "6",
+      "text": "F",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "7",
+      "text": "G",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "8",
+      "text": "H",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "9",
+      "text": "I",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "10",
+      "text": "J",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "11",
+      "text": "K",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "12",
+      "text": "L",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "13",
+      "text": "M",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "14",
+      "text": "N",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "15",
+      "text": "O",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "16",
+      "text": "P",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "17",
+      "text": "Q",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "18",
+      "text": "R",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "19",
+      "text": "S",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "20",
+      "text": "T",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "21",
+      "text": "U",
+      "order": 21,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "22",
+      "text": "V",
+      "order": 22,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "23",
+      "text": "W",
+      "order": 23,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "24",
+      "text": "X",
+      "order": 24,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "25",
+      "text": "Y",
+      "order": 25,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "26",
+      "text": "Z",
+      "order": 26,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "1",
+      "text": "Week 1",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "2",
+      "text": "Week 2",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "3",
+      "text": "Week 3",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "4",
+      "text": "Week 4",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "5",
+      "text": "Week 5",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "6",
+      "text": "Week 6",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "7",
+      "text": "Week 7",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "8",
+      "text": "Week 8",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "9",
+      "text": "Week 9",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "10",
+      "text": "Week 10",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "11",
+      "text": "Week 11",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "12",
+      "text": "Week 12",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "13",
+      "text": "Week 13",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "14",
+      "text": "Week 14",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "15",
+      "text": "Week 15",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "16",
+      "text": "Week 16",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "17",
+      "text": "Week 17",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "18",
+      "text": "Week 18",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "19",
+      "text": "Week 19",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "20",
+      "text": "Week 20",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "21",
+      "text": "Week 21",
+      "order": 21,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "22",
+      "text": "Week 22",
+      "order": 22,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "23",
+      "text": "Week 23",
+      "order": 23,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "24",
+      "text": "Week 24",
+      "order": 24,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "25",
+      "text": "Week 25",
+      "order": 25,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "26",
+      "text": "Week 26",
+      "order": 26,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "27",
+      "text": "Week 27",
+      "order": 27,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "28",
+      "text": "Week 28",
+      "order": 28,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "29",
+      "text": "Week 29",
+      "order": 29,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "30",
+      "text": "Week 30",
+      "order": 30,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "31",
+      "text": "Week 31",
+      "order": 31,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "32",
+      "text": "Week 32",
+      "order": 32,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "33",
+      "text": "Week 33",
+      "order": 33,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "34",
+      "text": "Week 34",
+      "order": 34,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "35",
+      "text": "Week 35",
+      "order": 35,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "36",
+      "text": "Week 36",
+      "order": 36,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "37",
+      "text": "Week 37",
+      "order": 37,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "38",
+      "text": "Week 38",
+      "order": 38,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "39",
+      "text": "Week 39",
+      "order": 39,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "40",
+      "text": "Week 40",
+      "order": 40,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "41",
+      "text": "Week 41",
+      "order": 41,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "42",
+      "text": "Week 42",
+      "order": 42,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "43",
+      "text": "Week 43",
+      "order": 43,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "44",
+      "text": "Week 44",
+      "order": 44,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "45",
+      "text": "Week 45",
+      "order": 45,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "46",
+      "text": "Week 46",
+      "order": 46,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "47",
+      "text": "Week 47",
+      "order": 47,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "48",
+      "text": "Week 48",
+      "order": 48,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "49",
+      "text": "Week 49",
+      "order": 49,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "50",
+      "text": "Week 50",
+      "order": 50,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "51",
+      "text": "Week 51",
+      "order": 51,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "52",
+      "text": "Week 52",
+      "order": 52,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "1",
+      "text": "1",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "2",
+      "text": "2",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "3",
+      "text": "3",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "4",
+      "text": "4",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "5",
+      "text": "5",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "6",
+      "text": "6",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "7",
+      "text": "7",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "8",
+      "text": "8",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "9",
+      "text": "9",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "10",
+      "text": "10",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "11",
+      "text": "11",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "12",
+      "text": "12",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "13",
+      "text": "13",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "14",
+      "text": "14",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "15",
+      "text": "15",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "16",
+      "text": "16",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "17",
+      "text": "17",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "18",
+      "text": "18",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "19",
+      "text": "19",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "20",
+      "text": "20",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "21",
+      "text": "21",
+      "order": 21,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "22",
+      "text": "22",
+      "order": 22,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "23",
+      "text": "23",
+      "order": 23,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "24",
+      "text": "24",
+      "order": 24,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "25",
+      "text": "25",
+      "order": 25,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "26",
+      "text": "26",
+      "order": 26,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "27",
+      "text": "27",
+      "order": 27,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "28",
+      "text": "28",
+      "order": 28,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "29",
+      "text": "29",
+      "order": 29,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "30",
+      "text": "30",
+      "order": 30,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "31",
+      "text": "31",
+      "order": 31,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "32",
+      "text": "32",
+      "order": 32,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "33",
+      "text": "33",
+      "order": 33,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "34",
+      "text": "34",
+      "order": 34,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "35",
+      "text": "35",
+      "order": 35,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "36",
+      "text": "36",
+      "order": 36,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "37",
+      "text": "37",
+      "order": 37,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "38",
+      "text": "38",
+      "order": 38,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "39",
+      "text": "39",
+      "order": 39,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "40",
+      "text": "40",
+      "order": 40,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "41",
+      "text": "41",
+      "order": 41,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "42",
+      "text": "42",
+      "order": 42,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "43",
+      "text": "43",
+      "order": 43,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "44",
+      "text": "44",
+      "order": 44,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "45",
+      "text": "45",
+      "order": 45,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "46",
+      "text": "46",
+      "order": 46,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "47",
+      "text": "47",
+      "order": 47,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "48",
+      "text": "48",
+      "order": 48,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "49",
+      "text": "49",
+      "order": 49,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "50",
+      "text": "50",
+      "order": 50,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "51",
+      "text": "51",
+      "order": 51,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "52",
+      "text": "52",
+      "order": 52,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "53",
+      "text": "53",
+      "order": 53,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "54",
+      "text": "54",
+      "order": 54,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "55",
+      "text": "55",
+      "order": 55,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "56",
+      "text": "56",
+      "order": 56,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "57",
+      "text": "57",
+      "order": 57,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "58",
+      "text": "58",
+      "order": 58,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "59",
+      "text": "59",
+      "order": 59,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "60",
+      "text": "60",
+      "order": 60,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "61",
+      "text": "61",
+      "order": 61,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "62",
+      "text": "62",
+      "order": 62,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "63",
+      "text": "63",
+      "order": 63,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "64",
+      "text": "64",
+      "order": 64,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "65",
+      "text": "65",
+      "order": 65,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "66",
+      "text": "66",
+      "order": 66,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "67",
+      "text": "67",
+      "order": 67,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "68",
+      "text": "68",
+      "order": 68,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "69",
+      "text": "69",
+      "order": 69,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "70",
+      "text": "70",
+      "order": 70,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "71",
+      "text": "71",
+      "order": 71,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "72",
+      "text": "72",
+      "order": 72,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "73",
+      "text": "73",
+      "order": 73,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "74",
+      "text": "74",
+      "order": 74,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "75",
+      "text": "75",
+      "order": 75,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "76",
+      "text": "76",
+      "order": 76,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "77",
+      "text": "77",
+      "order": 77,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "78",
+      "text": "78",
+      "order": 78,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "79",
+      "text": "79",
+      "order": 79,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "80",
+      "text": "80",
+      "order": 80,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "81",
+      "text": "81",
+      "order": 81,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "82",
+      "text": "82",
+      "order": 82,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "83",
+      "text": "83",
+      "order": 83,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "84",
+      "text": "84",
+      "order": 84,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "85",
+      "text": "85",
+      "order": 85,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "86",
+      "text": "86",
+      "order": 86,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "87",
+      "text": "87",
+      "order": 87,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "88",
+      "text": "88",
+      "order": 88,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "89",
+      "text": "89",
+      "order": 89,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "90",
+      "text": "90",
+      "order": 90,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "91",
+      "text": "91",
+      "order": 91,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "92",
+      "text": "92",
+      "order": 92,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "93",
+      "text": "93",
+      "order": 93,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "94",
+      "text": "94",
+      "order": 94,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "95",
+      "text": "95",
+      "order": 95,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "96",
+      "text": "96",
+      "order": 96,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "97",
+      "text": "97",
+      "order": 97,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "98",
+      "text": "98",
+      "order": 98,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "99",
+      "text": "99",
+      "order": 99,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "100",
+      "text": "100",
+      "order": 100,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "1",
+      "text": null,
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "2",
+      "text": null,
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "3",
+      "text": null,
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "4",
+      "text": null,
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "5",
+      "text": null,
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "6",
+      "text": null,
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "7",
+      "text": null,
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "8",
+      "text": null,
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "9",
+      "text": null,
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "10",
+      "text": null,
+      "order": 10,
+      "month": null,
+      "months": null
+    }
+  ],
+  "B": [
+    {
+      "challenge": "seasonal",
+      "key": "spring.1",
+      "text": "Flowers on Cover",
+      "order": 1,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "spring.2",
+      "text": "Countryside",
+      "order": 2,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "spring.3",
+      "text": "Picnic",
+      "order": 3,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "spring.4",
+      "text": "Rainy Setting",
+      "order": 4,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "spring.5",
+      "text": "Farm",
+      "order": 5,
+      "month": null,
+      "months": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.1",
+      "text": "Beach on Cover",
+      "order": 6,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.2",
+      "text": "Summer Camp",
+      "order": 7,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.3",
+      "text": "Boat",
+      "order": 8,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.4",
+      "text": "Hot Weather",
+      "order": 9,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "summer.5",
+      "text": "Summer Break",
+      "order": 10,
+      "month": null,
+      "months": [
+        6,
+        7,
+        8
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.1",
+      "text": "Pumpkin on Cover",
+      "order": 11,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.2",
+      "text": "Library Setting",
+      "order": 12,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.3",
+      "text": "Mystery/Investigation",
+      "order": 13,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.4",
+      "text": "Harvest/Farm Market",
+      "order": 14,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "autumn.5",
+      "text": "Bonfire",
+      "order": 15,
+      "month": null,
+      "months": [
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.1",
+      "text": "Snow on Cover",
+      "order": 16,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.2",
+      "text": "Holiday Romance",
+      "order": 17,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.3",
+      "text": "Ice Skating",
+      "order": 18,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.4",
+      "text": "Christmas Market",
+      "order": 19,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "seasonal",
+      "key": "winter.5",
+      "text": "Winter Festival",
+      "order": 20,
+      "month": null,
+      "months": [
+        12,
+        1,
+        2
+      ]
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.1",
+      "text": "Sports Romance",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.2",
+      "text": "Brother’s Best Friend",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.3",
+      "text": "Pen Pals",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.4",
+      "text": "Single Parent",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.5",
+      "text": "Workplace Romance",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.6",
+      "text": "Small Town Romance",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.7",
+      "text": "Holiday Romance",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.8",
+      "text": "Roommates",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.9",
+      "text": "Neighbors to Lovers",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.10",
+      "text": "Childhood Friends to Lovers",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.11",
+      "text": "Age Gap",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.12",
+      "text": "Mistaken Identity",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.13",
+      "text": "Love at First Sight",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.14",
+      "text": "Friends with Benefits",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.15",
+      "text": "Love Triangle",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.16",
+      "text": "Amnesia",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.17",
+      "text": "Revenge",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.18",
+      "text": "He Falls First",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.19",
+      "text": "She Falls First",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "tropes",
+      "key": "prompt.20",
+      "text": "Surprise Pregnancy",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.1",
+      "text": "The Sunshine",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.2",
+      "text": "Ice Queen",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.3",
+      "text": "Bad Boy",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.4",
+      "text": "The Witch",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.5",
+      "text": "Cinnamon Roll",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.6",
+      "text": "Broken Hero",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.7",
+      "text": "The Loner",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.8",
+      "text": "The Workaholic",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.9",
+      "text": "Girl Next Door",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.10",
+      "text": null,
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.11",
+      "text": "The Immortal",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.12",
+      "text": "Assassin",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.13",
+      "text": "Caregiver",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.14",
+      "text": "The Fae",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.15",
+      "text": "The Vampire",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.16",
+      "text": "Guardian",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.17",
+      "text": "Outcast",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.18",
+      "text": "Prodigy",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.19",
+      "text": "Commoner",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.20",
+      "text": "Popular One",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "archetype",
+      "key": "prompt.21",
+      "text": "Social Butterfly",
+      "order": 21,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.1",
+      "text": "New York City",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.2",
+      "text": "London",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.3",
+      "text": "Philadelphia",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.4",
+      "text": "Miami",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.5",
+      "text": "Nashville",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.6",
+      "text": "New Orleans",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.7",
+      "text": "Montreal",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.8",
+      "text": "Oxford",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.9",
+      "text": "Milan",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "easy.10",
+      "text": "Madrid",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.1",
+      "text": "Prague",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.2",
+      "text": "Vienna",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.3",
+      "text": "Copenhagen",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.4",
+      "text": "Athens",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.5",
+      "text": "Seoul",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.6",
+      "text": "Singapore",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.7",
+      "text": "Istanbul",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.8",
+      "text": "Melbourne",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.9",
+      "text": "Berlin",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "world",
+      "key": "challenge.10",
+      "text": "Porto",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "1.1",
+      "text": "Rare Genre",
+      "order": 1,
+      "month": 1,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "1.2",
+      "text": "Recent TBR",
+      "order": 2,
+      "month": 1,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "1.3",
+      "text": "Fresh Release",
+      "order": 3,
+      "month": 1,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "2.1",
+      "text": "Friends Before Lovers",
+      "order": 4,
+      "month": 2,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "2.2",
+      "text": "Unexpected",
+      "order": 5,
+      "month": 2,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "2.3",
+      "text": "More Than Romantic Love",
+      "order": 6,
+      "month": 2,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "3.1",
+      "text": "Let Someone Choose",
+      "order": 7,
+      "month": 3,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "3.2",
+      "text": "Unusual Premise",
+      "order": 8,
+      "month": 3,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "3.3",
+      "text": "Divides Readers",
+      "order": 9,
+      "month": 3,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "4.1",
+      "text": "Pastel Cover",
+      "order": 10,
+      "month": 4,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "4.2",
+      "text": "Personal Growth",
+      "order": 11,
+      "month": 4,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "4.3",
+      "text": "Nature-Based Powers",
+      "order": 12,
+      "month": 4,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "5.1",
+      "text": "Featuring a Witch",
+      "order": 13,
+      "month": 5,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "5.2",
+      "text": "Touch of Magic",
+      "order": 14,
+      "month": 5,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "5.3",
+      "text": "Whimsical Cover",
+      "order": 15,
+      "month": 5,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "6.1",
+      "text": "Vacation Gone Wrong",
+      "order": 16,
+      "month": 6,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "6.2",
+      "text": "Island",
+      "order": 17,
+      "month": 6,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "6.3",
+      "text": "Road Trip",
+      "order": 18,
+      "month": 6,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "7.1",
+      "text": "Dangerous Journey",
+      "order": 19,
+      "month": 7,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "7.2",
+      "text": "Search for Something Lost",
+      "order": 20,
+      "month": 7,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "7.3",
+      "text": "Unlikely Team",
+      "order": 21,
+      "month": 7,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "8.1",
+      "text": "Oldest TBR",
+      "order": 22,
+      "month": 8,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "8.2",
+      "text": "Bought Never Read",
+      "order": 23,
+      "month": 8,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "8.3",
+      "text": "Series to Continue",
+      "order": 24,
+      "month": 8,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "9.1",
+      "text": "Dark Academia",
+      "order": 25,
+      "month": 9,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "9.2",
+      "text": "Competition",
+      "order": 26,
+      "month": 9,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "9.3",
+      "text": "Mentor–Student",
+      "order": 27,
+      "month": 9,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "10.1",
+      "text": "Psychological Thriller",
+      "order": 28,
+      "month": 10,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "10.2",
+      "text": "Disappearance",
+      "order": 29,
+      "month": 10,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "10.3",
+      "text": "Dark Magic",
+      "order": 30,
+      "month": 10,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "11.1",
+      "text": "Autumn",
+      "order": 31,
+      "month": 11,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "11.2",
+      "text": "Family",
+      "order": 32,
+      "month": 11,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "11.3",
+      "text": "Food/Baking",
+      "order": 33,
+      "month": 11,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "12.1",
+      "text": "Winter Sport",
+      "order": 34,
+      "month": 12,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "12.2",
+      "text": null,
+      "order": 35,
+      "month": 12,
+      "months": null
+    },
+    {
+      "challenge": "monthly",
+      "key": "12.3",
+      "text": null,
+      "order": 36,
+      "month": 12,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "1",
+      "text": "A",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "2",
+      "text": "B",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "3",
+      "text": "C",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "4",
+      "text": "D",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "5",
+      "text": "E",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "6",
+      "text": "F",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "7",
+      "text": "G",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "8",
+      "text": "H",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "9",
+      "text": "I",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "10",
+      "text": "J",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "11",
+      "text": "K",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "12",
+      "text": "L",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "13",
+      "text": "M",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "14",
+      "text": "N",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "15",
+      "text": "O",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "16",
+      "text": "P",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "17",
+      "text": "Q",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "18",
+      "text": "R",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "19",
+      "text": "S",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "20",
+      "text": "T",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "21",
+      "text": "U",
+      "order": 21,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "22",
+      "text": "V",
+      "order": 22,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "23",
+      "text": "W",
+      "order": 23,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "24",
+      "text": "X",
+      "order": 24,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "25",
+      "text": "Y",
+      "order": 25,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "alphabet",
+      "key": "26",
+      "text": "Z",
+      "order": 26,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "1",
+      "text": "Week 1",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "2",
+      "text": "Week 2",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "3",
+      "text": "Week 3",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "4",
+      "text": "Week 4",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "5",
+      "text": "Week 5",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "6",
+      "text": "Week 6",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "7",
+      "text": "Week 7",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "8",
+      "text": "Week 8",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "9",
+      "text": "Week 9",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "10",
+      "text": "Week 10",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "11",
+      "text": "Week 11",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "12",
+      "text": "Week 12",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "13",
+      "text": "Week 13",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "14",
+      "text": "Week 14",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "15",
+      "text": "Week 15",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "16",
+      "text": "Week 16",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "17",
+      "text": "Week 17",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "18",
+      "text": "Week 18",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "19",
+      "text": "Week 19",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "20",
+      "text": "Week 20",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "21",
+      "text": "Week 21",
+      "order": 21,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "22",
+      "text": "Week 22",
+      "order": 22,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "23",
+      "text": "Week 23",
+      "order": 23,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "24",
+      "text": "Week 24",
+      "order": 24,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "25",
+      "text": "Week 25",
+      "order": 25,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "26",
+      "text": "Week 26",
+      "order": 26,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "27",
+      "text": "Week 27",
+      "order": 27,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "28",
+      "text": "Week 28",
+      "order": 28,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "29",
+      "text": "Week 29",
+      "order": 29,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "30",
+      "text": "Week 30",
+      "order": 30,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "31",
+      "text": "Week 31",
+      "order": 31,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "32",
+      "text": "Week 32",
+      "order": 32,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "33",
+      "text": "Week 33",
+      "order": 33,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "34",
+      "text": "Week 34",
+      "order": 34,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "35",
+      "text": "Week 35",
+      "order": 35,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "36",
+      "text": "Week 36",
+      "order": 36,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "37",
+      "text": "Week 37",
+      "order": 37,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "38",
+      "text": "Week 38",
+      "order": 38,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "39",
+      "text": "Week 39",
+      "order": 39,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "40",
+      "text": "Week 40",
+      "order": 40,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "41",
+      "text": "Week 41",
+      "order": 41,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "42",
+      "text": "Week 42",
+      "order": 42,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "43",
+      "text": "Week 43",
+      "order": 43,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "44",
+      "text": "Week 44",
+      "order": 44,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "45",
+      "text": "Week 45",
+      "order": 45,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "46",
+      "text": "Week 46",
+      "order": 46,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "47",
+      "text": "Week 47",
+      "order": 47,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "48",
+      "text": "Week 48",
+      "order": 48,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "49",
+      "text": "Week 49",
+      "order": 49,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "50",
+      "text": "Week 50",
+      "order": 50,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "51",
+      "text": "Week 51",
+      "order": 51,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "weeks",
+      "key": "52",
+      "text": "Week 52",
+      "order": 52,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "1",
+      "text": "1",
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "2",
+      "text": "2",
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "3",
+      "text": "3",
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "4",
+      "text": "4",
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "5",
+      "text": "5",
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "6",
+      "text": "6",
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "7",
+      "text": "7",
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "8",
+      "text": "8",
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "9",
+      "text": "9",
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "10",
+      "text": "10",
+      "order": 10,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "11",
+      "text": "11",
+      "order": 11,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "12",
+      "text": "12",
+      "order": 12,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "13",
+      "text": "13",
+      "order": 13,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "14",
+      "text": "14",
+      "order": 14,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "15",
+      "text": "15",
+      "order": 15,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "16",
+      "text": "16",
+      "order": 16,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "17",
+      "text": "17",
+      "order": 17,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "18",
+      "text": "18",
+      "order": 18,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "19",
+      "text": "19",
+      "order": 19,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "20",
+      "text": "20",
+      "order": 20,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "21",
+      "text": "21",
+      "order": 21,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "22",
+      "text": "22",
+      "order": 22,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "23",
+      "text": "23",
+      "order": 23,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "24",
+      "text": "24",
+      "order": 24,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "25",
+      "text": "25",
+      "order": 25,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "26",
+      "text": "26",
+      "order": 26,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "27",
+      "text": "27",
+      "order": 27,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "28",
+      "text": "28",
+      "order": 28,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "29",
+      "text": "29",
+      "order": 29,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "30",
+      "text": "30",
+      "order": 30,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "31",
+      "text": "31",
+      "order": 31,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "32",
+      "text": "32",
+      "order": 32,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "33",
+      "text": "33",
+      "order": 33,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "34",
+      "text": "34",
+      "order": 34,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "35",
+      "text": "35",
+      "order": 35,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "36",
+      "text": "36",
+      "order": 36,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "37",
+      "text": "37",
+      "order": 37,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "38",
+      "text": "38",
+      "order": 38,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "39",
+      "text": "39",
+      "order": 39,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "40",
+      "text": "40",
+      "order": 40,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "41",
+      "text": "41",
+      "order": 41,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "42",
+      "text": "42",
+      "order": 42,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "43",
+      "text": "43",
+      "order": 43,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "44",
+      "text": "44",
+      "order": 44,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "45",
+      "text": "45",
+      "order": 45,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "46",
+      "text": "46",
+      "order": 46,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "47",
+      "text": "47",
+      "order": 47,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "48",
+      "text": "48",
+      "order": 48,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "49",
+      "text": "49",
+      "order": 49,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "50",
+      "text": "50",
+      "order": 50,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "51",
+      "text": "51",
+      "order": 51,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "52",
+      "text": "52",
+      "order": 52,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "53",
+      "text": "53",
+      "order": 53,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "54",
+      "text": "54",
+      "order": 54,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "55",
+      "text": "55",
+      "order": 55,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "56",
+      "text": "56",
+      "order": 56,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "57",
+      "text": "57",
+      "order": 57,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "58",
+      "text": "58",
+      "order": 58,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "59",
+      "text": "59",
+      "order": 59,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "60",
+      "text": "60",
+      "order": 60,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "61",
+      "text": "61",
+      "order": 61,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "62",
+      "text": "62",
+      "order": 62,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "63",
+      "text": "63",
+      "order": 63,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "64",
+      "text": "64",
+      "order": 64,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "65",
+      "text": "65",
+      "order": 65,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "66",
+      "text": "66",
+      "order": 66,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "67",
+      "text": "67",
+      "order": 67,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "68",
+      "text": "68",
+      "order": 68,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "69",
+      "text": "69",
+      "order": 69,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "70",
+      "text": "70",
+      "order": 70,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "71",
+      "text": "71",
+      "order": 71,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "72",
+      "text": "72",
+      "order": 72,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "73",
+      "text": "73",
+      "order": 73,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "74",
+      "text": "74",
+      "order": 74,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "75",
+      "text": "75",
+      "order": 75,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "76",
+      "text": "76",
+      "order": 76,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "77",
+      "text": "77",
+      "order": 77,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "78",
+      "text": "78",
+      "order": 78,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "79",
+      "text": "79",
+      "order": 79,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "80",
+      "text": "80",
+      "order": 80,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "81",
+      "text": "81",
+      "order": 81,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "82",
+      "text": "82",
+      "order": 82,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "83",
+      "text": "83",
+      "order": 83,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "84",
+      "text": "84",
+      "order": 84,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "85",
+      "text": "85",
+      "order": 85,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "86",
+      "text": "86",
+      "order": 86,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "87",
+      "text": "87",
+      "order": 87,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "88",
+      "text": "88",
+      "order": 88,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "89",
+      "text": "89",
+      "order": 89,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "90",
+      "text": "90",
+      "order": 90,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "91",
+      "text": "91",
+      "order": 91,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "92",
+      "text": "92",
+      "order": 92,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "93",
+      "text": "93",
+      "order": 93,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "94",
+      "text": "94",
+      "order": 94,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "95",
+      "text": "95",
+      "order": 95,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "96",
+      "text": "96",
+      "order": 96,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "97",
+      "text": "97",
+      "order": 97,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "98",
+      "text": "98",
+      "order": 98,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "99",
+      "text": "99",
+      "order": 99,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "hundred",
+      "key": "100",
+      "text": "100",
+      "order": 100,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "1",
+      "text": null,
+      "order": 1,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "2",
+      "text": null,
+      "order": 2,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "3",
+      "text": null,
+      "order": 3,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "4",
+      "text": null,
+      "order": 4,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "5",
+      "text": null,
+      "order": 5,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "6",
+      "text": null,
+      "order": 6,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "7",
+      "text": null,
+      "order": 7,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "8",
+      "text": null,
+      "order": 8,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "9",
+      "text": null,
+      "order": 9,
+      "month": null,
+      "months": null
+    },
+    {
+      "challenge": "roulette",
+      "key": "10",
+      "text": null,
+      "order": 10,
+      "month": null,
+      "months": null
+    }
+  ]
+}

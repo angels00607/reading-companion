@@ -43,6 +43,7 @@ public struct ReadingDate: Codable, Equatable, Comparable, Sendable {
 public struct ISOWeek: Codable, Equatable, Sendable {
     public let year: Int
     public let week: Int
+    public init(year: Int, week: Int) { self.year = year; self.week = week }
 }
 public struct Book: Codable, Equatable, Sendable {
     public let id: UUID
