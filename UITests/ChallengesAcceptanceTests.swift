@@ -116,7 +116,13 @@ final class ChallengesAcceptanceTests: XCTestCase {
                     capture(app,"\(appearance)-\(size)-\(route)-missing-content")
                 }
                 if route == "2026" || route == "2028" { XCTAssertEqual(app.staticTexts["challenges.version"].label,"Version A") }
-                if route == "archive" { XCTAssertTrue(app.buttons["challenges.archived.2026"].exists) }
+                if route == "archive" {
+                    tap(app,app.buttons["challenges.archived.2026"])
+                    XCTAssertEqual(app.staticTexts["challenges.year"].label,"2026")
+                    XCTAssertEqual(app.staticTexts["challenges.version"].label,"Version A")
+                    XCTAssertTrue(app.scrollViews.firstMatch.exists)
+                    capture(app,"\(appearance)-\(size)-archive-2026-open")
+                }
                 if route == "roulette" { XCTAssertTrue(app.staticTexts["Prompts not configured"].exists); XCTAssertFalse(app.buttons["challenges.assign.1"].exists) }
                 if route == "tropes" {
                     tap(app,app.buttons["challenges.assign.prompt.1"])

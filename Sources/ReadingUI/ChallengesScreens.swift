@@ -152,7 +152,7 @@ struct ChallengeReviewScreen: View {
                     StatePresentation(kind: .empty, title: state.hasAnalysis ? "No more eligible matches" : "Not enough information", message: state.hasAnalysis ? "No remaining free prompt reaches 70% with the stored evidence. You can assign a book manually." : "Reliable book evidence is not available for semantic analysis. You can assign a book manually.")
                 }
                 Text("Automatic matching is unavailable. You can use saved suggestions or assign a book manually.")
-                challengeLink("Choose a challenge", id: "challenges.choose") { ChallengesHome(year: year) }
+                challengeLink("Choose a challenge", id: "challenges.choose") { BooksScreen("Challenges") { ChallengesHome(year: year) } }
             }
             BooksErrorMessage()
         }.onAppear(perform: reload).onChange(of: model.version) { _,_ in reload() }
@@ -229,7 +229,7 @@ struct ChallengeArchive: View {
         BooksScreen("Challenge Archive") {
             Text("Each year preserves its original prompts, version and confirmed assignments.")
             ForEach(snapshots) { snapshot in
-                challengeLink("\(snapshot.year) · Version \(snapshot.version.rawValue)", id: "challenges.archived." + String(snapshot.year)) { ChallengesHome(year: snapshot.year) }
+                challengeLink("\(snapshot.year) · Version \(snapshot.version.rawValue)", id: "challenges.archived." + String(snapshot.year)) { BooksScreen("Challenges") { ChallengesHome(year: snapshot.year) } }
             }
         }.onAppear {
             guard let repository = model.challengesRepository else { return }
