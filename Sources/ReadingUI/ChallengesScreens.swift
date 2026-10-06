@@ -256,7 +256,7 @@ private struct ChallengeJournalPreparation: View {
     }
 }
 
-@ViewBuilder private func challengeLink<Destination: View>(_ text: String, id: String, @ViewBuilder destination: () -> Destination) -> some View {
+@MainActor @ViewBuilder private func challengeLink<Destination: View>(_ text: String, id: String, @ViewBuilder destination: () -> Destination) -> some View {
     NavigationLink { destination() } label: {
         Label(text, systemImage: "chevron.right").padding(.vertical, 12).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
     }.buttonStyle(.plain).accessibilityIdentifier(id)
