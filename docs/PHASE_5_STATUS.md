@@ -29,12 +29,18 @@ The user explicitly approved preserving ISO week 53 as unconfigured and date-onl
 
 Historical imported readings never generate automatic proposals, placements, notification or reward cascades. Explicit manual historical assignment remains user-authoritative where finish-date eligibility is known.
 
+Unknown finish dates remain unknown. Explicit manual assignment can target an unscoped Challenge year chosen by the user, but Seasonal, Monthly and 52 Weeks still require an actual qualifying finish date. Alphabet uses title-based manual eligibility, not a manufactured semantic confidence score.
+
 Existing Foundation findings remain visible and deferred to Phase 12. No physical-device/VoiceOver certification is claimed.
 
 ## Validation
 
 Local SQLite: 17 baseline + 3 Books + 7 additive Challenges tests pass.
-Swift, iOS, Supabase/RLS, native acceptance flows and visual boards: pending CI.
+Swift: 92 tests pass on the current implementation (66 existing + 9 domain + 17 repository). Supabase/RLS: all 80 assertions pass (67 existing + 13 additive Challenges). iOS build and native acceptance/visual evidence are still being finalized.
+
+The first CI attempt exposed duplicate-title test fixtures in two ISO-week cases. Distinct fictional fixture titles corrected those setup failures; duplicate detection and all prior assertions remain intact. Later inspection corrected December's unavailable-slot display to its month-local #2/#3 identities. No missing catalog content was supplied.
+
+Run `37438742316` mapped a 22-point accessible frame to the live Review Matches link and mapped failed manual selection to row identifiers overriding nested link identifiers. The targeted fix gives shared Challenge links explicit vertical padding/plain button style and removes the redundant row identifier. Native assertions still require 44×44 points. The test scroll helper locates lazily rendered controls before asserting existence, without excluding controls or changing target thresholds. Screenshot inspection also identified vertical dividers in overview/prompt rows; explicit one-point horizontal separators replace them. Archive labels now read the persisted snapshot version directly.
 
 ## Implementation notes
 
@@ -43,3 +49,23 @@ The catalog resource is copied from `CHALLENGE_CATALOG.md`, retaining Archetype 
 Snapshots reuse Foundation tables. SQLite v6 and Supabase `202610060001_challenges.sql` preserve all old migrations/data, add analysis/rejection provenance and a general persistent `attention_items` table using the existing category model. Raw cloud mutations remain denied pending Phase 9 command transport.
 
 Confirmed Challenge assignments make only the Challenges Journal component ready. Copied payload changes enter existing `journal_corrections`; Book Review readiness is independent. No second Journal Session is introduced.
+
+Reliable stored semantic candidates retain exact integer confidence and source/reference/explanation/fingerprint. Only the best eligible free candidate at or above 70% is exposed. Confirm is explicit/idempotent. Reject takes no reason and suppresses the canonical Book/prompt/evidence identity; a material evidence revision can propose again while retiring superseded unconfirmed candidates. Confirmed assignments are never replaced by a higher score.
+
+52 Weeks uses ISO week-year and calendar finish dates. Date-only ties have no arbitrary ordering. Explicit same-week replacement is permitted; cross-week borrowing is rejected. 100 Books fills completion slots without semantic analysis or confidence. Explicit clears remain cleared, rather than being silently repopulated. Date corrections preserve confirmed decisions and create eligibility Attention where needed.
+
+Every stored decision uses owner-scoped SQLite transactions and the existing durable outbox. Archive reads the stored configuration, not the current catalog. Production cloud command transport remains denied until Phase 9; this phase does not deploy a production database or claim sync conflict resolution.
+
+## Acceptance evidence map
+
+| Flow | Coverage |
+| --- | --- |
+| A — Rotation/archive | 2026=A, 2027=B, 2028=A domain/native fixtures; snapshot serialization and persisted offline reopen/immutable guards after catalog evolution |
+| B — Proposal/Confirm | Native exact 99% proposal, unavailable Assistant without confirmation, explicit Confirm; repository idempotence/occupied exclusion/higher-score non-replacement |
+| C — Reject/next best | Native 99 → 88 → 70 → truthful empty state without reason; repository repeated-evidence suppression and material-evidence renewal |
+| D — Manual | Native eligible book/free prompt selection; repository confirms with nil confidence and rejects displacement |
+| E — Independence | Native Tropes → Around the World → Monthly candidates for the same completed Book; owner-scoped repository occupancy assertions |
+| F — 52 Weeks | Native first finish and explicit same-week replacement; repository Monday/Sunday, ISO year, cross-week rejection, week 53 and date-only ties |
+| G — Missing content | Native Archetype B #10, December B #2 and Roulette unavailable states; domain tests explicitly cover both December gaps and retained identities |
+
+DEBUG-only fictional fixtures demonstrate the review contract; they are not production book metadata or evidence. Human visual approval remains pending. The native matrix captures overview, all nine types, archive, rotation, 99/88/70 proposals, rejection/empty, missing content, manual selection/confirmation and same-week replacement in Light Standard, Dark Standard and Light Accessibility XXXL.
