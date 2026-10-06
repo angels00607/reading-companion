@@ -120,6 +120,7 @@ extension LocalStore: JournalRepository {
         let volume = try ensureVolume(db)
         try db.execute(sql: "UPDATE journal_components SET state='copied',copied_payload=?,copied_at=? WHERE owner_id=? AND reading_id=? AND component='book_review'", arguments: [payload,stamp(),ownerID.uuidString,readingID.uuidString])
         try db.execute(sql: "UPDATE journal_entries SET volume_id=? WHERE owner_id=? AND reading_id=?", arguments: [volume.uuidString,ownerID.uuidString,readingID.uuidString])
+        _ = try insertXPAward(try XPAward(semanticKey:"journal-work:\(readingID.uuidString):book-review",source:.journalWork,amount:GamificationBalance.amount(for:.journalWork)),db:db)
         try enqueueJournal(readingID, "journal.review.copied", ["volume":volume.uuidString], db)
     } }
     public func corrections() throws -> [JournalCorrection] { try queue.read { db in try Row.fetchAll(db, sql: "SELECT * FROM journal_corrections WHERE owner_id=? ORDER BY status,created_at DESC", arguments: [ownerID.uuidString]).map { row in JournalCorrection(id: UUID(uuidString: row["id"])!, readingID: UUID(uuidString: row["reading_id"])!, component: JournalComponent(rawValue: row["component"])!, field: row["field"], previousValue: row["previous_value"], currentValue: row["current_value"], resolved: (row["status"] as String) == "resolved") } } }

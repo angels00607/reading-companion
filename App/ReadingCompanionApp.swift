@@ -125,13 +125,15 @@ struct ReadingCompanionApp: App {
     }
     #if DEBUG
     private func seedGamificationQA(_ store:LocalStore) throws {
-        for n in 1...12 { _ = try store.awardXP(try XPAward(semanticKey:"qa:\(n)",source:n <= 8 ? .finishBook:.journalWork,amount:n <= 8 ? 100:40)) }; _ = try store.awardXP(try XPAward(semanticKey:"quest:qa-complete",source:.dailyQuest,amount:GamificationBalance.amount(for:.dailyQuest)))
+        var favoriteBooks=[UUID]()
+        for (index,pages) in [220,310,180].enumerated() { let book=try store.add(work:.init(provider:"qa-profile",reference:"reader-\(index)",title:["The Moonlit Archive","Letters from a Quiet Observatory","A Reader's Map of Impossible Bookshops"][index],author:"Taylor Reader"),choice:.addAnyway); favoriteBooks.append(book); let reading=try store.start(bookID:book,editionID:nil,mode:.page,date:nil); _ = try store.update(readingID:reading,value:.pages(current:pages),revision:0); try store.finish(readingID:reading,confirmed:true,date:BooksModel.today,revision:1) }
+        for n in 1...12 { _ = try store.awardXP(try XPAward(semanticKey:"qa:\(n)",source:n <= 8 ? .finishBook:.journalWork,amount:n <= 8 ? 100:40)) }
         let daily=QuestRules.candidates(cadence:.daily,periodKey:"2026-10-06",activity:.init(genuinePagesPerDay:[18,24,22],sessionsPerWeek:[3,4,4]),history:[])
         let weekly=QuestRules.candidates(cadence:.weekly,periodKey:"2026-W41",activity:.init(sessionsPerWeek:[3,4,4],journalActionsPerWeek:[2,3]),history:daily)
         let monthly=QuestRules.candidates(cadence:.monthly,periodKey:"2026-10",activity:.init(completionsPerMonth:[1,2,2],journalActionsPerWeek:[2,3]),history:daily+weekly)
         var quests=daily+weekly+monthly; quests[0].progress=max(1,quests[0].target-1); quests[1].progress=quests[1].target; quests[1].completedAt=Date(); quests[2].rerolledAt=Date(); try store.saveQuests(quests)
-        var achievements=try store.achievementProgress(); achievements[0] = .init(definition:achievements[0].definition,progress:1,unlockedAt:Date()); achievements[1] = .init(definition:achievements[1].definition,progress:7); achievements[2] = .init(definition:achievements[2].definition,progress:5,unlockedAt:Date()); achievements[4] = .init(definition:achievements[4].definition,progress:3); try store.saveAchievementProgress(achievements)
-        let featured=[achievements[0].definition.key,achievements[2].definition.key,achievements[3].definition.key]; try store.savePassport(.init(name:"Sarah Reader",readingSince:2020,featuredAchievementKeys:featured))
+        var achievements=try store.achievementProgress(); achievements[0] = .init(definition:achievements[0].definition,progress:1,unlockedAt:Date()); achievements[1] = .init(definition:achievements[1].definition,progress:7); achievements[2] = .init(definition:achievements[2].definition,progress:5,unlockedAt:Date()); achievements[3] = .init(definition:achievements[3].definition,progress:10,unlockedAt:Date()); achievements[4] = .init(definition:achievements[4].definition,progress:3); try store.saveAchievementProgress(achievements)
+        let featured=[achievements[0].definition.key,achievements[2].definition.key,achievements[3].definition.key]; try store.savePassport(.init(name:"Sarah Reader",readingSince:2020,favoriteBooks:favoriteBooks,favoriteSeries:"The Moonlit Archive",favoriteAuthor:"Taylor Reader",favoriteGenre:"Historical Fantasy",featuredAchievementKeys:featured))
         try store.setCosmetic("frame.classic",state:.equipped); try store.setCosmetic("theme.modern-bookish",state:.equipped); try store.setCosmetic("background.midnight",state:.unlocked)
     }
     private func seedStatsQA(_ store:LocalStore) throws {

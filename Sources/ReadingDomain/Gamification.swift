@@ -15,6 +15,7 @@ public enum GamificationError: Error { case invalidAward, duplicateAward, invali
 public enum QuestCadence: String, Codable, CaseIterable, Sendable { case daily, weekly, monthly
     public var activeCount:Int { switch self { case .daily:2; case .weekly,.monthly:3 } }
     public var xp:Int { switch self { case .daily:20; case .weekly:60; case .monthly:150 } }
+    public var xpSource:XPSource { switch self { case .daily:.dailyQuest; case .weekly:.weeklyQuest; case .monthly:.monthlyQuest } }
 }
 public enum QuestFamily: String, Codable, CaseIterable, Sendable { case frequency, pages, sessions, progress, completion, journalActivity, organization, consistency }
 public struct ActivitySummary: Equatable, Sendable {

@@ -220,6 +220,7 @@ extension LocalStore: BooksRepository {
             try save(reading, db: db)
             if effects.journalInbox { try createJournalCompletionWork(reading: reading, db: db) }
             if effects.challengeAnalysis { try createChallengeCompletionWork(reading: reading, db: db) }
+            if reading.status == .read, !reading.historical { _ = try insertXPAward(try XPAward(semanticKey:"finish-book:\(readingID.uuidString)",source:.finishBook,amount:GamificationBalance.amount(for:.finishBook)),db:db) }
             try command(id: readingID, kind: "reading.finish", revision: revision, payload: reading, db: db)
         }
     }
