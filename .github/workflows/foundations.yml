@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: Targeted tests, Stats self-QA, or final candidate regression
+        description: Targeted tests, Profile self-QA, or final candidate regression
         required: true
         default: candidate
         type: choice
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
         with:
-          name: phase-6-regression-and-foundation-results
+          name: phase-7-regression-and-foundation-results
           path: |
             work/Regression.xcresult
             work/Foundation*.xcresult

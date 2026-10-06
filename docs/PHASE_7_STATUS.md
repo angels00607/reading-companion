@@ -13,6 +13,9 @@ Human Visual QA is not yet approved. Phase 8 has not started.
   500-XP levels. Levels unlock cosmetics only.
 - Permanent, non-negative, append-only XP ledger with stable semantic award-key
   idempotency and immutable source metadata.
+- Event integration awards only verified live completion, copied Journal work,
+  confirmed Challenge assignments, completed Quests and one-time Achievement unlocks.
+  Historical imports and DNF records do not create XP.
 - Activity-only Daily/Weekly/Monthly Quest catalog and 2/3/3 active volume,
   conservative median-based targets, caps, cooldown history and persisted free rerolls.
 - All Achievements visible with explicit locked conditions/progress, one-time unlocks,
@@ -31,6 +34,8 @@ Human Visual QA is not yet approved. Phase 8 has not started.
 ## Validation state
 
 - Swift package build: passed locally.
+- Targeted Phase 7 Swift tests: 11 passed in CI.
+- Targeted iOS Simulator build: passed in CI.
 - SQLite Phase 7 migration/invariant tests: 5 passed locally.
 - Existing SQLite suites: 33 passed locally (17 foundation, 3 Books, 7 Challenges, 6 Stats).
 - Swift/XCTest and iOS acceptance are assigned to the macOS CI runner because this
