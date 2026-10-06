@@ -38,13 +38,13 @@ final class ChallengesAcceptanceTests: XCTestCase {
     @MainActor private func revealTextStart(_ app: XCUIApplication, _ element: XCUIElement) {
         let viewport = app.scrollViews.firstMatch.frame.intersection(app.frame).insetBy(dx: 0, dy: 12)
         for _ in 0..<35 {
-            if element.exists && element.frame.minY >= viewport.minY && element.frame.minY <= viewport.midY { return }
+            if element.exists && (viewport.contains(element.frame) || (element.frame.height > viewport.height && element.frame.minY >= viewport.minY && element.frame.minY <= viewport.midY)) { return }
             let movingDown = element.exists && element.frame.minY < viewport.minY
             let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: movingDown ? 0.4 : 0.65))
             let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: movingDown ? 0.6 : 0.45))
             start.press(forDuration: 0.05, thenDragTo: end)
         }
-        XCTAssertTrue(element.exists && element.frame.minY >= viewport.minY && element.frame.minY <= viewport.midY, "Scrollable text must expose its start: \(element.identifier), \(element.frame)")
+        XCTAssertTrue(element.exists && (viewport.contains(element.frame) || (element.frame.height > viewport.height && element.frame.minY >= viewport.minY && element.frame.minY <= viewport.midY)), "Scrollable text must expose its start: \(element.identifier), \(element.frame)")
     }
     @MainActor func testExplicitConfirmOccupancyAndIndependentNextChallenge() {
         let app = launch()
@@ -138,7 +138,7 @@ final class ChallengesAcceptanceTests: XCTestCase {
                 if route == "archetype" || route == "monthly" {
                     let label = route == "archetype" ? "Prompt 10 · Not configured" : "Prompt 2 · Not configured"
                     let missing = app.staticTexts[label].firstMatch
-                    for _ in 0..<35 where !missing.isHittable { app.swipeUp() }
+                    reveal(app,missing)
                     XCTAssertTrue(missing.isHittable, "Unavailable catalog slot must remain visible and unfilled")
                     if route == "monthly" { XCTAssertTrue(app.staticTexts["December"].exists) }
                     capture(app,"\(appearance)-\(size)-\(route)-missing-content")

@@ -46,6 +46,14 @@ jobs:
           path: |
             work/Challenges.xcresult
             work/challenges-screenshots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase-5-challenges-review-evidence
+          path: |
+            work/Challenges.xcresult/database.sqlite3
+            work/challenges-screenshots/*.png
+            work/challenges-screenshots/manifest.json
       - name: Journal acceptance and Human Visual QA
         if: always()
         run: |

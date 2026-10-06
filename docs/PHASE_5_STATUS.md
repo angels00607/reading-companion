@@ -48,6 +48,8 @@ Run `37443973783` at `f83c56d5d205f94eef02f65441deaf7716e033f4` passes the compl
 
 Self-review of that run's XXXL screenshots found a test-capture limitation: `isHittable` alone did not ensure the requested percentage/actions were inside the captured viewport. The scroll helper now additionally requires the entire target frame inside the visible scroll region. Captures include selected manual/same-week books, confirmed labels and the truthful Assistant unavailable state in all modes. No accessibility finding or threshold was removed.
 
+Run `37447165569` at `6e927b2d27f12aec596a122a573a50e663dbdbed` confirms the Assistant target correction: confirmation, rejection and manual/same-week tests pass, and the matrix's Assistant size assertions pass in all modes. Three capture-helper assertions still fail: two fully visible 87.5-point unavailable messages at y=379.5 were incorrectly required to start in the viewport's upper half, and a one-direction scroll overshot the Archetype gap. Short messages now require their full frame to be visible; overflowing text requires its beginning to be visible and is captured across scroll positions. Missing slots use the same bidirectional fully-visible helper as controls. All 44-point assertions remain intact. An additional compact PNG/manifest/result-database artifact makes review evidence downloadable; the original complete xcresult and attachments, including recordings and failures, remain uploaded unchanged.
+
 ## Implementation notes
 
 The catalog resource is copied from `CHALLENGE_CATALOG.md`, retaining Archetype B’s 21 numbered slots including the gap. Generic unavailable UI preserves slot keys; no internal TBD instructions are presented as prompt content.
