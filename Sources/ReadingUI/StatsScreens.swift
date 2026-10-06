@@ -81,7 +81,7 @@ public struct StatsHome: View {
     private func readingSummary(_ s:StatsSnapshot) -> some View {
         VStack(alignment:.leading,spacing:28) {
             VStack(alignment:.leading,spacing:4) {
-                Text(s.books.formatted()).font(DesignTokens.functionalFont(size:52,relativeTo:.largeTitle,weight:.semiBold)).foregroundStyle(DesignTokens.primary(scheme)).accessibilityIdentifier("stats.books.value")
+                Text(s.books.formatted()).font(DesignTokens.functionalFont(size:36,relativeTo:.largeTitle,weight:.semiBold)).foregroundStyle(DesignTokens.primary(scheme)).accessibilityIdentifier("stats.books.value")
                 Text("Books Read").font(DesignTokens.functionalFont(size:20,relativeTo:.title2,weight:.semiBold))
                 Text("Each completed reading counts, including rereads.").font(DesignTokens.functionalFont(size:13)).foregroundStyle(DesignTokens.secondaryText(scheme))
                 if s.rereads>0 { Text("\(s.rereads) repeat reading\(s.rereads==1 ? "" : "s")").font(DesignTokens.functionalFont(size:14)) }
@@ -105,7 +105,7 @@ public struct StatsHome: View {
             Text(scope=="Month" ? "Monthly double page" : scope=="Year" ? "Yearly statistics · two pages" : "Lifetime statistics · five-year volume")
                 .font(DesignTokens.functionalFont(size:14)).foregroundStyle(DesignTokens.secondaryText(scheme))
             if scope=="Lifetime" { Text("Choose the five years that match your physical volume. This view does not assign or archive a volume for you.").font(DesignTokens.functionalFont(size:14)) }
-            if s.undatedCompletions>0 { Text("\(s.undatedCompletions) completed readings have no finish date and cannot be assigned to these physical pages.").font(DesignTokens.functionalFont(size:14)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
+            if s.undatedCompletions>0 { Text("\(s.undatedCompletions) completed reading\(s.undatedCompletions==1 ? " has" : "s have") no finish date and cannot be assigned to these physical pages.").font(DesignTokens.functionalFont(size:14)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
             VStack(alignment:.leading,spacing:20) {
                 StatsMetric(title:"Books Read",value:s.books.formatted(),detail:"Completed readings, including rereads. DNF excluded.",id:"stats.books")
                 StatsMetric(title:"Pages Read",value:s.pages.display,detail:pageDetail(s),id:"stats.pages")

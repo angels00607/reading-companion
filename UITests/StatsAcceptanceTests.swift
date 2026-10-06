@@ -2,9 +2,13 @@ import XCTest
 
 final class StatsAcceptanceTests:XCTestCase {
     @MainActor private func launch(_ route:String,appearance:String="Light",size:String="UICTContentSizeCategoryL",selected:Bool=false,yearSelected:Bool=false) -> XCUIApplication {
-        let app=XCUIApplication(); app.launchArguments=["-phase6-fixture","-phase6-screen",route,"-phase0-appearance",appearance,"-UIPreferredContentSizeCategoryName",size]
+        let app=XCUIApplication(); app.launchArguments=["-phase6-fixture","-phase0-appearance",appearance,"-UIPreferredContentSizeCategoryName",size]
+        if route != "shell" { app.launchArguments += ["-phase6-screen",route] }
         if selected { app.launchArguments += ["-phase6-selected"] }; if yearSelected { app.launchArguments += ["-phase6-year-selected"] }
         app.launch(); XCUIDevice.shared.orientation = .portrait
+        if route=="shell" {
+            let tab=app.buttons["foundationTab.Stats"]; XCTAssertTrue(tab.waitForExistence(timeout:10)); tab.tap()
+        }
         XCTAssertTrue(app.scrollViews.firstMatch.waitForExistence(timeout:10)); return app
     }
     @MainActor private func capture(_ app:XCUIApplication,_ name:String) {
@@ -62,6 +66,18 @@ final class StatsAcceptanceTests:XCTestCase {
         reveal(app,app.staticTexts["stats.best.title"]); XCTAssertTrue(app.staticTexts["stats.best.title"].exists)
         capture(app,"Flow-F-Journal-shared-month-choice")
         app.terminate()
+    }
+    @MainActor func testStatsTabShellModes() {
+        for (appearance,size) in [("Light","UICTContentSizeCategoryL"),("Dark","UICTContentSizeCategoryL"),("Light","UICTContentSizeCategoryAccessibilityXXXL")] {
+            let app=launch("shell",appearance:appearance,size:size)
+            XCTAssertTrue(app.staticTexts["stats.books.value"].waitForExistence(timeout:10))
+            for name in ["Home","Journal","Challenges","Series","Stats"] {
+                let tab=app.buttons["foundationTab."+name]; XCTAssertTrue(tab.exists); XCTAssertGreaterThanOrEqual(tab.frame.width,44); XCTAssertGreaterThanOrEqual(tab.frame.height,44)
+            }
+            XCTAssertTrue(app.buttons["foundationTab.Stats"].isSelected)
+            capture(app,"\(appearance)-\(size)-shell-overview")
+            app.terminate()
+        }
     }
     @MainActor func testStatsVisualMatrix() {
         let cases=[("Light","UICTContentSizeCategoryL"),("Dark","UICTContentSizeCategoryL"),("Light","UICTContentSizeCategoryAccessibilityXXXL")]

@@ -123,7 +123,7 @@ struct ReadingCompanionApp: App {
             _ = try store.update(readingID:rid,value:pages.map { try! ReadingProgress.pages(current:$0) } ?? .percentage(100),revision:0)
             let finish=try ReadingDate(year:year,month:month,day:day)
             try store.finish(readingID:rid,confirmed:true,date:finish,revision:1)
-            try store.editReading(readingID:rid,start:nil,finish:finish,rating:rating,genre:pages==nil ? nil : "Historical Fantasy and the Extremely Long Name of a Readerâ€™s Chosen Primary Genre",format:format,revision:2)
+            try store.editReading(readingID:rid,start:nil,finish:finish,rating:rating,genre:pages==nil ? nil : "Historical Fantasy and the Extremely Long Name of a Reader\u{2019}s Chosen Primary Genre",format:format,revision:2)
             return (book,rid)
         }
         let first=try completed("The Very Long Chronicle of the Moonlit Bookshop and the Readers Who Returned to It",9,5,.stars(5),.paperback,100)

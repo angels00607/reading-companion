@@ -96,4 +96,12 @@ final class Phase6StatsRepositoryTests:XCTestCase {
         XCTAssertEqual(try reopened.stats(period:.volume(startYear:2026)).books,try reopened.stats(period:.year(2026)).books)
         let other=try LocalStore(path:path,ownerID:UUID()); XCTAssertEqual(try other.stats(period:.lifetime).books,0); XCTAssertNil(try other.stats(period:month).selection)
     }
+    func testFailedOutboxInsertionRollsBackSelection() throws {
+        let s=try store(),a=try complete(s)
+        try s.queue.write { db in
+            try db.execute(sql:"CREATE TRIGGER reject_stats_outbox BEFORE INSERT ON outbox WHEN NEW.kind='stats.best_book.select' BEGIN SELECT RAISE(ABORT,'Fixture failure'); END")
+        }
+        XCTAssertThrowsError(try s.selectBestBook(period:month,readingID:a.1,expectedRevision:0))
+        XCTAssertNil(try s.stats(period:month).selection)
+    }
 }
