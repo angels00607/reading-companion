@@ -14,7 +14,8 @@ struct ReadingCompanionApp: App {
                 else if let model {
                     if let route = visualQARoute { BooksVisualQA(route: route).environmentObject(model) }
                     else if let route = challengeQARoute { ChallengesVisualQA(route: route).environmentObject(model) }
-                    else { FoundationShell(homeContent: AnyView(BooksHome()), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear))).environmentObject(model) }
+                    else if let route = statsQARoute { StatsVisualQA(route: route).environmentObject(model) }
+                    else { FoundationShell(homeContent: AnyView(BooksHome()), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear)), statsContent:AnyView(StatsHome())).environmentObject(model) }
                 }
                 else if let storageError { StatePresentation(kind: .error, title: "Library unavailable", message: storageError) }
                 else { SkeletonRow() }
@@ -30,6 +31,13 @@ struct ReadingCompanionApp: App {
     private var challengeQAYear: Int? {
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-phase5-fixture") { return 2027 }
+        #endif
+        return nil
+    }
+    private var statsQARoute:String? {
+        #if DEBUG
+        let args=ProcessInfo.processInfo.arguments
+        if let index=args.firstIndex(of:"-phase6-screen"),index+1<args.count { return args[index+1] }
         #endif
         return nil
     }
@@ -61,7 +69,7 @@ struct ReadingCompanionApp: App {
         ]
         let proposals = candidates.map { kind,key,score,explanation in
             ChallengeProposal(readingID: reading, promptID: config.prompts.first { $0.challenge == kind && $0.key == key }!.id, confidence: score,
-                evidence: ChallengeEvidence(fingerprint: "fictional-fixture-\(kind.rawValue)-v1", source: "Fictional visual QA evidence", reference: "Fixture synopsis — not a provider analysis", explanation: explanation, reliable: true))
+                evidence: ChallengeEvidence(fingerprint: "fictional-fixture-\(kind.rawValue)-v1", source: "Fictional visual QA evidence", reference: "Fixture synopsis â€” not a provider analysis", explanation: explanation, reliable: true))
         }
         try store.storeChallengeProposals(proposals, year: 2027)
     }
@@ -92,7 +100,7 @@ struct ReadingCompanionApp: App {
                 owner = value
             } else { owner = UUID(); try owner.uuidString.write(to: identity, atomically: true, encoding: .utf8) }
             #if DEBUG
-            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture")
+            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture")
             #else
             let qa = false
             #endif
@@ -101,10 +109,46 @@ struct ReadingCompanionApp: App {
             if ProcessInfo.processInfo.arguments.contains("-phase4-fixture") { try seedSeriesQA(store) }
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-phase5-fixture") { try seedChallengesQA(store) }
+            if ProcessInfo.processInfo.arguments.contains("-phase6-fixture") { try seedStatsQA(store) }
             #endif
             model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
         } catch { storageError = "Could not open the local database. Existing files have not been reset or deleted." }
     }
+    #if DEBUG
+    private func seedStatsQA(_ store:LocalStore) throws {
+        func completed(_ title:String,_ month:Int,_ day:Int,_ rating:Rating,_ format:JournalFormat?,_ pages:Int?,year:Int=2026,bookID:UUID?=nil) throws -> (UUID,UUID) {
+            let book:UUID
+            if let bookID { book=bookID } else { book=try store.add(work:.init(provider:"qa-stats",reference:UUID().uuidString,title:title,author:"Fictional QA Author"),choice:.addAnyway) }
+            let rid=try store.start(bookID:book,editionID:nil,mode:pages==nil ? .percentage : .page,date:nil)
+            _ = try store.update(readingID:rid,value:pages.map { try! ReadingProgress.pages(current:$0) } ?? .percentage(100),revision:0)
+            let finish=try ReadingDate(year:year,month:month,day:day)
+            try store.finish(readingID:rid,confirmed:true,date:finish,revision:1)
+            try store.editReading(readingID:rid,start:nil,finish:finish,rating:rating,genre:pages==nil ? nil : "Historical Fantasy and the Extremely Long Name of a Readerâ€™s Chosen Primary Genre",format:format,revision:2)
+            return (book,rid)
+        }
+        let first=try completed("The Very Long Chronicle of the Moonlit Bookshop and the Readers Who Returned to It",9,5,.stars(5),.paperback,100)
+        let second=try completed("A Map of Quiet Places",9,21,.stars(3),.hardcover,120)
+        _ = try completed("An Unrated Percentage-Only Reading",9,25,.noRating,nil,nil)
+        _ = try completed("The Very Long Chronicle of the Moonlit Bookshop and the Readers Who Returned to It",2,1,.stars(4),.ebook,80,year:2027,bookID:first.0)
+        let unknown=try store.add(work:.init(provider:"qa-stats",reference:"unknown",title:"A Historical Reading Without Daily Activity",author:"Fictional QA Author"))
+        _ = try store.recordCompleted(bookID:unknown,editionID:nil,date:try ReadingDate(year:2025,month:12,day:5),rating:.noRating)
+        let undated=try store.add(work:.init(provider:"qa-stats",reference:"undated",title:"A Completed Reading With Unknown Finish Date",author:"Fictional QA Author"))
+        _ = try store.recordCompleted(bookID:undated,editionID:nil,date:nil,rating:.unknown)
+        let dnfBook=try store.add(work:.init(provider:"qa-stats",reference:"dnf",title:"DNF Is Excluded",author:"Fictional QA Author"))
+        let dnf=try store.start(bookID:dnfBook,editionID:nil,date:nil)
+        _ = try store.update(readingID:dnf,value:.pages(current:250),revision:0)
+        try store.markDNF(readingID:dnf,revision:1)
+        try store.recordReadingActivity(readingID:first.1,date:ReadingDate(year:2026,month:9,day:4),sourceReference:"Explicit fictional QA reading-day record")
+        try store.recordReadingActivity(readingID:second.1,date:ReadingDate(year:2026,month:9,day:4),sourceReference:"Explicit fictional QA reading-day record")
+        try store.recordReadingActivity(readingID:second.1,date:ReadingDate(year:2026,month:9,day:20),sourceReference:"Explicit fictional QA reading-day record")
+        if ProcessInfo.processInfo.arguments.contains("-phase6-selected") {
+            try store.selectBestBook(period:.month(year:2026,month:9),readingID:first.1,expectedRevision:0)
+        }
+        if ProcessInfo.processInfo.arguments.contains("-phase6-year-selected") {
+            try store.selectBestBook(period:.year(2026),readingID:first.1,expectedRevision:0)
+        }
+    }
+    #endif
     private func seedSeriesQA(_ store: LocalStore) throws {
         let fixtures: [(String, SeriesStatus?, SeriesStatusEvidence, Bool)] = [
             ("The Extremely Long Chronicle of the Moonlit Archive and Its Keepers", nil, .init(hasUnreadIncludedPublished: true), false),
