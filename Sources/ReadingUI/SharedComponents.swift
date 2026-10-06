@@ -150,6 +150,7 @@ public struct AppButton: View {
                             in: RoundedRectangle(cornerRadius: DesignTokens.buttonRadius))
                 .overlay(RoundedRectangle(cornerRadius: DesignTokens.buttonRadius)
                     .stroke(kind == .secondary ? DesignTokens.border(scheme) : Color.clear))
+                .contentShape(Rectangle())
         }.buttonStyle(.plain).frame(minHeight: DesignTokens.minimumTouchTarget)
     }
 }

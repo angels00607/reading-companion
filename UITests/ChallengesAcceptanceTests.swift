@@ -14,8 +14,8 @@ final class ChallengesAcceptanceTests: XCTestCase {
         XCTAssertTrue(element.exists, "Required live control must exist: \(element.identifier)")
         XCTAssertTrue(element.isHittable, "Control must remain reachable: \(element.identifier)")
         guard element.exists && element.isHittable else { return }
-        XCTAssertGreaterThanOrEqual(element.frame.width,44)
-        XCTAssertGreaterThanOrEqual(element.frame.height,44)
+        XCTAssertGreaterThanOrEqual(element.frame.width,44, "Live control width: \(element.identifier), \(element.label), \(element.frame)")
+        XCTAssertGreaterThanOrEqual(element.frame.height,44, "Live control height: \(element.identifier), \(element.label), \(element.frame)")
         element.tap()
     }
     @MainActor private func reveal(_ app: XCUIApplication, _ element: XCUIElement) {
@@ -95,6 +95,8 @@ final class ChallengesAcceptanceTests: XCTestCase {
                     capture(app,"\(appearance)-\(size)-review-99-confidence")
                     reveal(app,app.buttons["challenges.assistant"])
                     XCTAssertTrue(app.buttons["challenges.assistant"].isHittable)
+                    XCTAssertGreaterThanOrEqual(app.buttons["challenges.assistant"].frame.width,44)
+                    XCTAssertGreaterThanOrEqual(app.buttons["challenges.assistant"].frame.height,44)
                     capture(app,"\(appearance)-\(size)-review-actions")
                     for score in [88,70] {
                         tap(app,app.buttons["challenges.reject"])
