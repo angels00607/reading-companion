@@ -59,14 +59,14 @@ struct ChallengeDetailScreen: View {
         BooksScreen(kind.name) {
             if let state {
                 let prompts = state.configuration.prompts.filter { $0.challenge == kind }
-                Text("\(year) · Version \(state.configuration.version.rawValue)").foregroundStyle(DesignTokens.secondaryText(scheme))
+                Text("\(String(year)) · Version \(state.configuration.version.rawValue)").foregroundStyle(DesignTokens.secondaryText(scheme))
                 ChallengeProgress(completed: prompts.filter { state.assignment($0) != nil }.count, total: prompts.count)
                 if kind == .weeks { Text("Finish date determines the ISO week, Monday–Sunday. No borrowing between weeks. Same-day ties without a reliable finish order require your choice. Week 53 is not configured.").fixedSize(horizontal: false, vertical: true) }
                 if kind == .hundred { Text("Numbered completion slots. DNF readings do not count.") }
                 if kind == .alphabet { Text("Leading the, a, an, le, la and les are ignored. At most two books from the same series.") }
                 if kind == .seasonal || kind == .monthly { Text("Eligibility follows the reading’s finish month.").foregroundStyle(DesignTokens.secondaryText(scheme)) }
                 if kind == .world { Text("Cities only. A setting cannot be inferred from the author’s nationality or publisher.") }
-                if kind == .roulette { StatePresentation(kind: .empty, title: "Prompts not configured", message: "The ten prompt slots are preserved. Missing content will not be guessed.") }
+                if kind == .roulette { StatePresentation(kind: .empty, title: "Prompts not configured", message: "This challenge is waiting for its prompt list. You can return when it becomes available.") }
                 if let proposal = state.proposals.first, prompts.contains(where: { $0.id == proposal.promptID }) {
                     ChallengeProposalPanel(proposal: proposal, state: state, reload: reload)
                 }
@@ -151,7 +151,7 @@ struct ChallengeReviewScreen: View {
                 } else {
                     StatePresentation(kind: .empty, title: state.hasAnalysis ? "No more eligible matches" : "Not enough information", message: state.hasAnalysis ? "No remaining free prompt reaches 70% with the stored evidence. You can assign a book manually." : "Reliable book evidence is not available for semantic analysis. You can assign a book manually.")
                 }
-                Text("Semantic analysis is not connected yet. No book content has been guessed.")
+                Text("Automatic matching is unavailable. You can use saved suggestions or assign a book manually.")
                 challengeLink("Choose a challenge", id: "challenges.choose") { ChallengesHome(year: year) }
             }
             BooksErrorMessage()

@@ -24,7 +24,11 @@ public struct ChallengePrompt: Codable, Equatable, Identifiable, Sendable {
     }
     public var available: Bool { text != nil }
     public var group: String? {
-        if let month { return Calendar(identifier: .gregorian).monthSymbols[month - 1] }
+        if let month {
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.locale = Locale.current
+            return calendar.monthSymbols[month - 1]
+        }
         if challenge == .seasonal { return String(key.split(separator: ".")[0]).capitalized }
         if challenge == .world { return key.hasPrefix("easy") ? "Easy" : "Challenge" }
         return nil

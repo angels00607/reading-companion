@@ -112,6 +112,7 @@ final class ChallengesAcceptanceTests: XCTestCase {
                     let missing = app.staticTexts[label].firstMatch
                     for _ in 0..<35 where !missing.isHittable { app.swipeUp() }
                     XCTAssertTrue(missing.isHittable, "Unavailable catalog slot must remain visible and unfilled")
+                    if route == "monthly" { XCTAssertTrue(app.staticTexts["December"].exists) }
                     capture(app,"\(appearance)-\(size)-\(route)-missing-content")
                 }
                 if route == "2026" || route == "2028" { XCTAssertEqual(app.staticTexts["challenges.version"].label,"Version A") }
