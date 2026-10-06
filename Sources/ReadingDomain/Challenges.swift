@@ -105,6 +105,12 @@ public struct ChallengeYearState: Sendable {
     public init(configuration: ChallengeConfiguration, assignments: [ChallengeAssignment], proposals: [ChallengeProposal], readings: [ChallengeReading], hasAnalysis: Bool = false) {
         self.configuration = configuration; self.assignments = assignments; self.proposals = proposals; self.readings = readings; self.hasAnalysis = hasAnalysis
     }
+    public var assignmentsNeedingReview: [ChallengeAssignment] {
+        assignments.filter { assignment in
+            guard let record = readings.first(where: { $0.id == assignment.readingID }), let prompt = configuration.prompts.first(where: { $0.id == assignment.promptID }) else { return true }
+            return !ChallengeRules.eligible(record, prompt: prompt, year: configuration.year)
+        }
+    }
     public func assignment(_ prompt: ChallengePrompt) -> ChallengeAssignment? { assignments.first { $0.promptID == prompt.id } }
     public func bookTitle(readingID: UUID) -> String { readings.first { $0.id == readingID }?.book.title ?? "Book unavailable" }
 }

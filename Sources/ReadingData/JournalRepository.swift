@@ -53,6 +53,7 @@ extension LocalStore: JournalRepository {
             reading.rating = draft.rating; reading.startDate = draft.start; reading.finishDate = draft.finish
             try ReadingRules.setJournalFormat(draft.format, origin: .user, reading: &reading); reading.revision += 1
             try saveReadingForJournal(reading, db: db)
+            try refreshChallengesAfterReadingEdit(readingID, db: db)
             try db.execute(sql: "UPDATE journal_entries SET summary=?,page_count=? WHERE owner_id=? AND reading_id=?", arguments: [summary,draft.pageCount,ownerID.uuidString,readingID.uuidString])
             let record = try catalog(reading.bookID, db: db)
             let current = ReviewSnapshot(title: record.book.title, author: record.book.author, pages: draft.pageCount, rating: draft.rating, format: draft.format, start: draft.start, finish: draft.finish, summary: summary)

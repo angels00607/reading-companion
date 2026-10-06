@@ -43,6 +43,8 @@ extension LocalStore: ChallengesRepository {
             let rejection = ChallengeRules.rejectionKey(bookID: record.book.id, promptID: prompt.id, evidence: proposal.evidence)
             guard try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM challenge_rejections WHERE owner_id=? AND rejection_key=?", arguments: [ownerID.uuidString,rejection]) == 0,
                   try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM challenge_assignments WHERE owner_id=? AND prompt_id=? AND status='confirmed'", arguments: [ownerID.uuidString,prompt.id.uuidString]) == 0 else { continue }
+            // A new material evidence revision retires superseded unconfirmed candidates only.
+            try db.execute(sql: "UPDATE challenge_assignments SET status='rejected' WHERE owner_id=? AND prompt_id=? AND status='proposed' AND evidence_fingerprint<>? AND reading_id IN (SELECT id FROM readings WHERE owner_id=? AND book_id=?)", arguments: [ownerID.uuidString,prompt.id.uuidString,rejection,ownerID.uuidString,record.book.id.uuidString])
             let evidenceJSON = try challengeJSON(proposal.evidence)
             // Identical evidence is idempotent even if an adapter generates another UUID.
             guard try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM challenge_assignments a JOIN readings r ON r.owner_id=a.owner_id AND r.id=a.reading_id WHERE a.owner_id=? AND r.book_id=? AND a.prompt_id=? AND a.evidence_fingerprint=?", arguments: [ownerID.uuidString,record.book.id.uuidString,prompt.id.uuidString,rejection]) == 0 else { continue }
@@ -104,7 +106,7 @@ extension LocalStore: ChallengesRepository {
         guard confirmed else { throw DomainError.confirmationRequired }
         let config = try challengeConfig(year, db)
         guard let row = try Row.fetchOne(db, sql: "SELECT a.* FROM challenge_assignments a JOIN challenge_prompts p ON p.owner_id=a.owner_id AND p.id=a.prompt_id WHERE a.owner_id=? AND a.id=? AND p.year_id=? AND a.status='confirmed'", arguments: [ownerID.uuidString,id.uuidString,config.id.uuidString]) else { throw ChallengeError.staleProposal }
-        try db.execute(sql: "UPDATE challenge_assignments SET status='rejected' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
+        try db.execute(sql: "UPDATE challenge_assignments SET status='rejected',source='manual-cleared' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
         try updateChallengeJournal(UUID(uuidString: row["reading_id"])!, db)
         try refreshChallengeAttention(config, db)
         try enqueueChallenge(id, "challenge.assignment.remove", ["assignment":id.uuidString], db)
@@ -116,6 +118,12 @@ extension LocalStore: ChallengesRepository {
         guard db.changesCount == 1 else { throw JournalError.notReady }
         try enqueueChallenge(readingID, "challenge.journal.copied", ["payload":payload], db)
     } }
+    func refreshChallengesAfterReadingEdit(_ readingID: UUID, db: Database) throws {
+        for year in try Int.fetchAll(db, sql: "SELECT year FROM challenge_years WHERE owner_id=?", arguments: [ownerID.uuidString]) {
+            try refreshChallengeAttention(challengeConfig(year, db), db)
+        }
+        try updateChallengeJournal(readingID, db)
+    }
     // Called inside the existing live completion transaction; imports never invoke it.
     func createChallengeCompletionWork(reading: ReadingInstance, db: Database) throws {
         guard reading.status == .read, !reading.historical, let date = reading.finishDate else { return }
@@ -167,6 +175,8 @@ extension LocalStore: ChallengesRepository {
     private func placeDeterministicChallenges(_ year: Int, _ db: Database) throws {
         let config = try challengeConfig(year, db); let records = try challengeReadings(db)
         for prompt in config.prompts where prompt.challenge == .weeks {
+            let cleared = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM challenge_assignments WHERE owner_id=? AND prompt_id=? AND source='manual-cleared'", arguments: [ownerID.uuidString,prompt.id.uuidString]) ?? 0
+            guard cleared == 0 else { continue }
             let week = ISOWeek(year: year, week: Int(prompt.key)!)
             let prior = try Row.fetchOne(db, sql: "SELECT id,reading_id,source FROM challenge_assignments WHERE owner_id=? AND prompt_id=? AND status='confirmed'", arguments: [ownerID.uuidString,prompt.id.uuidString])
             if let prior, prior["source"] as String != "finish-date" { continue } // explicit manual choice wins
@@ -183,8 +193,11 @@ extension LocalStore: ChallengesRepository {
         // Completion slots, not semantic matches. Existing confirmed placements are stable.
         for record in records where record.reading.status == .read && !record.reading.historical && record.reading.finishDate?.year == year {
             let prior = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM challenge_assignments a JOIN challenge_prompts p ON p.owner_id=a.owner_id AND p.id=a.prompt_id WHERE a.owner_id=? AND p.year_id=? AND p.challenge_key='hundred' AND a.reading_id=? AND a.status='confirmed'", arguments: [ownerID.uuidString,config.id.uuidString,record.id.uuidString]) ?? 0
-            guard prior == 0 else { continue }
+            let clearedReading = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM challenge_assignments a JOIN challenge_prompts p ON p.owner_id=a.owner_id AND p.id=a.prompt_id WHERE a.owner_id=? AND p.year_id=? AND p.challenge_key='hundred' AND a.reading_id=? AND a.source='manual-cleared'", arguments: [ownerID.uuidString,config.id.uuidString,record.id.uuidString]) ?? 0
+            guard prior == 0 && clearedReading == 0 else { continue }
             for prompt in config.prompts where prompt.challenge == .hundred {
+                let clearedSlot = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM challenge_assignments WHERE owner_id=? AND prompt_id=? AND source='manual-cleared'", arguments: [ownerID.uuidString,prompt.id.uuidString]) ?? 0
+                if clearedSlot > 0 { continue }
                 let occupied = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM challenge_assignments WHERE owner_id=? AND prompt_id=? AND status='confirmed'", arguments: [ownerID.uuidString,prompt.id.uuidString]) ?? 0
                 if occupied == 0 { try insertChallengeAssignment(prompt, record, source: "completion", db); try updateChallengeJournal(record.id, db); break }
             }

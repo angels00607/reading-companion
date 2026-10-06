@@ -111,6 +111,9 @@ private struct ChallengePromptRow: View {
             if let group = prompt.group { Text(group).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
             Text(prompt.text ?? "Prompt \(prompt.order) · Not configured").font(DesignTokens.functionalFont(size: 16, relativeTo: .body, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
             if let assignment = state.assignment(prompt) {
+                if state.assignmentsNeedingReview.contains(where: { $0.id == assignment.id }) {
+                    AttentionRow(title: "Review assignment eligibility", detail: "The reading�s finish information changed. Your confirmed assignment is preserved until you decide.", category: "Challenges")
+                }
                 Label("Confirmed", systemImage: "checkmark.circle.fill").foregroundStyle(DesignTokens.primary(scheme))
                 Text(state.bookTitle(readingID: assignment.readingID)).fixedSize(horizontal: false, vertical: true)
                 Text(assignment.source == "manual" ? "Manual assignment" : assignment.confidence.map { "\($0)% MATCH · Confirmed by you" } ?? "From reading completion")
@@ -219,7 +222,7 @@ private struct ChallengeManualAssignment: View {
     }
 }
 
-private struct ChallengeArchive: View {
+struct ChallengeArchive: View {
     @EnvironmentObject private var model: BooksModel
     @State private var years: [Int] = []
     var body: some View {
@@ -251,7 +254,7 @@ private struct ChallengeJournalPreparation: View {
 }
 
 @ViewBuilder private func challengeLink<Destination: View>(_ text: String, id: String, @ViewBuilder destination: () -> Destination) -> some View {
-    NavigationLink(destination: destination) {
+    NavigationLink { destination() } label: {
         Label(text, systemImage: "chevron.right").frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
     }.accessibilityIdentifier(id)
 }

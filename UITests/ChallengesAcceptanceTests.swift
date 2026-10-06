@@ -91,7 +91,7 @@ final class ChallengesAcceptanceTests: XCTestCase {
                     XCTAssertTrue(app.staticTexts["No more eligible matches"].waitForExistence(timeout:5))
                     capture(app,"\(appearance)-\(size)-review-empty")
                 }
-                if route == "archive" { XCTAssertEqual(app.staticTexts["challenges.version"].label,"Version A") }
+                if route == "archive" { XCTAssertTrue(app.buttons["challenges.archived.2026"].exists) }
                 if route == "roulette" { XCTAssertTrue(app.staticTexts["Prompts not configured"].exists); XCTAssertFalse(app.buttons["challenges.assign.1"].exists) }
                 app.terminate()
             }

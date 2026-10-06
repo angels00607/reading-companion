@@ -71,7 +71,7 @@ final class Phase5ChallengesRepositoryTests: XCTestCase {
         }
     }
     func testWeekEarliestAndReplacementOnlySameISOWeek() throws {
-        let s = try store(), late = try complete(s,day:3), first = try complete(s,day:1)
+        let s = try store(), late = try complete(s,title:"Later Book",day:3), first = try complete(s,title:"Earlier Book",day:1)
         let p = try prompt(s,.weeks,"9")
         XCTAssertEqual(try s.challengeYear(year:2027).assignment(p)?.readingID,first)
         let different = try complete(s,day:10)
@@ -95,7 +95,7 @@ final class Phase5ChallengesRepositoryTests: XCTestCase {
         let s = try store(); _ = try complete(s,day:3,month:1,year:2027)
         XCTAssertTrue(try s.challengeYear(year:2026).assignments.isEmpty)
         XCTAssertFalse(try s.challengeYear(year:2026).configuration.prompts.contains { $0.challenge == .weeks && $0.key == "53" })
-        let monday = try complete(s,day:4,month:1)
+        let monday = try complete(s,title:"Monday Book",day:4,month:1)
         XCTAssertEqual(try s.challengeYear(year:2027).assignment(prompt(s,.weeks,"1"))?.readingID,monday)
     }
     func testUnknownFinishDNFAndHistoricalDoNotCreateAutomaticWork() async throws {
@@ -165,4 +165,34 @@ final class Phase5ChallengesRepositoryTests: XCTestCase {
         XCTAssertTrue(try s.challengeYear(year:2027).proposals.isEmpty)
         XCTAssertNil(try s.challengeYear(year:2027).assignment(p))
     }
+    func testExplicitClearPreservedAgainstAutomaticRepopulation() throws {
+        let s = try store(), reading = try complete(s)
+        let p = try prompt(s,.hundred,"1")
+        let assignment = try XCTUnwrap(s.challengeYear(year:2027).assignment(p))
+        try s.removeChallengeAssignment(id:assignment.id,year:2027,confirmed:true)
+        try s.ensureChallengeYear(year:2027)
+        XCTAssertNil(try s.challengeYear(year:2027).assignment(p))
+        try s.assignChallenge(promptID:p.id,readingID:reading,year:2027)
+        XCTAssertEqual(try s.challengeYear(year:2027).assignment(p)?.source,"manual")
+    }
+    func testReadingDateCorrectionPreservesAssignmentAndCreatesAttention() throws {
+        let s = try store(), reading = try complete(s)
+        let p = try prompt(s,.monthly,"3.1")
+        try s.assignChallenge(promptID:p.id,readingID:reading,year:2027)
+        let state = try s.challengeYear(year:2027)
+        let record = try XCTUnwrap(state.readings.first { $0.id == reading })
+        try s.editReading(readingID:reading,start:nil,finish:ReadingDate(year:2027,month:4,day:1),rating:.unknown,genre:nil,format:nil,revision:record.reading.revision)
+        XCTAssertEqual(try s.challengeYear(year:2027).assignment(p)?.readingID,reading)
+        XCTAssertTrue(try s.challengeYear(year:2027).assignmentsNeedingReview.contains { $0.promptID == p.id })
+        XCTAssertGreaterThan(try s.queue.read { try Int.fetchOne($0,sql:"SELECT COUNT(*) FROM attention_items WHERE reason='eligibility-changed' AND status='open'")! },0)
+    }
+    func testNewMaterialEvidenceRetiresUnconfirmedOldEvidenceOnly() throws {
+        let s = try store(), reading = try complete(s)
+        let p = try prompt(s,.tropes,"prompt.1")
+        try s.storeChallengeProposals([proposal(reading,p,99)],year:2027)
+        let newer = proposal(reading,p,74,fingerprint:"new-reliable-evidence")
+        try s.storeChallengeProposals([newer],year:2027)
+        XCTAssertEqual(try s.challengeYear(year:2027).proposals.first?.id,newer.id)
+    }
+
 }
