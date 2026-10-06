@@ -14,8 +14,9 @@ public struct FoundationShell: View {
     private let journalContent: AnyView?
     private let challengesContent: AnyView?
     private let seriesContent: AnyView?
-    public init() { homeContent = nil; journalContent = nil; seriesContent = nil; challengesContent = nil }
-    public init(homeContent: AnyView, journalContent: AnyView? = nil, seriesContent: AnyView? = nil, challengesContent: AnyView? = nil) { self.homeContent = homeContent; self.journalContent = journalContent; self.seriesContent = seriesContent; self.challengesContent = challengesContent }
+    private let statsContent: AnyView?
+    public init() { homeContent = nil; journalContent = nil; seriesContent = nil; challengesContent = nil; statsContent = nil }
+    public init(homeContent: AnyView, journalContent: AnyView? = nil, seriesContent: AnyView? = nil, challengesContent: AnyView? = nil, statsContent: AnyView? = nil) { self.homeContent = homeContent; self.journalContent = journalContent; self.seriesContent = seriesContent; self.challengesContent = challengesContent; self.statsContent = statsContent }
     public var body: some View {
         NavigationStack {
             ScrollView {
@@ -25,6 +26,7 @@ public struct FoundationShell: View {
                     else if let journalContent, selectedTab == .journal { journalContent }
                     else if let challengesContent, selectedTab == .challenges { challengesContent }
                     else if let seriesContent, selectedTab == .series { seriesContent }
+                    else if let statsContent, selectedTab == .stats { statsContent }
                     else { Phase1PreviewScreen(tab: selectedTab) }
                 }
                     .padding(.horizontal, DesignTokens.margin).padding(.bottom, 24)

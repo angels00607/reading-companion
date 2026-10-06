@@ -1,161 +1,111 @@
-name: Phase 5 Challenges
+name: Phase 6 Stats
 on:
   push:
-  pull_request:
+    branches: ['**']
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Targeted tests, Stats self-QA, or final candidate regression
+        required: true
+        default: candidate
+        type: choice
+        options: [targeted, qa, candidate]
 permissions:
   contents: read
 jobs:
   native:
     runs-on: macos-15
-    timeout-minutes: 65
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - run: swift --version
-      - run: swift test
+      - name: Targeted Stats Swift tests
+        if: ${{ ((github.event_name == 'workflow_dispatch' && (inputs.stage == 'targeted' || inputs.stage == 'qa')) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[phase6-targeted]') || contains(github.event.head_commit.message, '[phase6-qa]')))) }}
+        run: swift test --filter Phase6Stats
+      - name: Full Swift regression suite
+        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase6-targeted]') && !contains(github.event.head_commit.message, '[phase6-qa]'))) }}
+        run: swift test
       - run: brew install xcodegen
       - run: xcodegen generate
-      - run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: iOS build
+        run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
       - name: Select available iPhone simulator
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase6-targeted]')) }}
         run: |
           xcrun simctl list devices available -j > /tmp/reading-simulators.json
           python3 - <<'PY'
           import json, os
-          devices = json.load(open('/tmp/reading-simulators.json'))['devices']
-          phones = [d for group in devices.values() for d in group if 'iPhone' in d['name']]
-          assert phones, 'An iPhone simulator is required for acceptance QA'
-          phone = sorted(phones, key=lambda d: ('SE' not in d['name'], d['name']))[0]
-          print('Acceptance device:', phone['name'], phone['udid'])
-          with open(os.environ['GITHUB_ENV'], 'a') as env:
-              env.write('READING_SIMULATOR_ID=' + phone['udid'] + '\n')
+          phones=[d for group in json.load(open('/tmp/reading-simulators.json'))['devices'].values() for d in group if 'iPhone' in d['name']]
+          phone=sorted(phones,key=lambda d:('SE' not in d['name'],d['name']))[0]
+          print('Acceptance device:',phone['name'],phone['udid'])
+          with open(os.environ['GITHUB_ENV'],'a') as env:env.write('READING_SIMULATOR_ID='+phone['udid']+'\n')
           PY
-      - name: Challenges acceptance and Human Visual QA
+      - name: Stats self visual QA and acceptance
+        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'qa') || (github.event_name == 'push' && contains(github.event.head_commit.message, '[phase6-qa]'))) }}
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Challenges.xcresult -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests CODE_SIGNING_ALLOWED=NO test
-      - name: Export Challenges evidence
-        if: always()
-        run: |
-          if [ -d work/Challenges.xcresult ]; then
-            xcrun xcresulttool export attachments --path work/Challenges.xcresult --output-path work/challenges-screenshots
-          fi
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: phase-5-challenges-visual-qa
-          path: |
-            work/Challenges.xcresult
-            work/challenges-screenshots
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: phase-5-challenges-review-evidence
-          path: |
-            work/Challenges.xcresult/database.sqlite3
-            work/challenges-screenshots/*.png
-            work/challenges-screenshots/manifest.json
-      - name: Journal acceptance and Human Visual QA
-        if: always()
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Stats.xcresult -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests CODE_SIGNING_ALLOWED=NO test
+      - name: Candidate Stats functional acceptance and fonts
+        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase6-targeted]') && !contains(github.event.head_commit.message, '[phase6-qa]'))) }}
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Journal.xcresult -only-testing:FoundationAcceptanceTests/JournalAcceptanceTests CODE_SIGNING_ALLOWED=NO test
-      - name: Export Journal evidence
-        if: always()
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Stats.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testMonthIncompleteDataRatingAndManualYearChoice -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testRereadLifetimeUnknownAndJournalReuse -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testStatsTabShellModes -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testStatsPrimaryNumbersModes CODE_SIGNING_ALLOWED=NO test
+      - name: Export Stats evidence
+        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase6-targeted]')) }}
         run: |
-          if [ -d work/Journal.xcresult ]; then
-            xcrun xcresulttool export attachments --path work/Journal.xcresult --output-path work/journal-screenshots
-          fi
+          if [ -d work/Stats.xcresult ]; then xcrun xcresulttool export attachments --path work/Stats.xcresult --output-path work/stats-screenshots; fi
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase6-targeted]')) }}
         with:
-          name: phase-3-journal-visual-qa
+          name: phase-6-stats-visual-qa
           path: |
-            work/Journal.xcresult
-            work/journal-screenshots
-      - name: Series acceptance and Human Visual QA
-        if: always()
-        run: |
-          xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
-          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Series.xcresult -only-testing:FoundationAcceptanceTests/SeriesAcceptanceTests CODE_SIGNING_ALLOWED=NO test
-      - name: Export Series evidence
-        if: always()
-        run: |
-          if [ -d work/Series.xcresult ]; then
-            xcrun xcresulttool export attachments --path work/Series.xcresult --output-path work/series-screenshots
-          fi
+            work/Stats.xcresult
+            work/stats-screenshots
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase6-targeted]')) }}
         with:
-          name: phase-4-series-visual-qa
+          name: phase-6-stats-review-evidence
           path: |
-            work/Series.xcresult
-            work/series-screenshots
-      - name: Books Core acceptance and Human Visual QA
-        if: always()
+            work/Stats.xcresult/database.sqlite3
+            work/stats-screenshots/*
+            work/stats-screenshots/manifest.json
+      - name: Books and Challenges functional regression
+        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase6-targeted]') && !contains(github.event.head_commit.message, '[phase6-qa]'))) }}
         run: |
-          xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
-          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/BooksCore.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/BooksCoreAcceptanceTests CODE_SIGNING_ALLOWED=NO test
-      - name: Export Books Core evidence before foundation audits
-        if: always()
-        run: |
-          if [ -d work/BooksCore.xcresult ]; then
-            xcrun xcresulttool export attachments --path work/BooksCore.xcresult --output-path work/books-core-screenshots
-          fi
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: phase-2-books-visual-qa
-          path: |
-            work/BooksCore.xcresult
-            work/books-core-screenshots
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Regression.xcresult -only-testing:FoundationAcceptanceTests/BooksCoreAcceptanceTests/testOfficialAcceptanceFlow -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testExplicitConfirmOccupancyAndIndependentNextChallenge -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testRejectNextBestAndNoReasonOrRecurrence -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testManualAndSameWeekReplacement CODE_SIGNING_ALLOWED=NO test
       - name: Default-size foundation acceptance
-        if: always()
+        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase6-targeted]') && !contains(github.event.head_commit.message, '[phase6-qa]'))) }}
         run: |
-          xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" appearance dark
-          xcrun simctl help ui
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationDefault.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testSystemFollowsSimulatorDarkAppearance CODE_SIGNING_ALLOWED=NO test
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationDefault.xcresult -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testSystemFollowsSimulatorDarkAppearance CODE_SIGNING_ALLOWED=NO test
       - name: Largest-accessibility-size foundation acceptance
-        if: always()
+        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase6-targeted]') && !contains(github.event.head_commit.message, '[phase6-qa]'))) }}
         run: |
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size accessibility-extra-extra-extra-large
           xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationAccessibility.xcresult -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightAccessibilityXXXL -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkAccessibilityXXXLLandscape CODE_SIGNING_ALLOWED=NO test
-      - name: Collect opt-in app diagnostics
-        if: always()
-        run: |
-          mkdir -p work/diagnostics
-          container=$(xcrun simctl get_app_container "$READING_SIMULATOR_ID" com.readingcompanion.app data)
-          cp "$container/Documents/phase0-diagnostics.jsonl" work/diagnostics/
-      - name: Export acceptance screenshots
-        if: always()
-        run: |
-          for result in work/Foundation*.xcresult; do
-            if [ -d "$result" ]; then
-              xcrun xcresulttool export attachments --path "$result" --output-path "work/acceptance-screenshots/$(basename "$result" .xcresult)"
-            fi
-          done
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase6-targeted]') && !contains(github.event.head_commit.message, '[phase6-qa]'))) }}
         with:
-          name: phase-2-acceptance-results
+          name: phase-6-regression-and-foundation-results
           path: |
+            work/Regression.xcresult
             work/Foundation*.xcresult
-            work/acceptance-screenshots
-            work/diagnostics
-            work/BooksCore.xcresult
-            work/books-core-screenshots
   sqlite:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.stage == 'qa') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase6-qa]')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 scripts/test_local_schema.py
-      - run: python3 scripts/test_books_schema.py
-      - run: python3 scripts/test_challenges_schema.py
+      - run: python3 scripts/test_stats_schema.py
+      - if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase6-targeted]') && !contains(github.event.head_commit.message, '[phase6-qa]'))) }}
+        run: |
+          python3 scripts/test_local_schema.py
+          python3 scripts/test_books_schema.py
+          python3 scripts/test_challenges_schema.py
   supabase:
+    if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase6-targeted]') && !contains(github.event.head_commit.message, '[phase6-qa]'))) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

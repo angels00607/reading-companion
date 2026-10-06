@@ -1,0 +1,110 @@
+[
+  {
+    "mode": "Light",
+    "foreground": "text",
+    "backing": "background",
+    "ratio": 17.33
+  },
+  {
+    "mode": "Light",
+    "foreground": "text",
+    "backing": "surface",
+    "ratio": 19.7
+  },
+  {
+    "mode": "Light",
+    "foreground": "secondaryText",
+    "backing": "background",
+    "ratio": 5.56
+  },
+  {
+    "mode": "Light",
+    "foreground": "secondaryText",
+    "backing": "surface",
+    "ratio": 6.32
+  },
+  {
+    "mode": "Light",
+    "foreground": "primary",
+    "backing": "background",
+    "ratio": 9.99
+  },
+  {
+    "mode": "Light",
+    "foreground": "primary",
+    "backing": "surface",
+    "ratio": 11.36
+  },
+  {
+    "mode": "Light",
+    "foreground": "manualChoiceAccent",
+    "backing": "background",
+    "ratio": 7.88
+  },
+  {
+    "mode": "Light",
+    "foreground": "manualChoiceAccent",
+    "backing": "surface",
+    "ratio": 8.96
+  },
+  {
+    "mode": "Light",
+    "foreground": "text",
+    "backing": "selectedScopeBlueSurface",
+    "ratio": 16.42
+  },
+  {
+    "mode": "Dark",
+    "foreground": "text",
+    "backing": "background",
+    "ratio": 18.47
+  },
+  {
+    "mode": "Dark",
+    "foreground": "text",
+    "backing": "surface",
+    "ratio": 16.61
+  },
+  {
+    "mode": "Dark",
+    "foreground": "secondaryText",
+    "backing": "background",
+    "ratio": 10.82
+  },
+  {
+    "mode": "Dark",
+    "foreground": "secondaryText",
+    "backing": "surface",
+    "ratio": 9.73
+  },
+  {
+    "mode": "Dark",
+    "foreground": "primary",
+    "backing": "background",
+    "ratio": 10.31
+  },
+  {
+    "mode": "Dark",
+    "foreground": "primary",
+    "backing": "surface",
+    "ratio": 9.27
+  },
+  {
+    "mode": "Dark",
+    "foreground": "manualChoiceAccent",
+    "backing": "background",
+    "ratio": 5.6
+  },
+  {
+    "mode": "Dark",
+    "foreground": "manualChoiceAccent",
+    "backing": "surface",
+    "ratio": 5.04
+  },
+  {
+    "mode": "Dark",
+    "foreground": "text",
+    "backing": "selectedScopeBlueSurface",
+    "ratio": 12.98
+  }
+]
