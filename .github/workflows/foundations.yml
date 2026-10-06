@@ -51,7 +51,7 @@ jobs:
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Stats.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testMonthIncompleteDataRatingAndManualYearChoice -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testRereadLifetimeUnknownAndJournalReuse -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testStatsTabShellModes CODE_SIGNING_ALLOWED=NO test
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Stats.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testMonthIncompleteDataRatingAndManualYearChoice -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testRereadLifetimeUnknownAndJournalReuse -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testStatsTabShellModes -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testStatsPrimaryNumbersModes CODE_SIGNING_ALLOWED=NO test
       - name: Export Stats evidence
         if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase6-targeted]')) }}
         run: |

@@ -3,6 +3,14 @@ import GRDB
 import ReadingDomain
 
 extension LocalStore: StatsRepository {
+    #if DEBUG
+    /// Explicit fictional stored-history fixture, never an import or live progress command.
+    public func prepareStatsHistoricalPercentageQA(readingID: UUID) throws {
+        try queue.write { db in
+            try db.execute(sql:"UPDATE readings SET progress_mode='percentage',progress_percentage=100,current_page=NULL,total_pages=NULL WHERE owner_id=? AND id=? AND historical=1 AND status='read'",arguments:[ownerID.uuidString,readingID.uuidString])
+        }
+    }
+    #endif
     public func stats(period: StatsPeriod) throws -> StatsSnapshot {
         guard period.valid else { throw StatsError.invalidPeriod }
         return try queue.read { db in try statsSnapshot(period, db) }

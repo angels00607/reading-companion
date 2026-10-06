@@ -104,4 +104,13 @@ final class Phase6StatsRepositoryTests:XCTestCase {
         XCTAssertThrowsError(try s.selectBestBook(period:month,readingID:a.1,expectedRevision:0))
         XCTAssertNil(try s.stats(period:month).selection)
     }
+    func testHistoricalPercentageCompletionHasNoFabricatedObservations() throws {
+        let s=try store(),book=try s.add(work:.init(provider:"qa",reference:"historical-percentage",title:"Historical percentage reading",author:"QA"))
+        let id=try s.recordCompleted(bookID:book,editionID:nil,date:try ReadingDate(year:2026,month:9,day:5),rating:.noRating)
+        try s.prepareStatsHistoricalPercentageQA(readingID:id)
+        let reading=try s.record(id:book).readings.first { $0.id==id }!
+        XCTAssertTrue(reading.historical); XCTAssertEqual(reading.progress.mode,.percentage)
+        XCTAssertEqual(reading.progress.percentage,100); XCTAssertTrue(reading.progressObservations.isEmpty)
+        let st=try s.stats(period:month); XCTAssertEqual(st.books,1); XCTAssertNil(st.pages.known); XCTAssertNil(st.readingDays.known)
+    }
 }

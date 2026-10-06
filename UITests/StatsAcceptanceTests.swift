@@ -79,6 +79,17 @@ final class StatsAcceptanceTests:XCTestCase {
             app.terminate()
         }
     }
+    @MainActor func testStatsPrimaryNumbersModes() {
+        for (appearance,size) in [("Light","UICTContentSizeCategoryL"),("Dark","UICTContentSizeCategoryL"),("Light","UICTContentSizeCategoryAccessibilityXXXL")] {
+            for (route,value) in [("month","3"),("year","3"),("lifetime","6")] {
+                let app=launch(route,appearance:appearance,size:size)
+                let number=app.staticTexts["stats.books.value"]; reveal(app,number)
+                XCTAssertEqual(number.label,value); XCTAssertTrue(number.isHittable)
+                capture(app,"\(appearance)-\(size)-\(route)-books-number")
+                app.terminate()
+            }
+        }
+    }
     @MainActor func testStatsVisualMatrix() {
         let cases=[("Light","UICTContentSizeCategoryL"),("Dark","UICTContentSizeCategoryL"),("Light","UICTContentSizeCategoryAccessibilityXXXL")]
         for (appearance,size) in cases {
