@@ -15,7 +15,8 @@ struct ReadingCompanionApp: App {
                     if let route = visualQARoute { BooksVisualQA(route: route).environmentObject(model) }
                     else if let route = challengeQARoute { ChallengesVisualQA(route: route).environmentObject(model) }
                     else if let route = statsQARoute { StatsVisualQA(route: route).environmentObject(model) }
-                    else { FoundationShell(homeContent: AnyView(BooksHome()), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear)), statsContent:AnyView(StatsHome())).environmentObject(model) }
+                    else if let route = profileQARoute { ProfileVisualQA(route:route).environmentObject(model) }
+                    else { FoundationShell(homeContent: AnyView(VStack(alignment:.leading,spacing:20){BooksHome();HomePrimaryQuest()}), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear)), statsContent:AnyView(StatsHome()), profileContent:AnyView(ProfileHome())).environmentObject(model) }
                 }
                 else if let storageError { StatePresentation(kind: .error, title: "Library unavailable", message: storageError) }
                 else { SkeletonRow() }
@@ -38,6 +39,13 @@ struct ReadingCompanionApp: App {
         #if DEBUG
         let args=ProcessInfo.processInfo.arguments
         if let index=args.firstIndex(of:"-phase6-screen"),index+1<args.count { return args[index+1] }
+        #endif
+        return nil
+    }
+    private var profileQARoute:String? {
+        #if DEBUG
+        let args=ProcessInfo.processInfo.arguments
+        if let index=args.firstIndex(of:"-phase7-screen"),index+1<args.count{return args[index+1]}
         #endif
         return nil
     }
@@ -100,7 +108,7 @@ struct ReadingCompanionApp: App {
                 owner = value
             } else { owner = UUID(); try owner.uuidString.write(to: identity, atomically: true, encoding: .utf8) }
             #if DEBUG
-            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture")
+            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture") || ProcessInfo.processInfo.arguments.contains("-phase7-fixture")
             #else
             let qa = false
             #endif
@@ -110,11 +118,22 @@ struct ReadingCompanionApp: App {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-phase5-fixture") { try seedChallengesQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase6-fixture") { try seedStatsQA(store) }
+            if ProcessInfo.processInfo.arguments.contains("-phase7-fixture") { try seedGamificationQA(store) }
             #endif
             model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
         } catch { storageError = "Could not open the local database. Existing files have not been reset or deleted." }
     }
     #if DEBUG
+    private func seedGamificationQA(_ store:LocalStore) throws {
+        for n in 1...12 { _ = try store.awardXP(try XPAward(semanticKey:"qa:\(n)",source:n <= 8 ? .finishBook:.journalWork,amount:n <= 8 ? 100:40)) }; _ = try store.awardXP(try XPAward(semanticKey:"quest:qa-complete",source:.dailyQuest,amount:GamificationBalance.amount(for:.dailyQuest)))
+        let daily=QuestRules.candidates(cadence:.daily,periodKey:"2026-10-06",activity:.init(genuinePagesPerDay:[18,24,22],sessionsPerWeek:[3,4,4]),history:[])
+        let weekly=QuestRules.candidates(cadence:.weekly,periodKey:"2026-W41",activity:.init(sessionsPerWeek:[3,4,4],journalActionsPerWeek:[2,3]),history:daily)
+        let monthly=QuestRules.candidates(cadence:.monthly,periodKey:"2026-10",activity:.init(completionsPerMonth:[1,2,2],journalActionsPerWeek:[2,3]),history:daily+weekly)
+        var quests=daily+weekly+monthly; quests[0].progress=max(1,quests[0].target-1); quests[1].progress=quests[1].target; quests[1].completedAt=Date(); quests[2].rerolledAt=Date(); try store.saveQuests(quests)
+        var achievements=try store.achievementProgress(); achievements[0]=.init(definition:achievements[0].definition,progress:1,unlockedAt:Date()); achievements[1]=.init(definition:achievements[1].definition,progress:7); achievements[2]=.init(definition:achievements[2].definition,progress:5,unlockedAt:Date()); achievements[4]=.init(definition:achievements[4].definition,progress:3); try store.saveAchievementProgress(achievements)
+        let featured=[achievements[0].definition.key,achievements[2].definition.key,achievements[3].definition.key]; try store.savePassport(.init(name:"Sarah Reader",readingSince:2020,featuredAchievementKeys:featured))
+        try store.setCosmetic("frame.classic",state:.equipped); try store.setCosmetic("theme.modern-bookish",state:.equipped); try store.setCosmetic("background.midnight",state:.unlocked)
+    }
     private func seedStatsQA(_ store:LocalStore) throws {
         func completed(_ title:String,_ month:Int,_ day:Int,_ rating:Rating,_ format:JournalFormat?,_ pages:Int?,year:Int=2026,bookID:UUID?=nil) throws -> (UUID,UUID) {
             let book:UUID

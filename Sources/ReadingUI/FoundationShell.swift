@@ -15,8 +15,9 @@ public struct FoundationShell: View {
     private let challengesContent: AnyView?
     private let seriesContent: AnyView?
     private let statsContent: AnyView?
-    public init() { homeContent = nil; journalContent = nil; seriesContent = nil; challengesContent = nil; statsContent = nil }
-    public init(homeContent: AnyView, journalContent: AnyView? = nil, seriesContent: AnyView? = nil, challengesContent: AnyView? = nil, statsContent: AnyView? = nil) { self.homeContent = homeContent; self.journalContent = journalContent; self.seriesContent = seriesContent; self.challengesContent = challengesContent; self.statsContent = statsContent }
+    private let profileContent: AnyView?
+    public init() { homeContent = nil; journalContent = nil; seriesContent = nil; challengesContent = nil; statsContent = nil; profileContent=nil }
+    public init(homeContent: AnyView, journalContent: AnyView? = nil, seriesContent: AnyView? = nil, challengesContent: AnyView? = nil, statsContent: AnyView? = nil, profileContent:AnyView?=nil) { self.homeContent = homeContent; self.journalContent = journalContent; self.seriesContent = seriesContent; self.challengesContent = challengesContent; self.statsContent = statsContent; self.profileContent=profileContent }
     public var body: some View {
         NavigationStack {
             ScrollView {
@@ -38,7 +39,7 @@ public struct FoundationShell: View {
     }
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(selectedTab.rawValue).font(DesignTokens.functionalFont(size: 28, relativeTo: .largeTitle, weight: .semiBold)).foregroundStyle(DesignTokens.text(scheme)).fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader).accessibilityIdentifier("foundationTitle")
+            HStack(alignment:.top) { Text(selectedTab.rawValue).font(DesignTokens.functionalFont(size: 28, relativeTo: .largeTitle, weight: .semiBold)).foregroundStyle(DesignTokens.text(scheme)).fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader).accessibilityIdentifier("foundationTitle"); Spacer(); if let profileContent { NavigationLink { profileContent } label:{ Image(systemName:"person.crop.circle.fill").font(.system(size:28)).frame(width:44,height:44) }.accessibilityLabel("Open Reader Passport").accessibilityIdentifier("profile.open") } }
             if homeContent == nil { Text("Phase 1 component preview data").font(DesignTokens.functionalFont(size: 13, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
         }.padding(.top, 8)
     }

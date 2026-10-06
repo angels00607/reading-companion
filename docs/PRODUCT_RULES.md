@@ -155,6 +155,15 @@ from one another.
 -   No secret achievements.
 -   No bronze/silver/gold tier requirement.
 
+### Phase 7 V1 balancing catalog
+
+- Finish Book: 100 XP; Complete Journal work: 40 XP; Confirm Challenge prompt: 30 XP.
+- Daily Quest: 20 XP; Weekly Quest: 60 XP; Monthly Quest: 150 XP.
+- Every 500 XP advances one level, with no artificial maximum.
+- Achievement awards are configurable from 50 through 250 XP according to importance; level-only Achievements award 0 XP.
+- These values are implemented through one typed balancing catalog, never duplicated as feature-level constants.
+- The XP ledger is append-only and idempotent by stable semantic award key. Historical imports and administrative import/backup actions do not emit awards.
+
 ## Attention / notifications
 
 -   Push notification is delivery; AttentionItem is persistent
@@ -248,4 +257,3 @@ must be reviewable. Maintain Import History.
   confirmation of completion alone is insufficient: ambiguous cases return Unknown.
   Active, Completed, explicit Abandoned and override precedence retain their locked meanings.
 - No listening-time/playback behavior, feature screens or Phase 1 implementation.
-

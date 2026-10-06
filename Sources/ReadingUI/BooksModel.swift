@@ -10,13 +10,14 @@ public final class BooksModel: ObservableObject {
     public let challengesRepository: (any ChallengesRepository)?
     public let seriesRepository: (any SeriesRepository)?
     public let statsRepository: (any StatsRepository)?
+    public let gamificationRepository: (any GamificationRepository)?
     public let assetDirectory: URL
     @Published public var version = 0
     @Published public var error: String?
     @Published public var feedback: String?
     @Published public var feedbackReadingID: UUID?
     public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL) {
-        self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository; self.statsRepository = repository as? any StatsRepository; self.provider = provider; self.assetDirectory = assetDirectory
+        self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository; self.statsRepository = repository as? any StatsRepository; self.gamificationRepository = repository as? any GamificationRepository; self.provider = provider; self.assetDirectory = assetDirectory
     }
     @discardableResult public func perform<T>(_ body: () throws -> T) -> T? {
         do { let value = try body(); error = nil; version += 1; return value }

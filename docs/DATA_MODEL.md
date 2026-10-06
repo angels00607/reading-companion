@@ -223,6 +223,12 @@ amount - created_at
 
 XP must never be negative.
 
+Phase 7 implementation uses the existing immutable `xp_awards` ledger keyed by
+`(owner_id, semantic_key)` and an equally immutable one-to-one source metadata row.
+This preserves the Phase 0 restore/merge contract while adding stable award-source
+classification. A retry with the same semantic key is a no-op; no migration creates
+retroactive awards.
+
 ### AchievementDefinition
 
 -   stable key
@@ -253,6 +259,11 @@ XP must never be negative.
 -   equipped state as appropriate
 
 No currency/rarity/paywall fields are required by product.
+
+Phase 7 persists private `reader_profiles`, period-keyed `quest_instances`,
+monotonic `achievement_progress`, and `user_cosmetics`. Quest rows preserve reroll
+history rather than deleting rejected candidates. Locked cosmetics are derived from
+the catalog and level; only unlocked/equipped state is persisted.
 
 ## 7. Stats selections
 

@@ -88,12 +88,20 @@ public enum SeriesRules {
         return .init(type: .type3, entryCount: count, continuationPages: max(0, (count - 1) / 20))
     }
 }
-public struct XPAward: Equatable, Sendable {
+public struct XPAward: Identifiable, Codable, Equatable, Sendable {
+    public let id: UUID
     public let semanticKey: String
+    public let source: XPSource
     public let amount: Int
+    public let awardedAt: Date
     public init(semanticKey: String, amount: Int) throws {
         guard !semanticKey.isEmpty, amount >= 0 else { throw DomainError.invalidProgress }
-        self.semanticKey = semanticKey; self.amount = amount
+        self.id=UUID(); self.semanticKey = semanticKey; self.source = .achievement; self.amount = amount; self.awardedAt=Date()
+    }
+    public init(id:UUID=UUID(),semanticKey:String,source:XPSource,amount:Int,awardedAt:Date=Date()) throws {
+        guard !semanticKey.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty, amount >= 0,
+              source != .achievement || GamificationBalance.achievementRange.contains(amount) || amount == 0 else { throw GamificationError.invalidAward }
+        self.id=id; self.semanticKey=semanticKey; self.source=source; self.amount=amount; self.awardedAt=awardedAt
     }
 }
 public enum XPPolicy {
