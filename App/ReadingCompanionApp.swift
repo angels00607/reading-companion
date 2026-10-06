@@ -114,7 +114,8 @@ struct ReadingCompanionApp: App {
             ("A Series Left Behind", .abandoned, .init(hasUnreadIncludedPublished: true), false)
         ]
         for (index, fixture) in fixtures.enumerated() {
-            let id = UUID(); let series = ReadingSeries(id: id, ownerID: store.ownerID, name: fixture.0, author: "Taylor Reader", userStatusOverride: fixture.1, evidence: fixture.2, finalTotalKnown: fixture.3)
+            // Fixed QA timestamps keep the reviewed first row deterministic across launches.
+            let id = UUID(); let series = ReadingSeries(id: id, ownerID: store.ownerID, name: fixture.0, author: "Taylor Reader", userStatusOverride: fixture.1, evidence: fixture.2, finalTotalKnown: fixture.3, updatedAt: Date(timeIntervalSince1970: 1_700_000_000 - Double(index) * 86_400))
             let count = index == 0 ? 25 : 3
             var entries = [SeriesEntry]()
             for number in 1...count {

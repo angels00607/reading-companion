@@ -42,6 +42,8 @@ The first CI attempt exposed duplicate-title test fixtures in two ISO-week cases
 
 Run `37438742316` mapped a 22-point accessible frame to the live Review Matches link and mapped failed manual selection to row identifiers overriding nested link identifiers. The targeted fix gives shared Challenge links explicit vertical padding/plain button style and removes the redundant row identifier. Native assertions still require 44×44 points. The test scroll helper locates lazily rendered controls before asserting existence, without excluding controls or changing target thresholds. Screenshot inspection also identified vertical dividers in overview/prompt rows; explicit one-point horizontal separators replace them. Archive labels now read the persisted snapshot version directly.
 
+The same run exposed a pre-existing Series acceptance fixture ordering problem: wall-clock seed timestamps can put the required Moonlit Archive row outside the lazy viewport, although its stored Series is present. Only the fixture timestamps are made deterministic, retaining the reviewed first-row hierarchy; production sorting, Series screens and every old test assertion are unchanged. Captured month labels now use the current locale rather than root-locale `M01` strings, and Challenge years render without thousands grouping.
+
 ## Implementation notes
 
 The catalog resource is copied from `CHALLENGE_CATALOG.md`, retaining Archetype B’s 21 numbered slots including the gap. Generic unavailable UI preserves slot keys; no internal TBD instructions are presented as prompt content.
