@@ -20,10 +20,17 @@ final class ChallengesAcceptanceTests: XCTestCase {
     }
     @MainActor private func reveal(_ app: XCUIApplication, _ element: XCUIElement) {
         _ = element.waitForExistence(timeout:1)
-        for _ in 0..<35 where !element.isHittable {
-            if element.exists && element.frame.minY < app.frame.minY + 65 { app.swipeDown() }
-            else { app.swipeUp() }
+        let viewport = app.scrollViews.firstMatch.frame.intersection(app.frame).insetBy(dx: 0, dy: 12)
+        for _ in 0..<35 {
+            if element.exists && element.isHittable && viewport.contains(element.frame) { return }
+            if element.exists {
+                let movingDown = element.frame.midY < viewport.midY
+                let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: movingDown ? 0.35 : 0.75))
+                let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: movingDown ? 0.75 : 0.35))
+                start.press(forDuration: 0.05, thenDragTo: end)
+            } else { app.swipeUp() }
         }
+        XCTAssertTrue(element.exists && element.isHittable && viewport.contains(element.frame), "Required control must be fully visible: \(element.identifier), \(element.label), \(element.frame), viewport \(viewport)")
     }
     @MainActor private func capture(_ app: XCUIApplication, _ name: String) {
         let a = XCTAttachment(screenshot:app.screenshot()); a.name = "Phase5-" + name; a.lifetime = .keepAlways; add(a)
@@ -98,6 +105,12 @@ final class ChallengesAcceptanceTests: XCTestCase {
                     XCTAssertGreaterThanOrEqual(app.buttons["challenges.assistant"].frame.width,44)
                     XCTAssertGreaterThanOrEqual(app.buttons["challenges.assistant"].frame.height,44)
                     capture(app,"\(appearance)-\(size)-review-actions")
+                    tap(app,app.buttons["challenges.assistant"])
+                    let unavailable = app.staticTexts["challenges.assistant.unavailable"]
+                    XCTAssertTrue(unavailable.waitForExistence(timeout:5))
+                    XCTAssertEqual(app.staticTexts["challenges.confidence"].label,"99% MATCH")
+                    reveal(app,unavailable)
+                    capture(app,"\(appearance)-\(size)-assistant-unavailable")
                     for score in [88,70] {
                         tap(app,app.buttons["challenges.reject"])
                         XCTAssertEqual(app.staticTexts["challenges.confidence"].label,"\(score)% MATCH")
@@ -128,18 +141,20 @@ final class ChallengesAcceptanceTests: XCTestCase {
                 if route == "roulette" { XCTAssertTrue(app.staticTexts["Prompts not configured"].exists); XCTAssertFalse(app.buttons["challenges.assign.1"].exists) }
                 if route == "tropes" {
                     tap(app,app.buttons["challenges.assign.prompt.1"])
-                    capture(app,"\(appearance)-\(size)-manual-selection")
                     tap(app,app.buttons.containing(.staticText,identifier:"The Amber Garden").firstMatch)
+                    capture(app,"\(appearance)-\(size)-manual-selection")
                     tap(app,app.buttons["challenges.manual.confirm"])
                     XCTAssertTrue(app.staticTexts["Manual assignment"].waitForExistence(timeout:5))
+                    reveal(app,app.staticTexts["Manual assignment"].firstMatch)
                     capture(app,"\(appearance)-\(size)-manual-confirmed")
                 }
                 if route == "weeks" {
                     tap(app,app.buttons["challenges.replace.9"])
-                    capture(app,"\(appearance)-\(size)-same-week-selection")
                     tap(app,app.buttons.containing(.staticText,identifier:"The Blue Notebook").firstMatch)
+                    capture(app,"\(appearance)-\(size)-same-week-selection")
                     tap(app,app.buttons["challenges.manual.confirm"])
                     XCTAssertTrue(app.staticTexts["The Blue Notebook"].waitForExistence(timeout:5))
+                    reveal(app,app.staticTexts["The Blue Notebook"].firstMatch)
                     capture(app,"\(appearance)-\(size)-same-week-confirmed")
                 }
                 app.terminate()
