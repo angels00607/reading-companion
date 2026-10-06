@@ -74,7 +74,7 @@ final class ChallengesAcceptanceTests: XCTestCase {
         app.terminate()
     }
     @MainActor func testChallengesVisualMatrixAndRotation() {
-        let routes = ["overview","review","seasonal","tropes","archetype","world","monthly","alphabet","weeks","hundred","roulette","archive","no-information"]
+        let routes = ["overview","review","seasonal","tropes","archetype","world","monthly","alphabet","weeks","hundred","roulette","archive","2026","2028","no-information"]
         for (appearance,size) in [("Light","UICTContentSizeCategoryL"),("Dark","UICTContentSizeCategoryL"),("Light","UICTContentSizeCategoryAccessibilityXXXL")] {
             for route in routes {
                 let app = launch(route,appearance:appearance,size:size)
@@ -91,6 +91,14 @@ final class ChallengesAcceptanceTests: XCTestCase {
                     XCTAssertTrue(app.staticTexts["No more eligible matches"].waitForExistence(timeout:5))
                     capture(app,"\(appearance)-\(size)-review-empty")
                 }
+                if route == "archetype" || route == "monthly" {
+                    let label = route == "archetype" ? "Prompt 10 � Not configured" : "Prompt 2 � Not configured"
+                    let missing = app.staticTexts[label].firstMatch
+                    for _ in 0..<35 where !missing.isHittable { app.swipeUp() }
+                    XCTAssertTrue(missing.isHittable, "Unavailable catalog slot must remain visible and unfilled")
+                    capture(app,"\(appearance)-\(size)-\(route)-missing-content")
+                }
+                if route == "2026" || route == "2028" { XCTAssertEqual(app.staticTexts["challenges.version"].label,"Version A") }
                 if route == "archive" { XCTAssertTrue(app.buttons["challenges.archived.2026"].exists) }
                 if route == "roulette" { XCTAssertTrue(app.staticTexts["Prompts not configured"].exists); XCTAssertFalse(app.buttons["challenges.assign.1"].exists) }
                 app.terminate()

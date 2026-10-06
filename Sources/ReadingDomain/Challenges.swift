@@ -105,6 +105,22 @@ public struct ChallengeYearState: Sendable {
     public init(configuration: ChallengeConfiguration, assignments: [ChallengeAssignment], proposals: [ChallengeProposal], readings: [ChallengeReading], hasAnalysis: Bool = false) {
         self.configuration = configuration; self.assignments = assignments; self.proposals = proposals; self.readings = readings; self.hasAnalysis = hasAnalysis
     }
+    public func eligibleForManual(_ record: ChallengeReading, prompt: ChallengePrompt) -> Bool {
+        guard ChallengeRules.eligible(record, prompt: prompt, year: configuration.year) else { return false }
+        if prompt.challenge == .hundred {
+            return !assignments.contains { assignment in assignment.readingID == record.id && configuration.prompts.contains { $0.id == assignment.promptID && $0.challenge == .hundred } }
+        }
+        if prompt.challenge == .alphabet {
+            for seriesID in record.seriesIDs {
+                let books = Set(assignments.compactMap { assignment -> UUID? in
+                    guard configuration.prompts.contains(where: { $0.id == assignment.promptID && $0.challenge == .alphabet }), let assigned = readings.first(where: { $0.id == assignment.readingID }), assigned.seriesIDs.contains(seriesID) else { return nil }
+                    return assigned.book.id
+                })
+                if books.count >= 2 { return false }
+            }
+        }
+        return true
+    }
     public var assignmentsNeedingReview: [ChallengeAssignment] {
         assignments.filter { assignment in
             guard let record = readings.first(where: { $0.id == assignment.readingID }), let prompt = configuration.prompts.first(where: { $0.id == assignment.promptID }) else { return true }
@@ -145,8 +161,12 @@ public protocol ChallengesRepository: Sendable {
 }
 public extension ChallengeRules {
     static func eligible(_ record: ChallengeReading, prompt: ChallengePrompt, year: Int, automatic: Bool = false) -> Bool {
-        guard prompt.available, record.reading.status == .read, !automatic || !record.reading.historical,
-              let date = record.reading.finishDate else { return false }
+        guard prompt.available, record.reading.status == .read, !automatic || !record.reading.historical else { return false }
+        guard let date = record.reading.finishDate else {
+            // An explicit year/manual decision does not fabricate a finish date.
+            // Period-bound prompts still require the real date to establish eligibility.
+            return !automatic && ![ChallengeKind.seasonal,.monthly,.weeks].contains(prompt.challenge)
+        }
         if prompt.challenge == .weeks { return date.isoWeek.year == year && String(date.isoWeek.week) == prompt.key }
         guard date.year == year else { return false }
         if let month = prompt.month, month != date.month { return false }

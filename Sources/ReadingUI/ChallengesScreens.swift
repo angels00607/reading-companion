@@ -199,8 +199,8 @@ private struct ChallengeManualAssignment: View {
         BooksScreen(replacement ? "Replace week assignment" : "Manual assignment") {
             Text(prompt.text ?? "Not configured").font(DesignTokens.functionalFont(size: 20, relativeTo: .title2, weight: .semiBold))
             Text(replacement ? "Only a book finished in this same ISO week can replace the current assignment. The displaced book will not move to another week." : "Your choice is authoritative. No AI confidence score is attached.")
-            let records = state.readings.filter { ChallengeRules.eligible($0, prompt: prompt, year: state.configuration.year) }
-            if records.isEmpty { StatePresentation(kind: .empty, title: "No eligible finished book", message: "A known finish date is needed for this year and period. DNF readings are excluded.") }
+            let records = state.readings.filter { state.eligibleForManual($0, prompt: prompt) }
+            if records.isEmpty { StatePresentation(kind: .empty, title: "No eligible finished book", message: "The reading must qualify for this prompt and period. Month/week prompts require a known finish date. DNF readings are excluded.") }
             ForEach(records) { record in
                 Button { selected = record.id } label: {
                     VStack(alignment: .leading, spacing: 6) {

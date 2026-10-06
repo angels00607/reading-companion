@@ -195,4 +195,17 @@ final class Phase5ChallengesRepositoryTests: XCTestCase {
         XCTAssertEqual(try s.challengeYear(year:2027).proposals.first?.id,newer.id)
     }
 
+    func testUnknownFinishAllowsExplicitUnscopedManualButNotInventedPeriod() throws {
+        let s = try store();try s.ensureChallengeYear(year:2027)
+        let book = try s.add(work:WorkCandidate(provider:"fixture",reference:"unknown-date",title:"Unknown Date",author:"Author"))
+        let reading = try s.start(bookID:book,editionID:nil,date:nil)
+        try s.finish(readingID:reading,confirmed:true,date:nil,revision:0)
+        let p = try prompt(s,.tropes,"prompt.1")
+        try s.assignChallenge(promptID:p.id,readingID:reading,year:2027)
+        XCTAssertNotNil(try s.challengeYear(year:2027).assignment(p))
+        XCTAssertThrowsError(try s.assignChallenge(promptID:prompt(s,.weeks,"1").id,readingID:reading,year:2027))
+        XCTAssertThrowsError(try s.assignChallenge(promptID:prompt(s,.monthly,"1.1").id,readingID:reading,year:2027))
+        XCTAssertNil(try s.record(id:book).latest?.finishDate)
+    }
+
 }

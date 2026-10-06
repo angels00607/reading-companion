@@ -69,7 +69,7 @@ final class Phase5ChallengesTests: XCTestCase {
     }
     func testDNFUnknownFinishAndHistoricalDoNotAutoAnalyze() throws {
         let config = try ChallengeCatalog.configuration(year: 2027); let prompt = config.prompts.first { $0.challenge == .tropes }!
-        XCTAssertFalse(ChallengeRules.eligible(try record(date: nil), prompt: prompt, year: 2027))
+        XCTAssertFalse(ChallengeRules.eligible(try record(date: nil), prompt: prompt, year: 2027, automatic: true))
         XCTAssertFalse(ChallengeRules.eligible(try record(date: ReadingDate(year: 2027, month: 1, day: 1), status: .dnf), prompt: prompt, year: 2027))
         let imported = try record(date: ReadingDate(year: 2027, month: 1, day: 1), historical: true)
         XCTAssertFalse(ChallengeRules.eligible(imported, prompt: prompt, year: 2027, automatic: true))
