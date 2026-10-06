@@ -2,7 +2,7 @@
 
 Branch: `codex/phase-5-challenges`; authoritative starting main: `61ef0cafc885a28d1d6b284abbda1dc8eb4d3e25`.
 
-Implementation and validation are in progress. No merge or Phase 6 is authorized.
+READY FOR HUMAN REVIEW. Implementation and targeted automated/self-visual validation are complete; human functional and visual approval remains pending. No merge or Phase 6 is authorized.
 
 ## Acceptance criteria
 
@@ -31,12 +31,26 @@ Historical imported readings never generate automatic proposals, placements, not
 
 Unknown finish dates remain unknown. Explicit manual assignment can target an unscoped Challenge year chosen by the user, but Seasonal, Monthly and 52 Weeks still require an actual qualifying finish date. Alphabet uses title-based manual eligibility, not a manufactured semantic confidence score.
 
-Existing Foundation findings remain visible and deferred to Phase 12. No physical-device/VoiceOver certification is claimed.
+Existing Foundation findings remain visible and deferred to Phase 12. The historical 107 XCTest Dynamic Type findings remain unresolved; no responsible live element has been identified for those findings, instrumentation did not establish a false positive, and no finding has been suppressed. They remain an open accessibility risk requiring Phase 12 and manual native inspection. The mapped Phase 5 Assistant target correction does not resolve or reinterpret that history. No physical-device/VoiceOver certification is claimed.
 
 ## Validation
 
-Local SQLite: 17 baseline + 3 Books + 7 additive Challenges tests pass.
-Swift: 92 tests pass on the current implementation (66 existing + 9 domain + 17 repository). Supabase/RLS: all 80 assertions pass (67 existing + 13 additive Challenges). iOS build and native acceptance/visual evidence are still being finalized.
+Validated implementation: `facbab551d8d206a7bf249b7702b8834f09b722c`, [candidate run 37458473321](https://github.com/angels00607/reading-companion/actions/runs/37458473321). Final packaging changes documentation/QA only; no duplicate native matrix is required.
+
+| Validation | Result |
+| --- | --- |
+| Swift | PASS — 92 tests (66 existing + 9 domain + 17 repository) |
+| SQLite | PASS — 27 tests (17 baseline + 3 Books + 7 Challenges) |
+| Supabase/RLS | PASS — 80 assertions (67 existing + 13 Challenges) |
+| iOS build | PASS |
+| Challenges native acceptance | PASS — all 4 tests; xcresult records 0 issues |
+| Journal, Series, Books Core regression stages | PASS |
+| Font registration, included in Books Core | PASS — Manrope-Regular/Medium/SemiBold, PapernotesRegular, HelloBabyRegular |
+| Light Standard / Dark Standard / Accessibility XXXL | PASS — native matrix and targeted screenshot self-review |
+
+142 native PNG captures are retained in CI. The three final boards select 90 captures with source filenames, timestamps and SHA-256 hashes in the [capture index](qa/phase-5/capture-index.json). [Provenance and boards](qa/phase-5/README.md) identify the exact validated implementation and artifacts. Targeted final inspection covered 99%/70%, proposal actions, selected manual Book/date and replacement controls at XXXL. No new functional failure or visual regression was found; vertical expansion, wrapping and scrolling remain expected.
+
+The overall Foundation audit is not certified green: historical 107/148 findings remain visible and deferred to Phase 12/manual native inspection, without suppression or a false-positive claim. This packaging does not change application code or existing tests.
 
 The first CI attempt exposed duplicate-title test fixtures in two ISO-week cases. Distinct fictional fixture titles corrected those setup failures; duplicate detection and all prior assertions remain intact. Later inspection corrected December's unavailable-slot display to its month-local #2/#3 identities. No missing catalog content was supplied.
 
@@ -44,7 +58,7 @@ Run `37438742316` reported a 22-point accessible frame during the review flow an
 
 The same run exposed a pre-existing Series acceptance fixture ordering problem: wall-clock seed timestamps can put the required Moonlit Archive row outside the lazy viewport, although its stored Series is present. Only the fixture timestamps are made deterministic, retaining the reviewed first-row hierarchy; production sorting, Series screens and every old test assertion are unchanged. Captured month labels now use the current locale rather than root-locale `M01` strings, and Challenge years render without thousands grouping.
 
-Run `37443973783` at `f83c56d5d205f94eef02f65441deaf7716e033f4` passes the complete visual matrix, manual/same-week replacement and rejection flow. Its one remaining assertion is mapped by the xcresult issue timestamp and adjacent activity records to `challenges.assistant`, not the Review Matches navigation link: Ask Assistant reports a 22-point accessible height. The shared tertiary button reserves 48 points but its transparent label did not define the full interactive shape. A rectangle content shape now covers the existing label frame without changing appearance or thresholds. Matrix tests also assert the Assistant target in all three modes; validation of this correction is pending. Native archive navigation now preserves its scroll container. An intermediate Swift 6 isolation compile failure was corrected by annotating the shared Challenge link helper `@MainActor`; it was not an accessibility failure.
+Run `37443973783` at `f83c56d5d205f94eef02f65441deaf7716e033f4` passes the complete visual matrix, manual/same-week replacement and rejection flow. Its one remaining assertion is mapped by the xcresult issue timestamp and adjacent activity records to `challenges.assistant`, not the Review Matches navigation link: Ask Assistant reports a 22-point accessible height. The shared tertiary button reserves 48 points but its transparent label did not define the full interactive shape. A rectangle content shape now covers the existing label frame without changing appearance or thresholds. Matrix tests also assert the Assistant target in all three modes; the final candidate passes these assertions in all three modes. Native archive navigation now preserves its scroll container. An intermediate Swift 6 isolation compile failure was corrected by annotating the shared Challenge link helper `@MainActor`; it was not an accessibility failure.
 
 Self-review of that run's XXXL screenshots found a test-capture limitation: `isHittable` alone did not ensure the requested percentage/actions were inside the captured viewport. The scroll helper now additionally requires the entire target frame inside the visible scroll region. Captures include selected manual/same-week books, confirmed labels and the truthful Assistant unavailable state in all modes. No accessibility finding or threshold was removed.
 
@@ -77,3 +91,5 @@ Every stored decision uses owner-scoped SQLite transactions and the existing dur
 | G — Missing content | Native Archetype B #10, December B #2 and Roulette unavailable states; domain tests explicitly cover both December gaps and retained identities |
 
 DEBUG-only fictional fixtures demonstrate the review contract; they are not production book metadata or evidence. Human visual approval remains pending. The native matrix captures overview, all nine types, archive, rotation, 99/88/70 proposals, rejection/empty, missing content, manual selection/confirmation and same-week replacement in Light Standard, Dark Standard and Light Accessibility XXXL.
+
+Final candidate `37458473321` passes all four Challenges tests, including the corrected capture-helper matrix. Acceptance flows A–G below are covered by the combined native/domain/repository evidence. The final boards are prepared for human review, not human approval or physical-device/VoiceOver certification. PR #6 remains unmerged; Phase 6 has not started.
