@@ -13,7 +13,8 @@ struct ReadingCompanionApp: App {
                 if isFoundationQA { FoundationShell() }
                 else if let model {
                     if let route = visualQARoute { BooksVisualQA(route: route).environmentObject(model) }
-                    else { FoundationShell(homeContent: AnyView(BooksHome()), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome())).environmentObject(model) }
+                    else if let route = challengeQARoute { ChallengesVisualQA(route: route).environmentObject(model) }
+                    else { FoundationShell(homeContent: AnyView(BooksHome()), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear))).environmentObject(model) }
                 }
                 else if let storageError { StatePresentation(kind: .error, title: "Library unavailable", message: storageError) }
                 else { SkeletonRow() }
@@ -26,6 +27,45 @@ struct ReadingCompanionApp: App {
                 }
         }
     }
+    private var challengeQAYear: Int? {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-phase5-fixture") { return 2027 }
+        #endif
+        return nil
+    }
+    private var challengeQARoute: String? {
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if let index = args.firstIndex(of: "-phase5-screen"), index + 1 < args.count { return args[index + 1] }
+        #endif
+        return nil
+    }
+    #if DEBUG
+    private func seedChallengesQA(_ store: LocalStore) throws {
+        for year in [2026,2027,2028] { try store.ensureChallengeYear(year: year) }
+        func completed(_ reference: String, _ title: String, _ date: ReadingDate) throws -> UUID {
+            let book = try store.add(work: WorkCandidate(provider: "qa-challenges", reference: reference, title: title, author: "Fictional QA Author"))
+            let reading = try store.start(bookID: book, editionID: nil, date: nil)
+            try store.finish(readingID: reading, confirmed: true, date: date, revision: 0)
+            return reading
+        }
+        let reading = try completed("winter", "The Deliberately Long Story of Two Childhood Friends Reunited at a Winter Sports Festival in New York City", try ReadingDate(year: 2027, month: 12, day: 8))
+        _ = try completed("manual", "The Amber Garden", try ReadingDate(year: 2027, month: 3, day: 1))
+        _ = try completed("week-second", "The Blue Notebook", try ReadingDate(year: 2027, month: 3, day: 3))
+        _ = try completed("different-week", "Another Week", try ReadingDate(year: 2027, month: 3, day: 10))
+        let config = try store.challengeYear(year: 2027).configuration
+        let candidates: [(ChallengeKind,String,Int,String)] = [
+            (.tropes,"prompt.10",99,"Fictional fixture synopsis explicitly states a childhood-friends romance."),
+            (.world,"easy.1",88,"Fictional fixture synopsis explicitly identifies New York City as the setting."),
+            (.monthly,"12.1",70,"Fictional fixture synopsis explicitly describes a winter sport; the reading finished in December.")
+        ]
+        let proposals = candidates.map { kind,key,score,explanation in
+            ChallengeProposal(readingID: reading, promptID: config.prompts.first { $0.challenge == kind && $0.key == key }!.id, confidence: score,
+                evidence: ChallengeEvidence(fingerprint: "fictional-fixture-\(kind.rawValue)-v1", source: "Fictional visual QA evidence", reference: "Fixture synopsis — not a provider analysis", explanation: explanation, reliable: true))
+        }
+        try store.storeChallengeProposals(proposals, year: 2027)
+    }
+    #endif
     private var isFoundationQA: Bool {
         #if DEBUG
         return ProcessInfo.processInfo.arguments.contains("-phase0-diagnostics")
@@ -52,14 +92,17 @@ struct ReadingCompanionApp: App {
                 owner = value
             } else { owner = UUID(); try owner.uuidString.write(to: identity, atomically: true, encoding: .utf8) }
             #if DEBUG
-            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture")
+            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture")
             #else
             let qa = false
             #endif
             let store = try LocalStore(path: qa ? ":memory:" : root.appendingPathComponent(owner.uuidString + ".sqlite").path, ownerID: owner)
             if ProcessInfo.processInfo.arguments.contains("-phase3-fixture") { try seedJournalQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase4-fixture") { try seedSeriesQA(store) }
-            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-phase5-fixture") { try seedChallengesQA(store) }
+            #endif
+            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
         } catch { storageError = "Could not open the local database. Existing files have not been reset or deleted." }
     }
     private func seedSeriesQA(_ store: LocalStore) throws {
@@ -71,7 +114,8 @@ struct ReadingCompanionApp: App {
             ("A Series Left Behind", .abandoned, .init(hasUnreadIncludedPublished: true), false)
         ]
         for (index, fixture) in fixtures.enumerated() {
-            let id = UUID(); let series = ReadingSeries(id: id, ownerID: store.ownerID, name: fixture.0, author: "Taylor Reader", userStatusOverride: fixture.1, evidence: fixture.2, finalTotalKnown: fixture.3)
+            // Fixed QA timestamps keep the reviewed first row deterministic across launches.
+            let id = UUID(); let series = ReadingSeries(id: id, ownerID: store.ownerID, name: fixture.0, author: "Taylor Reader", userStatusOverride: fixture.1, evidence: fixture.2, finalTotalKnown: fixture.3, updatedAt: Date(timeIntervalSince1970: 1_700_000_000 - Double(index) * 86_400))
             let count = index == 0 ? 25 : 3
             var entries = [SeriesEntry]()
             for number in 1...count {

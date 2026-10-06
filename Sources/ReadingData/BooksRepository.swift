@@ -219,6 +219,7 @@ extension LocalStore: BooksRepository {
             let effects = try ReadingRules.finish(&reading, confirmed: confirmed, date: date, expectedRevision: revision)
             try save(reading, db: db)
             if effects.journalInbox { try createJournalCompletionWork(reading: reading, db: db) }
+            if effects.challengeAnalysis { try createChallengeCompletionWork(reading: reading, db: db) }
             try command(id: readingID, kind: "reading.finish", revision: revision, payload: reading, db: db)
         }
     }
@@ -289,6 +290,7 @@ extension LocalStore: BooksRepository {
             if let format { try ReadingRules.setJournalFormat(format, origin: .user, reading: &value) }
             else { value.journalFormat = nil }
             value.revision += 1; try save(value, db: db)
+            try refreshChallengesAfterReadingEdit(readingID, db: db)
             for field in ["start_date","finish_date","rating","primary_genre","journal_format"] { try provenance(id: readingID, type: "reading", field: field, source: "manual", reference: nil, db: db) }
             try command(id: readingID, kind: "reading.edit", revision: revision, payload: value, db: db)
         }

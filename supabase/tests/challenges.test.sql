@@ -1,0 +1,22 @@
+begin;
+select plan(13);
+select has_table('public','challenge_rejections','rejection evidence persisted');
+select has_table('public','challenge_analysis','analysis provenance persisted');
+select has_table('public','attention_items','shared persistent attention');
+select is((select relrowsecurity from pg_class where oid='public.challenge_rejections'::regclass),true,'rejections RLS enabled');
+select is((select relrowsecurity from pg_class where oid='public.challenge_analysis'::regclass),true,'analysis RLS enabled');
+select is((select relrowsecurity from pg_class where oid='public.attention_items'::regclass),true,'attention RLS enabled');
+select ok(not has_table_privilege('authenticated','public.challenge_rejections','INSERT'),'authenticated cannot bypass rejection commands');
+select ok(not has_table_privilege('authenticated','public.challenge_analysis','INSERT'),'authenticated cannot bypass analysis commands');
+select ok(not has_table_privilege('anon','public.attention_items','SELECT'),'anonymous cannot read attention');
+insert into public.attention_items(owner_id,id,category,entity_id,reason,status) values
+('00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002','challenges','00000000-0000-0000-0000-000000000003','match-review','open');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',true);
+select is((select count(*)::int from public.attention_items),1,'owner can read own attention');
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000004',true);
+select is((select count(*)::int from public.attention_items),0,'other owner cannot read attention');
+reset role;
+select has_trigger('public','challenge_years','year_no_delete','year snapshot deletion blocked');
+select has_trigger('public','challenge_assignments','challenge_completed','completion required at database boundary');
+select * from finish();rollback;
