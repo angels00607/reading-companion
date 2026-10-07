@@ -1,6 +1,24 @@
 import XCTest
 
 final class ProfileGamificationAcceptanceTests: XCTestCase {
+    @MainActor func testPassportLabelCorrectionVisualQA() {
+        for (appearance,size) in [("Light","UICTContentSizeCategoryL"),("Dark","UICTContentSizeCategoryL"),("Light","UICTContentSizeCategoryAccessibilityXXXL")] {
+            let app = XCUIApplication()
+            app.launchArguments = ["-phase7-fixture","-phase7-screen","profile","-phase0-appearance",appearance,"-UIPreferredContentSizeCategoryName",size]
+            app.launch(); XCUIDevice.shared.orientation = .portrait
+            XCTAssertTrue(app.scrollViews["phase7.profile"].waitForExistence(timeout:15))
+            let prefix = "Phase7-\(appearance)-\(size)-"
+            attach(app,prefix+"profile-top")
+            scrollTo(app.descendants(matching:.any)["profile.level"].firstMatch,app)
+            attach(app,prefix+"profile-level")
+            let favorites = app.staticTexts["Favorite Books \u{00B7} 10 selected"]
+            scrollTo(favorites,app); XCTAssertTrue(favorites.exists && favorites.isHittable)
+            XCTAssertFalse(app.staticTexts.matching(NSPredicate(format:"label CONTAINS %@","Â")).firstMatch.exists)
+            attach(app,prefix+"profile-favorites")
+            app.swipeUp(); app.swipeUp(); attach(app,prefix+"profile-lower")
+            app.terminate()
+        }
+    }
     @MainActor func testCleanProductionLaunchA() {
         let app = XCUIApplication()
         app.launchArguments = ["-phase7-acceptance-store",UUID().uuidString,"-phase7-screen","quests"]
