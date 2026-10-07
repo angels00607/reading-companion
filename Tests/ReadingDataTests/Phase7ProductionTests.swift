@@ -44,7 +44,7 @@ final class Phase7ProductionTests: XCTestCase {
     func testFlowsCDCurrentPeriodSlotQuotaAndISOWeekRollover() throws {
         let clock = Phase7Clock(), owner = UUID(), url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".sqlite")
         defer { try? FileManager.default.removeItem(at:url) }
-        let s = try store(clock,path:url.path,owner:owner)
+        var s = try store(clock,path:url.path,owner:owner)
         let first = try s.currentQuests(), daily = first.filter { $0.cadence == .daily }
         try s.rerollQuest(daily[1].id)
         let replaced = try s.currentQuests().filter { $0.cadence == .daily }
@@ -54,6 +54,9 @@ final class Phase7ProductionTests: XCTestCase {
         XCTAssertThrowsError(try s.rerollQuest(replaced.first!.id))
         XCTAssertThrowsError(try s.rerollQuest(first.first { $0.cadence == .monthly }!.id))
         let weekly = first.first { $0.cadence == .weekly }!; try s.rerollQuest(weekly.id)
+        s = try store(clock,path:url.path,owner:owner)
+        XCTAssertFalse(try s.rerollAvailable(.daily)); XCTAssertFalse(try s.rerollAvailable(.weekly))
+        XCTAssertEqual(try s.currentQuests().filter { $0.cadence == .daily },replaced)
         clock.set("2026-10-06T12:00:00Z")
         let next = try s.currentQuests()
         XCTAssertEqual(next.filter { $0.cadence == .daily }.count,2)
@@ -64,6 +67,11 @@ final class Phase7ProductionTests: XCTestCase {
         XCTAssertTrue(try s.currentQuests().filter { $0.cadence == .weekly }.allSatisfy { $0.periodKey == "2026-W42" })
         XCTAssertTrue(try s.rerollAvailable(.weekly))
         XCTAssertTrue(try s.quests().contains { $0.id == weekly.id && $0.rerolledAt != nil })
+        let oldMonthly = first.filter { $0.cadence == .monthly }.map(\.id)
+        clock.set("2026-11-02T12:00:00Z")
+        let monthly = try s.currentQuests().filter { $0.cadence == .monthly }
+        XCTAssertEqual(monthly.count,3); XCTAssertTrue(monthly.allSatisfy { $0.periodKey == "2026-11" })
+        XCTAssertTrue(try s.quests().filter { oldMonthly.contains($0.id) }.count == 3)
     }
     func testFlowECooldownUsesCalendarNotInsertionOrder() throws {
         let t = QuestCatalog.templates.first!, q = QuestInstance(templateKey:t.key,cadence:.daily,periodKey:"2026-10-05",title:t.title,unit:t.unit,target:1)
