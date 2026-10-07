@@ -28,14 +28,32 @@ final class StoryGraphImportAcceptanceTests:XCTestCase {
         XCTAssertTrue(app.staticTexts["import.result"].waitForExistence(timeout:10))
     }
     @MainActor private func fixture(_ app:XCUIApplication,_ id:String) {
-        app.buttons["import.fixture.menu"].tap()
+        let menu=app.buttons["import.fixture.menu"]
+        XCTAssertTrue(menu.exists);XCTAssertTrue(app.frame.contains(menu.frame))
+        XCTAssertGreaterThanOrEqual(menu.frame.width,44);XCTAssertGreaterThanOrEqual(menu.frame.height,44)
+        // XCTest's nested SwiftUI Menu proxy requests an unsupported AX scroll action
+        // despite its visible navigation-bar frame. Tap the same live frame directly.
+        menu.coordinate(withNormalizedOffset:.init(dx:0.5,dy:0.5)).tap()
         let action=app.buttons[id];XCTAssertTrue(action.waitForExistence(timeout:5));action.tap()
+    }
+    @MainActor private func verifyImportedLibrary(_ app:XCUIApplication,capturePrefix:String?=nil) {
+        tap(app,app.buttons["import.library"])
+        let reread=app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@ AND label CONTAINS %@","books.row.","The Lantern Archive")).firstMatch
+        reveal(app,reread);XCTAssertTrue(reread.label.contains("Read 2×"),"Two completions share one canonical Book row")
+        if let prefix=capturePrefix { capture(app,prefix+"-Imported-Library") }
+        let unknown=app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@ AND label CONTAINS %@","books.row.","The Unknown Shore")).firstMatch
+        tap(app,unknown);tap(app,app.buttons["books.history"])
+        let unknownFormat=app.staticTexts["Format: Unknown"];reveal(app,unknownFormat);XCTAssertTrue(unknownFormat.exists)
+        XCTAssertTrue(app.staticTexts["Finished: Unknown"].exists)
+        if let prefix=capturePrefix { capture(app,prefix+"-Imported-Unknown-History") }
+        app.navigationBars.buttons.firstMatch.tap();app.navigationBars.buttons.firstMatch.tap();app.navigationBars.buttons.firstMatch.tap()
     }
     @MainActor func testHistoricalImportAndExplicitReconciliation() {
         let app=launch();fixture(app,"import.fixture.initial")
         XCTAssertTrue(app.staticTexts["import.preview"].waitForExistence(timeout:10));reveal(app,app.staticTexts["import.group.New Books"]);XCTAssertEqual(app.staticTexts["import.group.New Books"].label,"New Books · 3")
         confirm(app);reveal(app,app.staticTexts["import.fixture.safety"])
         XCTAssertEqual(app.staticTexts["import.fixture.safety"].label,"3 readings · 0 XP · 0 Quest progress · 0 Achievements · 0 Challenges · 0 Inbox")
+        verifyImportedLibrary(app)
         fixture(app,"import.fixture.protect");fixture(app,"import.fixture.reconcile")
         XCTAssertTrue(app.staticTexts["import.preview"].waitForExistence(timeout:10));reveal(app,app.staticTexts["import.group.Possible Updates"]);XCTAssertEqual(app.staticTexts["import.group.Possible Updates"].label,"Possible Updates · 1")
         reveal(app,app.staticTexts["import.group.Already Up to Date"]);XCTAssertEqual(app.staticTexts["import.group.Already Up to Date"].label,"Already Up to Date · 1")
@@ -63,6 +81,7 @@ final class StoryGraphImportAcceptanceTests:XCTestCase {
             reveal(app,app.staticTexts["import.group.New Books"]);capture(app,label+"-New-Books")
             reveal(app,app.staticTexts["import.group.Already Up to Date"]);capture(app,label+"-Preview-Categories")
             confirm(app);reveal(app,app.staticTexts["import.result"]);capture(app,label+"-Committed")
+            verifyImportedLibrary(app,capturePrefix:label)
             fixture(app,"import.fixture.protect");fixture(app,"import.fixture.reconcile");XCTAssertTrue(app.staticTexts["import.preview"].waitForExistence(timeout:10))
             reveal(app,app.staticTexts["import.group.Possible Updates"]);capture(app,label+"-Possible-Updates")
             reveal(app,app.staticTexts["import.group.Needs Review"]);capture(app,label+"-Needs-Review")

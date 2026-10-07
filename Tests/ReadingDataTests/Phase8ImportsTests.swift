@@ -45,6 +45,7 @@ final class Phase8ImportsTests:XCTestCase {
     func testRereadsOneBookDistinctReadingInstances() throws {
         let s=try store();let run=try apply(s,csv("Archive,Author,uid1,read,2,\"2023/02/01-2023/02/03,2024/02/01-2024/02/03\",,4,ebook\n"))
         XCTAssertEqual(run.newBooks,1);XCTAssertEqual(run.newReadings,2);XCTAssertEqual(try s.library().first!.readings.count,2)
+        XCTAssertEqual(try s.stats(period:.lifetime).books,2);XCTAssertEqual(try s.stats(period:.year(2024)).books,1)
         XCTAssertTrue(try s.library().first!.readings.allSatisfy(\.historical))
     }
     func testRetryAndReorderedImportDoNotDuplicateLifecycleRecords() throws {
@@ -54,6 +55,7 @@ final class Phase8ImportsTests:XCTestCase {
     func testUnknownDatesRemainUnknownAndPagesAreNotManufactured() throws {
         let s=try store();try apply(s,csv("Archive,Author,uid1,read,1,,,0,ebook\n"));let reading=try s.library().first!.readings.first!
         XCTAssertNil(reading.startDate);XCTAssertNil(reading.finishDate);XCTAssertNil(reading.progress.currentPage);XCTAssertNil(reading.progress.totalPages);XCTAssertEqual(reading.rating,.noRating)
+        let stats=try s.stats(period:.lifetime);XCTAssertEqual(stats.books,1);XCTAssertNil(stats.pages.known);XCTAssertNil(stats.readingDays.known);XCTAssertEqual(stats.undatedCompletions,1)
     }
     func testOnlyExplicitAcceptedFieldChangesApplied() throws {
         let s=try store();try apply(s,csv());let id=try s.library().first!.id
@@ -153,5 +155,13 @@ final class Phase8ImportsTests:XCTestCase {
         XCTAssertThrowsError(try s.decideImport(id:displayed.id,accept:true,currentFingerprint:displayed.currentFingerprint))
         let refreshed=try s.importReviews().first!;try s.decideImport(id:refreshed.id,accept:true,currentFingerprint:refreshed.currentFingerprint)
         XCTAssertEqual(try s.record(id:book.id).book.title,"Archive Revised")
+    }
+    func testExplicitDateRangesEstablishRereadsWhenCountColumnIsAbsent() throws {
+        let data=Data("Title,Authors,ISBN/UID,Read Status,Dates Read\nArchive,Author,uid1,read,\"2023/02/01-2023/02/03,2024/02/01-2024/02/03\"\n".utf8)
+        let s=try store();let run=try apply(s,data);XCTAssertEqual(run.newReadings,2);XCTAssertEqual(run.newBooks,1)
+    }
+    func testBoundedCSVExpansionFailsBeforeAnyPersistence() throws {
+        let s=try store();let data=csv((0..<26).map { "Book \($0),Author,id\($0),read,1000,,,0,ebook\n" }.joined())
+        XCTAssertThrowsError(try s.previewStoryGraph(data));XCTAssertEqual(try s.bookCount(),0);XCTAssertTrue(try s.importHistory().isEmpty)
     }
 }

@@ -9,7 +9,7 @@ public enum ImportError: Error, Equatable, LocalizedError, Sendable {
         switch self {
         case .invalidCSV: "The CSV is malformed or is not UTF-8. Nothing was imported."
         case .unsupportedHeaders: "This file does not contain StoryGraph Title, Authors and Read Status columns. Nothing was imported."
-        case .oversized: "Use a CSV smaller than 10 MB with at most 10,000 rows. Nothing was imported."
+        case .oversized: "Use a CSV smaller than 10 MB with at most 10,000 rows and 25,000 reading occurrences. Nothing was imported."
         case .stalePreview: "Your library changed. Load the file again and review a fresh preview."
         case .confirmationRequired: "Confirm the preview before importing."
         case .invalidResolution: "Review the book identity and supplied reading information before applying."
@@ -135,6 +135,7 @@ public enum StoryGraphAdapter {
         let csv = try SafeCSV.parse(data)
         let headers = csv[0].map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
         guard Set(headers).count == headers.count, ["title", "authors", "read status"].allSatisfy(headers.contains) else { throw ImportError.unsupportedHeaders }
+        var expandedOccurrences = 0
         return try csv.dropFirst().enumerated().map { offset, cells in
             func cell(_ name: String) -> String { headers.firstIndex(of: name).map { cells[$0].trimmingCharacters(in: .whitespacesAndNewlines) } ?? "" }
             var issues = [String]()
@@ -146,8 +147,8 @@ public enum StoryGraphAdapter {
             let status = cell("read status").lowercased()
             if !["read", "to-read", "currently-reading", "did-not-finish"].contains(status) { issues.append("This reading status is unsupported. No reading will be inferred.") }
             let rawCount = cell("read count")
-            let count = rawCount.isEmpty ? (status == "read" ? 1 : 0) : Int(rawCount)
-            guard let count, (0...1000).contains(count) else { throw ImportError.invalidCSV }
+            let declaredCount = rawCount.isEmpty ? (status == "read" ? 1 : 0) : Int(rawCount)
+            guard var count=declaredCount, (0...1000).contains(count) else { throw ImportError.invalidCSV }
             if status == "read" && count == 0 { issues.append("Read status conflicts with a zero read count.") }
             var starts = [ReadingDate?](), finishes = [ReadingDate?]()
             let ranges = cell("dates read")
@@ -156,9 +157,14 @@ public enum StoryGraphAdapter {
                     let pair = range.trimmingCharacters(in: .whitespaces).components(separatedBy: "-")
                     if pair.count == 2 {
                         starts.append(parseDate(pair[0], issues: &issues)); finishes.append(parseDate(pair[1], issues: &issues))
+                        guard starts.count<=1000 else { throw ImportError.oversized }
                     } else { issues.append("Reading date ranges are not recognized. No dates were inferred.") }
                 }
             }
+            if rawCount.isEmpty && !starts.isEmpty { count=starts.count }
+            guard count<=1000 else { throw ImportError.oversized }
+            expandedOccurrences += max(1,max(count,starts.count))
+            guard expandedOccurrences<=25_000 else { throw ImportError.oversized }
             if starts.isEmpty && count > 0 {
                 starts = Array(repeating: nil, count: count); finishes = Array(repeating: nil, count: count)
                 // Day-first Last Date Read is intentionally not guessed. Only unambiguous year-first values are accepted.
