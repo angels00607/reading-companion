@@ -32,7 +32,11 @@ jobs:
           xcrun simctl list devices available -j > /tmp/phase9-simulators.json
           SIMULATOR_ID=$(python3 -c "import json; d=json.load(open('/tmp/phase9-simulators.json')); print(next(v['udid'] for group in d['devices'].values() for v in group if 'iPhone' in v['name']))")
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase9Keychain.xcresult -only-testing:FoundationFontTests/Phase9KeychainTests CODE_SIGNING_ALLOWED=NO test
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase9Keychain.xcresult -only-testing:FoundationFontTests/Phase9KeychainTests CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- test
+          APP_CONTAINER=$(xcrun simctl get_app_container "$SIMULATOR_ID" com.readingcompanion.app app)
+          codesign --verify --strict "$APP_CONTAINER"
+          codesign -d --entitlements :- "$APP_CONTAINER" > work/Phase9Keychain.entitlements.plist
+          python3 -c "import plistlib; p=plistlib.load(open('work/Phase9Keychain.entitlements.plist','rb')); a=p['application-identifier']; assert a.endswith('com.readingcompanion.app'); assert p['keychain-access-groups']==[a]; print('PASS: signed host grants only its own Keychain group')"
       - uses: actions/upload-artifact@v4
         if: ${{ always() && !contains(github.event.head_commit.message, '[phase9-native]') }}
         with:
@@ -42,4 +46,6 @@ jobs:
         if: always()
         with:
           name: phase9-keychain-results
-          path: work/Phase9Keychain.xcresult
+          path: |
+            work/Phase9Keychain.xcresult
+            work/Phase9Keychain.entitlements.plist
