@@ -84,6 +84,9 @@ public protocol ImportsRepository: Sendable {
     func resolveImportCandidate(id: UUID, bookID: UUID?, createSeparateBook: Bool, confirmed: Bool) throws
     func linkImportCandidate(id: UUID, bookID: UUID, readingIDs: [UUID], confirmed: Bool) throws
     func skipImportCandidate(id: UUID, confirmed: Bool) throws
+    #if DEBUG
+    func importAcceptanceSummary() throws -> String
+    #endif
 }
 
 /// RFC 4180 quoted fields, doubled quotes, CRLF and embedded line breaks. Never evaluates spreadsheet formulas.
@@ -164,7 +167,7 @@ public enum StoryGraphAdapter {
             if !ratingText.isEmpty {
                 if ratingText == "0" { rating = .noRating }
                 else if let value = Double(ratingText), value.isFinite, value.rounded() == value, (1...5).contains(value) { rating = try .validatedStars(Int(value)) }
-                else { issues.append("The imported rating is not a whole star from 1 to 5. It has not been rounded; choose a rating manually.") }
+                else { issues.append("Imported rating \(ratingText.prefix(64)) is not a whole star from 1 to 5. It has not been rounded; choose a rating manually.") }
             }
             return StoryGraphRow(number: offset + 2, title: title, author: author, identity: identity, isbn: isbn, status: status, starts: starts, finishes: finishes, rating: rating, issues: Array(Set(issues)).sorted())
         }
@@ -173,7 +176,7 @@ public enum StoryGraphAdapter {
         let text = text.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return nil }
         let parts = text.split(separator: "/", omittingEmptySubsequences: false)
-        guard parts.count == 3, parts[0].count == 4, let year = Int(parts[0]), let month = Int(parts[1]), let day = Int(parts[2]), let date = try? ReadingDate(year: year, month: month, day: day) else { issues.append("A date is ambiguous or invalid. Correct it to YYYY/MM/DD; no date was inferred."); return nil }
+        guard parts.count == 3, parts[0].count == 4, let year = Int(parts[0]), let month = Int(parts[1]), let day = Int(parts[2]), let date = try? ReadingDate(year: year, month: month, day: day) else { issues.append("Date \(text.prefix(64)) is ambiguous or invalid. Correct it to YYYY/MM/DD; no date was inferred."); return nil }
         return date
     }
     public static func validISBN(_ value: String) -> Bool {

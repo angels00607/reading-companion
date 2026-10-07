@@ -4,11 +4,41 @@ import GRDB
 import ReadingDomain
 
 extension LocalStore: ImportsRepository {
+    #if DEBUG
+    public func importAcceptanceSummary() throws -> String {
+        try queue.read { db in
+            func count(_ table:String) throws -> Int { try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM \(table) WHERE owner_id=?",arguments:[ownerID.uuidString]) ?? 0 }
+            let xp=try Int.fetchOne(db,sql:"SELECT COALESCE(SUM(amount),0) FROM xp_awards WHERE owner_id=?",arguments:[ownerID.uuidString]) ?? 0
+            let progress=try Int.fetchOne(db,sql:"SELECT COALESCE(SUM(progress),0) FROM quest_instances WHERE owner_id=?",arguments:[ownerID.uuidString]) ?? 0
+            let achievements=try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM achievement_progress WHERE owner_id=? AND unlocked_at IS NOT NULL",arguments:[ownerID.uuidString]) ?? 0
+            return "\(try count("readings")) readings · \(xp) XP · \(progress) Quest progress · \(achievements) Achievements · \(try count("challenge_assignments")) Challenges · \(try count("journal_entries")) Inbox"
+        }
+    }
+    #endif
     public func previewStoryGraph(_ data: Data) throws -> ImportPreview {
         let rows = try StoryGraphAdapter.rows(data)
         return try queue.read { db in
-            let candidates = try rows.map { try importCandidate($0, db: db) }
+            let candidates = try importCandidates(rows,db:db)
             return ImportPreview(id: UUID(), fingerprint: importHash(data), libraryFingerprint: try importLibraryFingerprint(db), candidates: candidates)
+        }
+    }
+    private func importCandidates(_ rows:[StoryGraphRow],db:Database) throws -> [ImportCandidate] {
+        let identities=Dictionary(grouping:rows,by:\.identity)
+        let evidence=try identities.mapValues { try Set($0.map(importRowFingerprint)) }
+        let titles=Dictionary(grouping:rows,by: { $0.title.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))+"\u{1F}"+$0.author.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX")) })
+        var seen=Set<String>()
+        return try rows.map { row in
+            let ordinary=try importCandidate(row,db:db)
+            let fingerprints=evidence[row.identity,default:[]]
+            let titleKey=row.title.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))+"\u{1F}"+row.author.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))
+            let differentIdentities=Set(titles[titleKey,default:[]].map(\.identity)).count>1
+            if fingerprints.count>1 || differentIdentities {
+                return ImportCandidate(id:ordinary.id,row:row,group:.review,bookID:ordinary.bookID,matches:ordinary.matches,explanation:"Repeated or competing identities in this file require explicit review. No work or reading is silently merged.")
+            }
+            if !seen.insert(row.identity).inserted {
+                return ImportCandidate(id:ordinary.id,row:row,group:.unchanged,bookID:ordinary.bookID,matches:ordinary.matches,explanation:"An identical source row is already included once in this preview.")
+            }
+            return ordinary
         }
     }
     private func importCandidate(_ row: StoryGraphRow, db: Database) throws -> ImportCandidate {
@@ -69,7 +99,7 @@ extension LocalStore: ImportsRepository {
             if let existing = try importRun(fingerprint: preview.fingerprint, db: db) { return existing }
             guard preview.libraryFingerprint == (try importLibraryFingerprint(db)) else { throw ImportError.stalePreview }
             // Recompute from normalized facts; never trust a caller's classification or selected UUID.
-            let candidates = try preview.candidates.map { try importCandidate($0.row, db: db) }
+            let candidates = try importCandidates(preview.candidates.map(\.row),db:db)
             let beforeBooks = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM books WHERE owner_id=?", arguments: [ownerID.uuidString]) ?? 0
             let beforeReadings = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM readings WHERE owner_id=?", arguments: [ownerID.uuidString]) ?? 0
             // Insert history last using a deferred foreign-key transaction? Candidates are staged after history below.
@@ -135,7 +165,7 @@ extension LocalStore: ImportsRepository {
             let ratingState: String; let whole: Int?
             switch rating { case .unknown: ratingState="unknown"; whole=nil; case .noRating: ratingState="unrated"; whole=nil; case .stars(let n):ratingState="rated";whole=n }
             // Dedicated historical write path. No finish/start command, consumer, activity, progress observation or Inbox producer.
-            try db.execute(sql:"INSERT INTO readings(id,owner_id,book_id,edition_id,status,progress_mode,current_page,historical,start_date,finish_date,rating_state,rating_whole) VALUES(?,?,?,?,?,'page',NULL,1,?,?,?,?)",arguments:[id.uuidString,ownerID.uuidString,bookID.uuidString,editionID,status,start,finish,ratingState,whole])
+            try db.execute(sql:"INSERT INTO readings(id,owner_id,book_id,edition_id,status,progress_mode,current_page,historical,start_date,finish_date,rating_state,rating_whole) VALUES(?,?,?,?,?,'page',NULL,?,?,?,?,?)",arguments:[id.uuidString,ownerID.uuidString,bookID.uuidString,editionID,status,status != "currently_reading",start,finish,ratingState,whole])
             try db.execute(sql:"INSERT INTO import_occurrences VALUES(?,?,?,?,?,?)",arguments:[ownerID.uuidString,row.identity,index+1,bookID.uuidString,id.uuidString,editionID])
             for field in ["start_date","finish_date","rating"] { try importProvenance(id,type:"reading",field:field,reference:row.identity,db:db) }
         }
@@ -205,7 +235,10 @@ extension LocalStore: ImportsRepository {
         }
     }
     public func pendingImportCandidates() throws -> [ImportCandidate] {
-        try queue.read { db in try String.fetchAll(db,sql:"SELECT candidate_json FROM import_candidates WHERE owner_id=? AND status='pending' ORDER BY rowid",arguments:[ownerID.uuidString]).map { try JSONDecoder().decode(ImportCandidate.self,from:Data($0.utf8)) } }
+        try queue.read { db in try String.fetchAll(db,sql:"SELECT candidate_json FROM import_candidates WHERE owner_id=? AND status='pending' ORDER BY rowid",arguments:[ownerID.uuidString]).map {
+            let stored=try JSONDecoder().decode(ImportCandidate.self,from:Data($0.utf8)),live=try importCandidate(stored.row,db:db)
+            return ImportCandidate(id:stored.id,row:stored.row,group:.review,bookID:live.bookID,matches:live.matches,explanation:stored.explanation)
+        } }
     }
     public func resolveImportCandidate(id: UUID, bookID: UUID?, createSeparateBook: Bool, confirmed: Bool) throws {
         guard confirmed else { throw ImportError.confirmationRequired }
@@ -214,7 +247,8 @@ extension LocalStore: ImportsRepository {
             let candidate = try JSONDecoder().decode(ImportCandidate.self,from:Data(json.utf8))
             guard candidate.row.issues.isEmpty, (bookID != nil) != createSeparateBook else { throw ImportError.invalidResolution }
             if let bookID {
-                guard candidate.matches.contains(bookID) || candidate.bookID == bookID else { throw ImportError.invalidResolution }
+                let live=try importCandidate(candidate.row,db:db)
+                guard live.matches.contains(bookID) || live.bookID == bookID else { throw ImportError.invalidResolution }
                 let known = try String.fetchOne(db,sql:"SELECT book_id FROM import_occurrences WHERE owner_id=? AND source_identity=? AND occurrence=0",arguments:[ownerID.uuidString,candidate.row.identity])
                 guard known == nil || known == bookID.uuidString else { throw ImportError.invalidResolution }
                 // Identity decision explicitly selects the existing canonical Book; existing local readings are preserved.
@@ -241,7 +275,8 @@ extension LocalStore: ImportsRepository {
         try queue.write { db in
             guard let json=try String.fetchOne(db,sql:"SELECT candidate_json FROM import_candidates WHERE owner_id=? AND id=? AND status='pending'",arguments:[ownerID.uuidString,id.uuidString]) else { throw ImportError.invalidResolution }
             let candidate=try JSONDecoder().decode(ImportCandidate.self,from:Data(json.utf8))
-            guard candidate.row.issues.isEmpty,candidate.row.status == "read",candidate.matches.contains(bookID) || candidate.bookID == bookID,
+            let live=try importCandidate(candidate.row,db:db)
+            guard candidate.row.issues.isEmpty,candidate.row.status == "read",live.matches.contains(bookID) || live.bookID == bookID,
                   readingIDs.count == candidate.row.finishes.count,Set(readingIDs).count == readingIDs.count,
                   try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM import_occurrences WHERE owner_id=? AND source_identity=?",arguments:[ownerID.uuidString,candidate.row.identity]) == 0 else { throw ImportError.invalidResolution }
             let record=try catalog(bookID,db:db)

@@ -12,12 +12,13 @@ CREATE TABLE import_candidates (
  PRIMARY KEY(owner_id,id), UNIQUE(owner_id,fingerprint),
  FOREIGN KEY(owner_id,run_id) REFERENCES import_runs(owner_id,id)
 );
+CREATE UNIQUE INDEX reading_book_identity ON readings(owner_id,id,book_id);
 CREATE TABLE import_occurrences (
  owner_id TEXT NOT NULL, source_identity TEXT NOT NULL, occurrence INTEGER NOT NULL CHECK(occurrence>=0),
  book_id TEXT NOT NULL, reading_id TEXT, edition_id TEXT,
  PRIMARY KEY(owner_id,source_identity,occurrence),
  FOREIGN KEY(owner_id,book_id) REFERENCES books(owner_id,id),
- FOREIGN KEY(owner_id,reading_id) REFERENCES readings(owner_id,id),
+ FOREIGN KEY(owner_id,reading_id,book_id) REFERENCES readings(owner_id,id,book_id),
  FOREIGN KEY(owner_id,edition_id,book_id) REFERENCES editions(owner_id,id,book_id)
 );
 CREATE INDEX import_pending ON import_candidates(owner_id,status);

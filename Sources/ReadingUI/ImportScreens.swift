@@ -13,6 +13,7 @@ public struct ImportHome: View {
     @State private var busy = false
     @State private var confirm = false
     @State private var lastImport: ImportHistory?
+    @State private var acceptanceSummary=""
     private var repository: (any ImportsRepository)? { model.repository as? any ImportsRepository }
     public init() {}
     public var body: some View {
@@ -21,12 +22,6 @@ public struct ImportHome: View {
             Text("Choose your StoryGraph CSV, review the preview, then confirm. Your current data stays authoritative; changes require your decision.").fixedSize(horizontal:false,vertical:true)
             Text("Historical readings receive no XP, Quest progress, Achievements, automatic Challenges or Journal Inbox work. Format is always your own choice.").font(DesignTokens.functionalFont(size:14)).fixedSize(horizontal:false,vertical:true).accessibilityIdentifier("import.safety")
             AppButton("Choose CSV file",symbol:"doc",action:{ selecting=true }).disabled(busy).accessibilityIdentifier("import.choose")
-            #if DEBUG
-            if ProcessInfo.processInfo.arguments.contains("-phase8-fixture") {
-                AppButton("Load fictional StoryGraph CSV",kind:.secondary,action:{ load(StoryGraphImportFixture.initial) }).accessibilityIdentifier("import.fixture.initial")
-                AppButton("Load fictional reconciliation CSV",kind:.secondary,action:{ load(StoryGraphImportFixture.reconcile) }).accessibilityIdentifier("import.fixture.reconcile")
-            }
-            #endif
             if busy { ProgressView("Preparing preview") }
             if let message { StatePresentation(kind:.error,title:"Import not applied",message:message).accessibilityIdentifier("import.error") }
             if let preview {
@@ -48,10 +43,28 @@ public struct ImportHome: View {
                 StatusChip("Import saved",symbol:"checkmark")
                 Text("\(lastImport.newBooks) new books · \(lastImport.newReadings) historical readings. \(lastImport.review) source rows queued for review.").fixedSize(horizontal:false,vertical:true).accessibilityIdentifier("import.result")
                 NavigationLink("View imported books") { MyBooksScreen() }.buttonStyle(ProfileLinkStyle()).accessibilityIdentifier("import.library")
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("-phase8-fixture") { Text(acceptanceSummary).font(DesignTokens.functionalFont(size:14)).fixedSize(horizontal:false,vertical:true).accessibilityIdentifier("import.fixture.safety") }
+                #endif
             }
-            NavigationLink("Needs Review · \(candidates.count + reviews.count)") { ImportNeedsReview() }.buttonStyle(ProfileLinkStyle()).accessibilityIdentifier("import.needsReview")
+            NavigationLink { ImportNeedsReview() } label: {
+                if candidates.count + reviews.count > 0 {
+                    AttentionRow(title:"Needs Review · \(candidates.count + reviews.count)",detail:"Imported differences and uncertain rows are waiting for your decision.",category:"Import")
+                } else { Text("Needs Review · 0") }
+            }.buttonStyle(ProfileLinkStyle()).accessibilityIdentifier("import.needsReview")
             NavigationLink("Import History · \(history.count)") { ImportHistoryScreen() }.buttonStyle(ProfileLinkStyle()).accessibilityIdentifier("import.history")
         }.task(id:model.version) { reload() }
+        #if DEBUG
+        .toolbar {
+            if ProcessInfo.processInfo.arguments.contains("-phase8-fixture") {
+                Menu("QA inputs") {
+                    Button("Load fictional StoryGraph CSV") { load(StoryGraphImportFixture.initial) }.accessibilityIdentifier("import.fixture.initial")
+                    Button("Load fictional reconciliation CSV") { load(StoryGraphImportFixture.reconcile) }.accessibilityIdentifier("import.fixture.reconcile")
+                    if lastImport != nil { Button("Record fictional manual title correction") { protectFixtureTitle() }.accessibilityIdentifier("import.fixture.protect") }
+                }.font(DesignTokens.functionalFont(size:14)).frame(minWidth:44,minHeight:44).accessibilityIdentifier("import.fixture.menu")
+            }
+        }
+        #endif
         .confirmationDialog("Import this preview?",isPresented:$confirm,titleVisibility:.visible) {
             Button("Import supported history") { apply() }
             Button("Cancel",role:.cancel) {}
@@ -81,9 +94,22 @@ public struct ImportHome: View {
         catch { message=error.localizedDescription }
     }
     private func reload() {
-        do { history=try repository?.importHistory() ?? [];candidates=try repository?.pendingImportCandidates() ?? [];reviews=try repository?.importReviews() ?? [] }
+        do { history=try repository?.importHistory() ?? [];candidates=try repository?.pendingImportCandidates() ?? [];reviews=try repository?.importReviews() ?? []
+            #if DEBUG
+            acceptanceSummary=try repository?.importAcceptanceSummary() ?? ""
+            #endif
+        }
         catch { message="Could not load import history. Existing data is unchanged." }
     }
+    #if DEBUG
+    private func protectFixtureTitle() {
+        do {
+            guard let book=try model.repository.library(query:"Lantern",view:.all,sort:.title,filters:.init(),limit:10,offset:0).first else { return }
+            try model.repository.edit(bookID:book.id,values:[.title:"The Lantern Archive · My corrected title"],revision:book.revision)
+            model.version+=1;reload()
+        } catch { message=error.localizedDescription }
+    }
+    #endif
 }
 
 private struct ImportCandidateSummary: View {
@@ -113,7 +139,7 @@ struct ImportNeedsReview:View {
                 if review.userOverridden { StatusChip("Your correction is protected",symbol:"hand.raised").accessibilityIdentifier("import.protected") }
                 DataChangeReview(field:fieldLabel(review.field),current:review.current,proposed:review.proposed,source:"StoryGraph CSV",accept:{ decide(review,true) },keep:{ decide(review,false) },edit:{ editID=review.entityID })
                 Text("Accept is your explicit correction; Keep suppresses the same source evidence.").font(DesignTokens.functionalFont(size:14)).fixedSize(horizontal:false,vertical:true)
-            }.accessibilityIdentifier("import.review."+review.field)
+            }.accessibilityElement(children:.contain).accessibilityIdentifier("import.review."+review.field)
         }
         ForEach(candidates) { candidate in
             NavigationLink { ImportIdentityReview(candidate:candidate) } label: { ImportCandidateSummary(candidate:candidate).padding(.vertical,8).frame(minHeight:44).contentShape(Rectangle()) }.buttonStyle(.plain).accessibilityIdentifier("import.candidate."+String(candidate.row.number))
@@ -205,7 +231,7 @@ struct ImportHistoryScreen:View {
                 Text("\(run.review) queued for review · \(run.unchanged) already up to date").fixedSize(horizontal:false,vertical:true)
                 StatusChip("Committed · No live rewards",symbol:"checkmark")
                 Divider()
-            }.accessibilityIdentifier("import.history.row")
+            }.accessibilityElement(children:.contain).accessibilityIdentifier("import.history.row")
         }
         if let error { Text(error) }
     }.task { do { history=try (model.repository as? any ImportsRepository)?.importHistory() ?? [] } catch { self.error="Could not load committed history." } } }

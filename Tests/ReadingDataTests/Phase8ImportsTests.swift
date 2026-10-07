@@ -106,4 +106,39 @@ final class Phase8ImportsTests:XCTestCase {
         let reopened=try LocalStore(path:path,ownerID:owner);XCTAssertEqual(try reopened.pendingImportCandidates().count,1);XCTAssertEqual(try reopened.importHistory().count,1)
         let other=try LocalStore(path:path,ownerID:UUID());XCTAssertTrue(try other.importHistory().isEmpty);XCTAssertTrue(try other.pendingImportCandidates().isEmpty)
     }
+    func testExplicitExistingReadingLinkPreservesFormatOriginAndNoDuplicate() throws {
+        let s=try store();let book=try s.add(work:.init(provider:"manual",reference:"a",title:"Archive",author:"Author"))
+        let reading=try s.recordCompleted(bookID:book,editionID:nil,date:try ReadingDate(year:2024,month:2,day:3),rating:.stars(4))
+        try s.editReading(readingID:reading,start:nil,finish:try ReadingDate(year:2024,month:2,day:3),rating:.stars(4),genre:nil,format:.paperback,revision:0)
+        try apply(s,csv());let candidate=try s.pendingImportCandidates().first!
+        try s.linkImportCandidate(id:candidate.id,bookID:book,readingIDs:[reading],confirmed:true)
+        XCTAssertEqual(try s.record(id:book).readings.count,1);XCTAssertEqual(try s.record(id:book).readings.first!.journalFormat,.paperback)
+        XCTAssertTrue(try s.importReviews().isEmpty);XCTAssertTrue(try s.xpAwards().isEmpty)
+    }
+    func testKeptIncompleteRowSuppressionIgnoresPositionAndFormatButNotChangedEvidence() throws {
+        let s=try store();let data=csv("Archive,Author,uid1,read,1,,03/04/2024,3.5,ebook\n")
+        try apply(s,data);try s.skipImportCandidate(id:s.pendingImportCandidates().first!.id,confirmed:true)
+        let shifted=csv("Other,Another,other,to-read,0,,,,ebook\nArchive,Author,uid1,read,1,,03/04/2024,3.5,paperback\n")
+        let preview=try s.previewStoryGraph(shifted);XCTAssertEqual(preview.candidates[1].group,.unchanged)
+        XCTAssertEqual(try s.previewStoryGraph(csv("Archive,Author,uid1,read,1,,04/05/2024,3.5,ebook\n")).count(.review),1)
+    }
+    func testImportedActiveReadingHasNoRetroactivityButFutureGenuineActivityWorks() throws {
+        let s=try store();_ = try s.currentQuests();try apply(s,csv("Ongoing,Author,active,currently-reading,0,,,,ebook\n"))
+        let reading=try s.library().first!.readings.first!;XCTAssertFalse(reading.historical);XCTAssertTrue(try s.xpAwards().isEmpty);XCTAssertEqual(try count(s,"gamification_activity"),0)
+        _ = try s.update(readingID:reading.id,value:.pages(current:10),revision:0,observationID:UUID());XCTAssertGreaterThan(try count(s,"gamification_activity"),0)
+    }
+    func testImportedDNFOnlyExplicitResumeActivatesFutureLiveCommands() throws {
+        let s=try store();try apply(s,csv("Stopped,Author,dnf,did-not-finish,0,,,,ebook\n"));let reading=try s.library().first!.readings.first!
+        XCTAssertTrue(reading.historical);XCTAssertEqual(reading.status,.dnf);XCTAssertTrue(try s.xpAwards().isEmpty)
+        try s.resume(readingID:reading.id,revision:0);let resumed=try s.library().first!.readings.first!;XCTAssertFalse(resumed.historical);XCTAssertNil(resumed.progress.currentPage)
+        XCTAssertTrue(try s.xpAwards().isEmpty);XCTAssertTrue(try s.journalInbox().isEmpty);XCTAssertEqual(try count(s,"gamification_activity"),0)
+        try s.finish(readingID:reading.id,confirmed:true,date:nil,revision:resumed.revision);XCTAssertFalse(try s.xpAwards().isEmpty);XCTAssertEqual(try s.journalInbox().count,1)
+    }
+    func testWithinFileDuplicatePreviewAndContradictoryIdentityAreConservative() throws {
+        let s=try store();let line="Archive,Author,uid1,read,1,,2024/02/03,4,ebook\n"
+        let preview=try s.previewStoryGraph(csv(line+line));XCTAssertEqual(preview.count(.newBooks),1);XCTAssertEqual(preview.count(.unchanged),1)
+        let run=try s.applyImport(preview,confirmed:true);XCTAssertEqual(run.newBooks,1);XCTAssertEqual(run.newReadings,1)
+        let other=try store();let conflict=try other.previewStoryGraph(csv(line+"Different title,Author,uid1,read,1,,2024/02/03,4,ebook\n"))
+        XCTAssertEqual(conflict.count(.review),2);try other.applyImport(conflict,confirmed:true);XCTAssertEqual(try other.bookCount(),0)
+    }
 }

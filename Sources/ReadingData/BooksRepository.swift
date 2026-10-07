@@ -245,7 +245,12 @@ extension LocalStore: BooksRepository {
             guard reading.revision == revision else { throw DomainError.staleRevision }
             guard try catalog(reading.bookID, db: db).active == nil else { throw BooksError.activeReadingExists }
             try ReadingRules.resume(&reading); try save(reading, db: db)
-            try command(id: readingID, kind: "reading.resume", revision: revision, payload: reading, db: db)
+            // Explicitly resuming an imported DNF begins future live activity. Import itself
+            // never activates a lifecycle or replays completion; normalized source history remains linked.
+            if reading.historical, (try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM import_occurrences WHERE owner_id=? AND reading_id=?",arguments:[ownerID.uuidString,readingID.uuidString]) ?? 0) > 0 {
+                try db.execute(sql:"UPDATE readings SET historical=0 WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,readingID.uuidString])
+            }
+            try command(id: readingID, kind: "reading.resume", revision: revision, payload: self.reading(readingID,db:db), db: db)
         }
     }
     private func mutate(_ id: UUID, revision: Int, kind: String, body: (inout ReadingInstance) throws -> Void) throws {

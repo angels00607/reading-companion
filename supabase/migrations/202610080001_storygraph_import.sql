@@ -11,12 +11,13 @@ create table public.import_candidates (
  fingerprint text not null, status text not null check(status in ('pending','resolved','kept')),
  primary key(owner_id,id), unique(owner_id,fingerprint), foreign key(owner_id,run_id) references public.import_runs(owner_id,id)
 );
+create unique index reading_book_identity on public.readings(owner_id,id,book_id);
 create table public.import_occurrences (
  owner_id uuid not null, source_identity text not null, occurrence integer not null check(occurrence>=0),
  book_id uuid not null, reading_id uuid, edition_id uuid,
  primary key(owner_id,source_identity,occurrence),
  foreign key(owner_id,book_id) references public.books(owner_id,id),
- foreign key(owner_id,reading_id) references public.readings(owner_id,id),
+ foreign key(owner_id,reading_id,book_id) references public.readings(owner_id,id,book_id),
  foreign key(owner_id,edition_id,book_id) references public.editions(owner_id,id,book_id)
 );
 create index import_pending on public.import_candidates(owner_id,status);
