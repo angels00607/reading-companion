@@ -4,7 +4,8 @@ ROOT=pathlib.Path(__file__).resolve().parents[1]
 class Phase7SchemaTests(unittest.TestCase):
  def setUp(self):
   self.db=sqlite3.connect(':memory:')
-  for n in range(1,9):self.db.executescript((ROOT/f'Sources/ReadingData/Resources/local_v{n}.sql').read_text())
+  self.db.execute('PRAGMA foreign_keys=ON')
+  for n in range(1,10):self.db.executescript((ROOT/f'Sources/ReadingData/Resources/local_v{n}.sql').read_text())
  def reject(self,sql):
   with self.assertRaises(sqlite3.DatabaseError):self.db.execute(sql)
  def test_profile_and_exact_featured_payload_are_private_rows(self):
@@ -23,4 +24,17 @@ class Phase7SchemaTests(unittest.TestCase):
   self.assertFalse(self.db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('currency','loot','offers')").fetchall())
  def test_clean_upgrade_does_not_retroactively_award(self):
   self.assertEqual(self.db.execute('SELECT count(*) FROM xp_awards').fetchone()[0],0);self.assertEqual(self.db.execute('SELECT count(*) FROM quest_instances').fetchone()[0],0)
+ def test_live_activity_is_owner_scoped_unique_and_immutable(self):
+  self.db.execute("INSERT INTO gamification_activity VALUES('u','progress:o','progress','r',1,'2026-10-05','now')")
+  self.reject("INSERT INTO gamification_activity VALUES('u','progress:o','progress','r',1,'2026-10-05','later')")
+  self.reject("UPDATE gamification_activity SET quantity=9")
+  self.reject("DELETE FROM gamification_activity")
+  self.reject("INSERT INTO gamification_activity VALUES('u','bad','sessions','r',1,'2026-10-05','now')")
+ def test_lifecycle_preserves_history_and_enforces_owner_fk_and_slot(self):
+  self.db.execute("INSERT INTO quest_instances VALUES('u','q','progress.record','daily','2026-10-05','Record','updates',1,0,NULL,NULL)")
+  self.db.execute("INSERT INTO quest_lifecycle VALUES('u','q',0,0,'now')")
+  self.reject("INSERT INTO quest_lifecycle VALUES('other','q',0,0,'now')")
+  self.reject("UPDATE quest_lifecycle SET slot=3")
+  self.reject("UPDATE quest_lifecycle SET baseline=-1")
+  self.assertEqual(self.db.execute('SELECT COUNT(*) FROM quest_instances').fetchone()[0],1)
 if __name__=='__main__':unittest.main()

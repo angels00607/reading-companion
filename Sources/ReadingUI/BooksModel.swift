@@ -16,11 +16,19 @@ public final class BooksModel: ObservableObject {
     @Published public var error: String?
     @Published public var feedback: String?
     @Published public var feedbackReadingID: UUID?
+    @Published public var gamificationReward: String?
     public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL) {
         self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository; self.statsRepository = repository as? any StatsRepository; self.gamificationRepository = repository as? any GamificationRepository; self.provider = provider; self.assetDirectory = assetDirectory
     }
     @discardableResult public func perform<T>(_ body: () throws -> T) -> T? {
-        do { let value = try body(); error = nil; version += 1; return value }
+        do {
+            let before = try gamificationRepository?.xpAwards().reduce(0) { $0+$1.amount } ?? 0
+            let value = try body()
+            let after = try gamificationRepository?.xpAwards().reduce(0) { $0+$1.amount } ?? before
+            let oldLevel = GamificationBalance.level(totalXP:before), newLevel = GamificationBalance.level(totalXP:after)
+            if newLevel > oldLevel { gamificationReward = "Level \(newLevel). Your configured cosmetics are available. Every reading feature remains available." }
+            error = nil; version += 1; return value
+        }
         catch DomainError.staleRevision { error = "The record changed. Reload and review before applying this change." }
         catch DomainError.invalidProgress { error = "Enter a valid position: pages must be whole numbers within the known total; percentage must be between 0 and 100." }
         catch BooksError.activeReadingExists { error = "This book already has an active reading. Open it to update progress." }

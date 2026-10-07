@@ -20,7 +20,9 @@ public struct ProfileVisualQA: View {
                     case "achievements": AchievementsScreen(values: achievements)
                     case "collection": CollectionScreen(level: level, states: states)
                     case "reward": BooksScreen("Reward") {
-                        FeatureCelebration(eyebrow: "ACHIEVEMENT UNLOCKED", title: "In the Margins", message: "You completed five Journal works. +100 XP has been added once.")
+                        if let reward = model.gamificationReward {
+                            FeatureCelebration(eyebrow:"LEVEL UP",title:"A new reader level",message:reward)
+                        } else { Text("No new level has been reached.") }
                     }
                     default: ProfileHome()
                     }
@@ -68,6 +70,10 @@ public struct ProfileHome:View {
     private var xp:Int { awards.reduce(0){$0+$1.amount} }; private var level:Int { GamificationBalance.level(totalXP:xp) }
     public var body:some View { BooksScreen("Reader Passport") {
         passportHeader
+        if let reward = model.gamificationReward {
+            FeatureCelebration(eyebrow:"LEVEL UP",title:"A new reader level",message:reward)
+            Button("Continue reading") { model.gamificationReward = nil }.frame(minHeight:44)
+        }
         levelCard
         metrics
         favorites

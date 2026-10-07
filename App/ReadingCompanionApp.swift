@@ -112,7 +112,14 @@ struct ReadingCompanionApp: App {
             #else
             let qa = false
             #endif
-            let store = try LocalStore(path: qa ? ":memory:" : root.appendingPathComponent(owner.uuidString + ".sqlite").path, ownerID: owner)
+            var storePath = qa ? ":memory:" : root.appendingPathComponent(owner.uuidString + ".sqlite").path
+            #if DEBUG
+            let args = ProcessInfo.processInfo.arguments
+            if let i = args.firstIndex(of:"-phase7-acceptance-store"), i+1 < args.count, let token = UUID(uuidString:args[i+1]) {
+                storePath = root.appendingPathComponent("acceptance-"+token.uuidString+".sqlite").path
+            }
+            #endif
+            let store = try LocalStore(path:storePath,ownerID:owner)
             if ProcessInfo.processInfo.arguments.contains("-phase3-fixture") { try seedJournalQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase4-fixture") { try seedSeriesQA(store) }
             #if DEBUG
@@ -122,22 +129,36 @@ struct ReadingCompanionApp: App {
             #endif
             _ = try store.currentQuests()
             model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
+            #if DEBUG
+            if profileQARoute == "reward", qa {
+                // Genuine live finish actions cross the next 500-XP boundary.
+                for _ in 0..<5 { _ = model?.perform {
+                    let b = try store.add(work:.init(provider:"manual",reference:UUID().uuidString,title:"Another reading journey",author:"Taylor Reader"),choice:.addAnyway)
+                    let rid = try store.start(bookID:b,editionID:nil,date:nil)
+                    try store.finish(readingID:rid,confirmed:true,date:BooksModel.today,revision:0)
+                } }
+            }
+            #endif
         } catch { storageError = "Could not open the local database. Existing files have not been reset or deleted." }
     }
     #if DEBUG
     private func seedGamificationQA(_ store:LocalStore) throws {
-        var favoriteBooks=[UUID]()
-        for (index,pages) in [220,310,180].enumerated() { let book=try store.add(work:.init(provider:"qa-profile",reference:"reader-\(index)",title:["The Moonlit Archive","Letters from a Quiet Observatory","A Reader's Map of Impossible Bookshops"][index],author:"Taylor Reader"),choice:.addAnyway); favoriteBooks.append(book); let reading=try store.start(bookID:book,editionID:nil,mode:.page,date:nil); _ = try store.update(readingID:reading,value:.pages(current:pages),revision:0); try store.finish(readingID:reading,confirmed:true,date:BooksModel.today,revision:1) }
-        for n in 1...12 { _ = try store.awardXP(try XPAward(semanticKey:"qa:\(n)",source:n <= 8 ? .finishBook:.journalWork,amount:n <= 8 ? 100:40)) }
-        let daily=QuestRules.candidates(cadence:.daily,periodKey:"2026-10-06",activity:.init(genuinePagesPerDay:[18,24,22],sessionsPerWeek:[3,4,4]),history:[])
-        let weekly=QuestRules.candidates(cadence:.weekly,periodKey:"2026-W41",activity:.init(sessionsPerWeek:[3,4,4],journalActionsPerWeek:[2,3]),history:daily)
-        let monthly=QuestRules.candidates(cadence:.monthly,periodKey:"2026-10",activity:.init(completionsPerMonth:[1,2,2],journalActionsPerWeek:[2,3]),history:daily+weekly)
-        var quests=daily+weekly+monthly; quests[0].progress=max(1,quests[0].target-1); quests[1].progress=quests[1].target; quests[1].completedAt=Date(); quests[2].rerolledAt=Date()
-        let replacement=QuestRules.candidates(cadence:.weekly,periodKey:"2026-W41",activity:.init(sessionsPerWeek:[3,4,4],journalActionsPerWeek:[2,3]),history:quests,excluding:Set(quests.map(\.templateKey))).first
-        if let replacement { quests.append(replacement) }; try store.saveQuests(quests)
-        var achievements=try store.achievementProgress(); achievements[0] = .init(definition:achievements[0].definition,progress:1,unlockedAt:Date()); achievements[1] = .init(definition:achievements[1].definition,progress:7); achievements[2] = .init(definition:achievements[2].definition,progress:5,unlockedAt:Date()); achievements[3] = .init(definition:achievements[3].definition,progress:10,unlockedAt:Date()); achievements[4] = .init(definition:achievements[4].definition,progress:3); try store.saveAchievementProgress(achievements)
-        let featured=[achievements[0].definition.key,achievements[2].definition.key,achievements[3].definition.key]; try store.savePassport(.init(name:"Sarah Reader",readingSince:2020,favoriteBooks:favoriteBooks,favoriteSeries:"The Moonlit Archive",favoriteAuthor:"Taylor Reader",favoriteGenre:"Historical Fantasy",featuredAchievementKeys:featured))
-        try store.setCosmetic("frame.classic",state:.equipped); try store.setCosmetic("theme.modern-bookish",state:.equipped); try store.setCosmetic("background.midnight",state:.unlocked)
+        // Visual scenario replay. Every mutation below uses the same production lifecycle;
+        // no Quest progress, Achievement progress, or XP is assigned for presentation.
+        _ = try store.currentQuests()
+        var books = [UUID]()
+        for n in 0..<5 {
+            let book = try store.add(work:.init(provider:"manual",reference:UUID().uuidString,title:"The Reader's Journey \(n+1)",author:"Taylor Reader"),choice:.addAnyway)
+            books.append(book)
+            let rid = try store.start(bookID:book,editionID:nil,date:nil)
+            _ = try store.update(readingID:rid,value:.pages(current:10),revision:0)
+            try store.finish(readingID:rid,confirmed:true,date:BooksModel.today,revision:1)
+            try store.saveBookReview(readingID:rid,draft:.init(summary:"My reading notes",pageCount:10,rating:.noRating,format:.paperback,start:nil,finish:BooksModel.today))
+            try store.markBookReviewCopied(readingID:rid)
+        }
+        let unlocked = try store.achievementProgress().filter(\.isUnlocked)
+        let featured = unlocked.count >= 3 ? Array(unlocked.prefix(3).map { $0.definition.key }) : []
+        try store.savePassport(.init(name:"Sarah Reader",readingSince:2020,favoriteBooks:books,featuredAchievementKeys:featured))
     }
     private func seedStatsQA(_ store:LocalStore) throws {
         func completed(_ title:String,_ month:Int,_ day:Int,_ rating:Rating,_ format:JournalFormat?,_ pages:Int?,year:Int=2026,bookID:UUID?=nil) throws -> (UUID,UUID) {

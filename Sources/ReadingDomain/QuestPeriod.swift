@@ -26,7 +26,8 @@ public struct QuestPeriod: Equatable, Sendable {
         if cadence == .weekly {
             let parts = key.components(separatedBy:"-W")
             guard parts.count == 2, let year = Int(parts[0]), let week = Int(parts[1]), (1...53).contains(week) else { return nil }
-            guard let date = cal.date(from:DateComponents(yearForWeekOfYear:year,weekOfYear:week,weekday:2)), QuestPeriod(cadence:cadence,now:date,timeZone:timeZone).key == key else { return nil }; return date
+            var components = DateComponents(); components.weekday = 2; components.weekOfYear = week; components.yearForWeekOfYear = year
+            guard let date = cal.date(from:components), QuestPeriod(cadence:cadence,now:date,timeZone:timeZone).key == key else { return nil }; return date
         }
         let parts = key.split(separator:"-").compactMap { Int($0) }
         guard parts.count == (cadence == .daily ? 3 : 2), let date = cal.date(from:DateComponents(year:parts[0],month:parts[1],day:cadence == .daily ? parts[2] : 1)), QuestPeriod(cadence:cadence,now:date,timeZone:timeZone).key == key else { return nil }; return date

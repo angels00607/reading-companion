@@ -27,7 +27,8 @@ extension LocalStore {
         let known = Set(actual.map { $0["family"] as String })
         let active = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM readings WHERE owner_id=? AND status='currently_reading' AND historical=0 AND deleted_at IS NULL",arguments:[ownerID.uuidString]) ?? 0
         let journal = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM journal_components c JOIN readings r ON r.owner_id=c.owner_id AND r.id=c.reading_id WHERE c.owner_id=? AND c.component='book_review' AND c.state='ready' AND r.historical=0",arguments:[ownerID.uuidString]) ?? 0
-        return try QuestCatalog.templates.filter { t in
+        let todayCounted = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM gamification_activity WHERE owner_id=? AND family='frequency' AND activity_date=?",arguments:[ownerID.uuidString,period(.daily).key]) ?? 0
+        return QuestCatalog.templates.filter { t in
             guard t.cadences.contains(p.cadence), QuestPeriod.cooldownAllows(t,cadence:p.cadence,periodKey:p.key,history:history,timeZone:gamificationTimeZone) else { return false }
             switch t.family {
             case .progress,.organization: return true // Explicit small actions; no inferred reading activity.
@@ -36,7 +37,7 @@ extension LocalStore {
             case .journalActivity: return journal > 0
             case .pages: return known.contains(t.family.rawValue) && active > 0
             case .frequency,.consistency:
-                return known.contains(QuestFamily.frequency.rawValue) && p.availableDays > (try activityCount(.frequency,period:p,db:db))
+                return known.contains(QuestFamily.frequency.rawValue) && p.availableDays > (todayCounted > 0 ? 1 : 0)
             }
         }
     }
@@ -48,7 +49,8 @@ extension LocalStore {
         var target = QuestRules.target(for:t,cadence:p.cadence,activity:activity)
         if t.family == .frequency || t.family == .consistency {
             // A date already counted at creation cannot be counted again. Bound late starts.
-            target = min(target,max(1,p.availableDays - (try activityCount(.frequency,period:p,db:db))))
+            let todayCounted = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM gamification_activity WHERE owner_id=? AND family='frequency' AND activity_date=?",arguments:[ownerID.uuidString,period(.daily).key]) ?? 0
+            target = min(target,max(1,p.availableDays - (todayCounted > 0 ? 1 : 0)))
         }
         return .init(templateKey:t.key,cadence:p.cadence,periodKey:p.key,title:t.title,unit:t.unit,target:target)
     }
@@ -82,7 +84,8 @@ extension LocalStore {
         guard cadence != .monthly else { return false }
         return try queue.write { db in
             let current = try ensureCurrentQuests(db), p = period(cadence), history = try questHistory(db)
-            return !history.contains { $0.cadence == cadence && $0.periodKey == p.key && $0.rerolledAt != nil } && current.contains { $0.cadence == cadence && !$0.isComplete } && !(try eligibleTemplates(p,history:history,db:db)).isEmpty
+            let candidates = try eligibleTemplates(p,history:history,db:db)
+            return !history.contains { $0.cadence == cadence && $0.periodKey == p.key && $0.rerolledAt != nil } && current.contains { $0.cadence == cadence && !$0.isComplete } && !candidates.isEmpty
         }
     }
     public func rerollQuest(_ id: UUID) throws { try queue.write { db in
