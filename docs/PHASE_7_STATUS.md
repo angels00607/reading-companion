@@ -1,142 +1,168 @@
 # Phase 7 — Profile & Gamification
 
-## Status
+## Status and review boundary
 
-**NOT READY FOR HUMAN FUNCTIONAL / VISUAL ACCEPTANCE.**
+**READY FOR HUMAN FUNCTIONAL AND VISUAL REVIEW.** The five production blockers
+are complete. Human approval is pending; PR #8 is not merged. Phase 8 has not
+started. Main remains the approved Phase 6 merge
+`1b5e6809db4ec4f8062eadbcb50260662d1636cd`.
 
-Phase 6 remains approved and merged at `1b5e6809db4ec4f8062eadbcb50260662d1636cd`.
-The existing Phase 7 branch is a partial implementation candidate. The continuation
-verified its existing evidence and corrected two mapped review-fixture defects.
-No PR has been merged. Phase 8 has not started.
+Validated application: `20de2d471540ccafa6ade17f542abc8e208f26ab`.
+Subsequent acceptance-test and documentation/QA commits do not change the
+application, migrations, functional typography or prior-phase UI.
 
-## Existing foundations — not complete production journeys
+## Completed production blockers
 
-- Private Reader Passport with avatar/frame, name, Reading History Since, level/XP,
-  Books/Pages/Achievements, favorites and exactly three configurable Featured Achievements.
-- Central `GamificationBalance` catalog with the locked V1 values and unlimited
-  500-XP levels. Levels unlock cosmetics only.
-- Permanent, non-negative, append-only XP ledger with stable semantic award-key
-  idempotency and immutable source metadata.
-- Live Finish Book, Book Review Copied and proposal-confirmation award hooks.
-- Activity-only Quest templates, adaptive-target helper and Quest persistence APIs.
-  Production generation, live activity integration, period filtering and actual
-  cooldown / reroll quota enforcement remain incomplete; see blockers below.
-- All Achievements visible with explicit locked conditions/progress, one-time unlocks,
-  configurable 0 or 50–250 XP, and three Featured selections.
-- Collection categories and Locked/Unlocked/Equipped display / storage. Theme preview
-  and interactive equipment are not implemented. The existing Level Up display is static.
-  No currency, rarity, loot, offer or paywall model.
-- Home can display one supplied Quest; Profile links to Quest Center, Achievements and Collection.
+1. Normal startup, Home and Quest Center generate and use persisted current
+   2 Daily / 3 Weekly / 3 Monthly slots without seeds. Actual reading, explicit
+   reading-day, Journal and manual organization commands advance eligible goals.
+   History, creation baselines, completion and once-only XP survive reopening.
+2. Local-day, ISO Monday–Sunday week and calendar-month boundaries govern current
+   sets. Cooldown uses elapsed periods, including rejected templates, without a
+   fallback bypass. Selected-slot rerolls enforce one Daily/day, one Weekly/week,
+   none Monthly, persist the quota and exclude immediate return. Targets use only
+   genuine available history and conservative remaining-day caps. Legacy history
+   informs targets without replaying events, progress or ordinary XP.
+3. All five existing catalog Achievement conditions evaluate automatically from
+   genuine nonhistorical facts and permanent awards. Unlocks and XP are monotonic
+   and idempotent. Import, DNF completion, missing dates and percentage-to-pages
+   conversion do not manufacture activity. Errors preserve Progress unknown.
+4. Collection provides ephemeral preview, unchanged Cancel and validated Apply,
+   persisted across process reopening. Known keys, actual level eligibility and
+   one equipped item/category are enforced. Themes modify decorative Passport
+   surfaces only; preset categories remain individually editable. Essential
+   reading features have no level gate. Configured Featured selections are
+   exactly three genuinely unlocked Achievements.
+5. Production acceptance A–J covers real repository commands, durable reopening,
+   controlled calendar boundaries and live native interactions. Visual replay
+   uses those same commands, never assigned Quest/Achievement progress or arbitrary
+   XP. The final boards were produced only after the functional blockers passed.
 
-The prior status overstated production coverage. Stored fixtures and helper APIs
-do not establish completed production Quest / Achievement / customization journeys.
+Detailed mechanics: [PHASE_7_LIFECYCLE.md](PHASE_7_LIFECYCLE.md).
 
-## Data and migration
+## Additive migrations
 
-- Local additive migration `local_v8.sql`.
-- Supabase additive migration `202610070001_profile_gamification.sql` with owner RLS.
-- Migration creates no XP, Quest, Achievement or cosmetic history from existing books.
-- Existing immutable Phase 0 XP storage remains authoritative and is not rewritten.
+- Existing Phase 7 foundations: `local_v8.sql` and
+  `202610070001_profile_gamification.sql`.
+- This completion adds `local_v9.sql` and
+  `202610070002_live_gamification.sql`: immutable owner-scoped activity,
+  Quest slot/creation-baseline metadata, private RLS and cosmetic key/level guards.
+- Earlier migrations and the immutable permanent XP ledger are preserved. No
+  migration backfills historical imports or ordinary completion/Journal XP.
+- Upgrade validation preserves existing v8 records; cross-owner access, mutation
+  of immutable facts and invalid cosmetic writes are tested.
 
-## Validation state
+## Validation evidence
 
-Candidate [run 37521560931](https://github.com/angels00607/reading-companion/actions/runs/37521560931)
-on `4212f17df261b4813361f14bec2996a8dd04f5e3`:
+| Check | Result and provenance |
+| --- | --- |
+| Full Swift regression | **139 passed**, including **23 Phase 7 tests**, complete production matrix and final test-only runs |
+| SQLite migrations/invariants | **42 passed**: 17 Foundation, 3 Books, 7 Challenges, 6 Stats, 9 Gamification; candidate run below |
+| Supabase migrations/RLS | **121 passed**, 10 files, including 14 new lifecycle assertions; candidate run below |
+| iOS Simulator build | **PASS** on production and final Passport application runs |
+| Native font registration | **PASS**, unchanged approved resources, candidate run |
+| Phase 7 native acceptance | **3 passed**: clean production launch, persistent cosmetic/theme Cancel/Apply/reopen, and 15-route three-mode matrix |
+| Light Standard / Dark Standard / Light Accessibility XXXL | **PASS**, production matrix plus targeted final Passport correction; screenshots inspected |
+| Books / Challenges native regression | **4 passed**, candidate run |
+| Foundation default / largest-size audits | **FAIL — known retained Foundation accessibility findings**; retained findings, no suppression or threshold change |
 
-- Full Swift regression: **127 passed**, including **11 Phase 7 tests**.
-- iOS Simulator build and approved font registration: **passed**.
-- SQLite: **38 passed** (17 Foundation, 3 Books, 7 Challenges, 6 Stats, 5 Gamification).
-- Supabase / RLS: **107 passed**, 9 test files.
-- Books / Challenges native functional regression: **4 passed**.
-- Phase 7 fixture acceptance: **failed**, as mapped below. It did not exercise
-  complete production Quest / Achievement / customization flows.
-- Foundation default / accessibility stages retain the documented open findings.
+The single complete candidate is
+[run 37596754723](https://github.com/angels00607/reading-companion/actions/runs/37596754723)
+at `fc235e11bae15c925d61e0ef02e53da7e3e99f9c`.
+The final genuine-history adapter is verified by full Swift regression, iOS build
+and Phase 7 native acceptance in
+[run 37599213808](https://github.com/angels00607/reading-companion/actions/runs/37599213808)
+at `b49d3e500e25c29c1332baa30a86d4f67094d974`. Unchanged migrations, fonts and
+earlier native regression reuse the complete candidate's evidence. The
+acceptance-test-only head `cd59bdb741de30320e0a5b770a1c8640462366e2` explicitly
+verifies reopened reroll quotas, monthly history and the 499/500/501 boundary:
+full 139 Swift tests and the identical iOS application build pass in
+[run 37599619408](https://github.com/angels00607/reading-companion/actions/runs/37599619408).
+No second complete native/Foundation cycle was launched. Final documentation/QA
+packaging skips identical CI.
 
-Correction [run 37587259525](https://github.com/angels00607/reading-companion/actions/runs/37587259525)
-on `f12fbc25654011154ab5fe480ea0976ceda6033b`:
+Font registration preserves `Manrope-Regular`, `Manrope-Medium`,
+`Manrope-SemiBold`, `PapernotesRegular` and `HelloBabyRegular`. Manrope is the
+functional typeface. Source and bundled font binaries were not changed.
 
-- Targeted Phase 7 Swift tests and iOS build: **passed**.
-- Light Standard / Dark Standard / Accessibility XXXL fixture acceptance: **passed**.
-- Screenshot inspection confirms that the seeded Quests and Achievements render.
-  It also exposed compressed words in horizontal Quest / Achievement / Collection
-  rows at XXXL and a grouped year (`2,020`) in the Passport.
-- Database commands, schema and font resources are unchanged by this correction;
-  successful candidate evidence is reused. No duplicate full matrix was launched.
-- Native validation uses macOS CI. The current workstation is Windows and cannot
-  perform native iOS simulator / physical-device / VoiceOver certification.
+## Production acceptance A–J
 
-## Mapped fixture defects and correction
+| Flow | Result | Evidence |
+| --- | --- | --- |
+| A — clean launch | PASS | Normal unseeded 2/3/3 repository generation and isolated persistent native launch |
+| B — live completion/once-only XP/reopen | PASS | Real progress command, stable observation replay and file-backed reopen |
+| C — period rollover/history | PASS | Controlled local day, ISO week and calendar month rollover; history retained |
+| D — selected reroll/quota/reopen | PASS | Untouched sibling slot, same-slot replacement, current-period quota, no Monthly reroll or immediate return; file-backed reopen |
+| E — elapsed cooldown | PASS | Real calendar distances and production generation, independent of insertion order |
+| F — automatic Achievement/once-only XP/reopen | PASS | Real add/start/update/confirm/copy commands, five catalog conditions, award-key deduplication and file-backed reopen |
+| G — 500 XP/cosmetics-only gates | PASS | Exact 499/500/501 boundary, real finish-based level unlock and accessible Library |
+| H — preview/Cancel/Apply/reopen | PASS | Actual native preview with unchanged Cancel, validated Apply, process reopen; repository persistence |
+| I — locked/unknown rejection | PASS | Locked native control, atomic repository rejection, unchanged equipment and storage guards |
+| J — theme boundary/persistence | PASS | Actual native theme preview/Cancel/Apply/reopen in the existing shell; decorative-token implementation and individually editable categories |
 
-- Candidate run `37521560931` failed 12 screen-presence assertions. Its retained
-  XCTest snapshot identifies `phase7.quests` as type **46 (ScrollView)**, whereas
-  the test queried `otherElements`. The same construction is used for Passport,
-  Achievements and Collection. Reward retains its existing celebration query.
-- The Quest screenshot was genuinely empty: `ProfileVisualQA` constructed the
-  state-owning `QuestCenter` with an empty array before loading its fixture. The
-  destination retained that initial array despite the later parent update.
-- Correction `f12fbc25654011154ab5fe480ea0976ceda6033b` loads repository data before
-  constructing destinations, queries actual ScrollViews and adds explicit seeded
-  Quest / Achievement-content assertions. No audit finding or threshold is weakened.
-- Original logs / attachments remain diagnostic evidence. The original empty Quest
-  capture must not be presented as an acceptable final visual board.
+Separate tests verify percentage, import, unresolved-history and DNF exclusions,
+known-date target adaptation, no fake sessions, conservative late-period day
+targets and preservation of distinct Stats records without duplicate day credit.
 
-## Targeted visual correction
+## Final visual evidence
 
-`d6b455483b353cb9560cc8e96eb68f0352131628` stacks the three Phase 7 card/row
-types vertically at accessibility sizes and displays the reading-history year
-without number grouping. Standard-size hierarchy, Manrope, labels, semantics,
-touch targets, appearance tokens and navigation are preserved.
+[Review index](qa/phase7/README.md),
+[Light Standard](qa/phase7/Light-Standard.png),
+[Dark Standard](qa/phase7/Dark-Standard.png),
+[Accessibility XXXL](qa/phase7/Accessibility-XXXL.png),
+[per-capture provenance/checksums](qa/phase7/PROVENANCE.json).
 
-[Run 37588608227](https://github.com/angels00607/reading-companion/actions/runs/37588608227)
-validates this UI correction using the targeted Phase 7 Swift / iOS / fixture
-matrix. **Passed:** 11 targeted Swift tests, iOS build and the single XCTest
-fixture-acceptance test across five routes in Light Standard, Dark Standard and
-Light Accessibility XXXL. All 27 named captures were inspected through the
-three [diagnostic boards](qa/phase7/README.md). The identified compressed words
-now have full-width text space and the Passport year is `2020`.
-No database code or earlier-phase UI was changed. The repeated targeted UI pass
-is justified by the mapped new Phase 7 reflow issue, rather than a redundant full
-regression or Foundation audit cycle.
+One final set uses 57 selected real native captures on iPhone SE (3rd generation),
+19 panels per board. It includes Passport identity/XP, Featured selections,
+current cadence sets, consumed reroll, actual progress/completion, Achievement
+conditions, locked/unlocked Collection, Theme Preview/Apply and a live Level Up.
+Native content is unmodified; only contact-sheet labels/frame are added.
 
-Boards are diagnostic candidate evidence, not approval of incomplete production
-flows. Source application SHA, run, artifact, device, filenames, timestamps and
-checksums are recorded in [PROVENANCE.json](qa/phase7/PROVENANCE.json). Final
-documentation / QA packaging does not modify application code and requires no
-new native matrix.
+Mapped new Phase 7 XXXL word compression and Passport name/XP number wrapping
+were corrected through vertical expansion at accessibility sizes. Standard
+hierarchy, five tabs, 44-point targets, Manrope, appearance modes and semantics
+remain intact. The native preview-scrolling harness fault was mapped to dismissal
+of the sheet and corrected by scrolling the actual active surface; no finding or
+threshold was weakened. The final inspection also mapped four malformed favorite separators (`Â·`).
+Only these Passport strings were corrected at the validated application SHA.
+[Run 37601146010](https://github.com/angels00607/reading-companion/actions/runs/37601146010)
+passes the iOS build and one targeted native test across all three modes, checking
+the exact corrected label. Unit/domain, schema, fonts and unrelated routes were
+unchanged, so their passed evidence is reused. The final boards replace 12
+Passport captures from this run and retain 48 unchanged-route captures from the
+complete production matrix; each source SHA/run/artifact is explicit in provenance.
+All final panels were inspected: full-width XXXL identity/XP, corrected favorite
+labels, truthful activity progress, distinct locks, preview/applied surfaces and
+scrolling expansion are preserved. No new unresolved Phase 7 functional or visual
+problem was detected.
 
-## Remaining Phase 7 functional blockers
+## Diagnostic history and limitations
 
-1. **Production Quest lifecycle:** candidate generation is called by the fictional
-   QA seed and reroll UI, not normal startup or live activity. No production caller
-   advances Quest progress from reading / Journal events. Clean normal launches
-   therefore have no generated Quests.
-2. **Periods / cooldown / rerolls:** UI reads all persisted periods; the used-reroll
-   check is not scoped to the current day/week. `cooldownPeriods` is declared but
-   the helper excludes the last 12 rows instead of evaluating elapsed periods.
-   Daily frequency targets can exceed one day when given a session median above one,
-   conflicting with the non-impossible-Quest rule.
-3. **Automatic Achievements:** award hooks do not update or evaluate conditions.
-   The only current non-test `saveAchievementProgress` caller is the fictional seed.
-4. **Customization:** Collection rows have no equip or preview action. There is no
-   theme-preview / cancel / apply journey. The repository accepts a catalog key
-   without verifying its unlock level or enforcing one equipped item per category.
-5. **Acceptance coverage:** screenshots / presence assertions do not verify live
-   Quest completion, rollover, quota enforcement, automatic unlocks or equipment
-   persistence. These require targeted implementation and acceptance coverage.
+The previous NOT READY status is preserved verbatim in
+[PHASE_7_DIAGNOSTIC_HISTORY.md](PHASE_7_DIAGNOSTIC_HISTORY.md). Its fixture boards
+remain available at historical head `902091b68c4bc483e3a610cc79d95a158a49e124`;
+they are not substituted for production acceptance. Runs `37593346065` and
+`37595099765` retain the native replay/harness evidence and correction history.
 
-These are Phase 7 implementation / validation gaps, not deferred Phase 12 findings.
-Passing existing helper / migration tests cannot establish Phase 7 completion.
-
-## Deliberate limitations / later work
-
-- Phase 7 does not replay historical imports and does not integrate Phase 8 import events.
-- Physical-device and VoiceOver certification remain Phase 12 work.
-- Foundation history remains intact: **107 unresolved Dynamic Type findings**, no
-  mapped responsible live element, and instrumentation did not establish a false
-  positive. The later **148 Foundation findings** remain visible and deferred as
-  documented. No finding is suppressed by this continuation.
-- Missing Challenge content and reward TBDs remain exactly as documented. No content,
-  historical XP, import behavior or backup behavior is inferred.
-- Human Visual QA is not yet approved for Phase 7.
-- The V1 catalogs are deliberately small, stable and configurable; adding future catalog
-  content must preserve the locked philosophy and does not alter the Phase 7 data model.
+- **107 XCTest Dynamic Type findings remain unresolved; no responsible live
+  element has been identified; instrumentation did not establish a false
+  positive; no finding has been suppressed.** The later **148 Foundation findings**
+  and their complete documented history remain visible and deferred. This is an
+  open accessibility risk requiring Phase 12/manual native inspection; it was
+  not reinvestigated during this completion. Existing accessibility tests and
+  thresholds are retained, so the full candidate is not globally green.
+- Physical-device/spoken VoiceOver and comprehensive accessibility certification
+  remain Phase 12 work. The native evidence uses macOS CI, not the Windows host.
+  The requested final matrix is Light Standard / Dark Standard / Light XXXL;
+  no Dark XXXL certification is claimed.
+- Session templates remain ineligible without a genuine session recorder.
+  Missing activity/date data is not reconstructed. Historical imports never
+  replay live awards or completion cascades.
+- Full cloud command transport/multi-device conflict integration and executable
+  backup/restore remain later-phase work; owner RLS and additive sync foundations
+  are present, not claimed as a completed production cloud service.
+- All existing Challenge content/reward, week-53 and same-date tie TBDs remain
+  exactly as documented. No missing catalog content or future requirement is
+  inferred. No new product decision requiring approval was introduced.
+- Human functional and visual approval remains pending. PR #8 is ready for
+  review only; no merge or Phase 8 work is authorized by this status.
