@@ -1,7 +1,46 @@
 import SwiftUI
 import ReadingDomain
 
-public struct ProfileVisualQA:View { @EnvironmentObject private var model:BooksModel; let route:String; @State private var quests=[QuestInstance]();@State private var achievements=[AchievementProgress]();@State private var states=[String:CosmeticState]();@State private var level=1; public init(route:String){self.route=route}; public var body:some View { NavigationStack { Group { switch route { case "quests":QuestCenter(quests:quests);case "achievements":AchievementsScreen(values:achievements);case "collection":CollectionScreen(level:level,states:states);case "reward":BooksScreen("Reward"){FeatureCelebration(eyebrow:"ACHIEVEMENT UNLOCKED",title:"In the Margins",message:"You completed five Journal works. +100 XP has been added once.")};default:ProfileHome() } }.task{guard let repo=model.gamificationRepository else{return};quests=(try? repo.quests()) ?? [];achievements=(try? repo.achievementProgress()) ?? [];states=(try? repo.cosmeticStates()) ?? [:];level=GamificationBalance.level(totalXP:(try? repo.xpAwards())?.reduce(0){$0+$1.amount} ?? 0)} } } }
+public struct ProfileVisualQA: View {
+    @EnvironmentObject private var model: BooksModel
+    let route: String
+    @State private var quests = [QuestInstance]()
+    @State private var achievements = [AchievementProgress]()
+    @State private var states = [String: CosmeticState]()
+    @State private var level = 1
+    @State private var loaded = false
+    @State private var error: String?
+    public init(route: String) { self.route = route }
+    public var body: some View {
+        NavigationStack {
+            Group {
+                if loaded {
+                    switch route {
+                    case "quests": QuestCenter(quests: quests)
+                    case "achievements": AchievementsScreen(values: achievements)
+                    case "collection": CollectionScreen(level: level, states: states)
+                    case "reward": BooksScreen("Reward") {
+                        FeatureCelebration(eyebrow: "ACHIEVEMENT UNLOCKED", title: "In the Margins", message: "You completed five Journal works. +100 XP has been added once.")
+                    }
+                    default: ProfileHome()
+                    }
+                } else if let error {
+                    StatePresentation(kind: .error, title: "Review fixture unavailable", message: error)
+                } else { SkeletonRow() }
+            }.task {
+                do {
+                    guard let repo = model.gamificationRepository else { throw GamificationError.invalidTarget }
+                    quests = try repo.quests()
+                    achievements = try repo.achievementProgress()
+                    states = try repo.cosmeticStates()
+                    level = GamificationBalance.level(totalXP: try repo.xpAwards().reduce(0) { $0 + $1.amount })
+                    // Construct state-owning destinations only after the fixture is available.
+                    loaded = true
+                } catch { self.error = "Could not load the existing review fixture." }
+            }
+        }
+    }
+}
 
 public struct HomePrimaryQuest:View { @EnvironmentObject private var model:BooksModel; @State private var quest:QuestInstance?; public init(){}; public var body:some View { Group { if let quest { VStack(alignment:.leading,spacing:8){Text("TODAY'S QUEST").font(DesignTokens.functionalFont(size:12,weight:.semiBold));QuestCard(quest:quest);NavigationLink("See all Quests"){QuestCenter(quests:(try? model.gamificationRepository?.quests()) ?? [])}.font(DesignTokens.functionalFont(size:14,weight:.semiBold))}.accessibilityIdentifier("phase7.homeQuest") } }.task{let values=(try? model.gamificationRepository?.quests()) ?? []; quest=values.first{$0.cadence == .daily && !$0.isComplete}} } }
 
@@ -40,3 +79,4 @@ public struct AchievementsScreen:View { @Environment(\.colorScheme) private var 
 }
 private struct AchievementBadgeView:View { @Environment(\.colorScheme) private var scheme; let value:AchievementProgress; var body:some View { HStack(spacing:14){ZStack{Circle().fill(value.isUnlocked ? DesignTokens.plumSurface(scheme):DesignTokens.blueSurface(scheme)).frame(width:54,height:54);Image(systemName:value.definition.symbol).font(.system(size:23))};VStack(alignment:.leading,spacing:4){Text(value.definition.name).font(DesignTokens.functionalFont(size:16,weight:.semiBold));Text(value.isUnlocked ? "Unlocked" : value.definition.condition).foregroundStyle(DesignTokens.secondaryText(scheme));if !value.isUnlocked {Text("\(min(value.progress,value.definition.target)) of \(value.definition.target)").font(DesignTokens.functionalFont(size:12));ReadingProgressBar(.percentage(Double(value.progress)*100/Double(value.definition.target)))}};Spacer();if value.isUnlocked{Image(systemName:"checkmark.circle.fill").accessibilityLabel("Unlocked")}}.padding(12).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:14)).accessibilityElement(children:.contain) } }
 public struct CollectionScreen:View { @Environment(\.colorScheme) private var scheme; let level:Int; let states:[String:CosmeticState]; public var body:some View { BooksScreen("Collection") { Text("Cosmetics personalize surfaces and your Passport without changing semantic colors, typography or navigation.").foregroundStyle(DesignTokens.secondaryText(scheme));ForEach(CosmeticCategory.allCases,id:\.self){category in Text(category.rawValue.uppercased()).font(DesignTokens.functionalFont(size:12,weight:.semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme));ForEach(CosmeticCatalog.all.filter{$0.category == category}){item in let state:CosmeticState=states[item.key] ?? (level >= item.unlockLevel ? .unlocked:.locked); HStack{Image(systemName:category == .frames ? "circle.dashed":"paintpalette");VStack(alignment:.leading){Text(item.name).font(DesignTokens.functionalFont(size:16,weight:.semiBold));Text(state == .locked ? "Unlocks at Level \(item.unlockLevel)" : state.rawValue.capitalized).foregroundStyle(DesignTokens.secondaryText(scheme))};Spacer();Image(systemName:state == .equipped ? "checkmark.circle.fill" : state == .locked ? "lock.fill":"circle")}.frame(minHeight:58).padding(.horizontal,12).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:12)).accessibilityElement(children:.combine)} }; FeatureCelebration(eyebrow:"LEVEL UP",title:"Level 5",message:"A new cosmetic is now available. Every reading feature remains available at every level.") }.accessibilityIdentifier("phase7.collection") } }
+
