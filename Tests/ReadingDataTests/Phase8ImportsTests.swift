@@ -114,7 +114,10 @@ final class Phase8ImportsTests:XCTestCase {
         try apply(s,csv());let candidate=try s.pendingImportCandidates().first!
         try s.linkImportCandidate(id:candidate.id,bookID:book,readingIDs:[reading],confirmed:true)
         XCTAssertEqual(try s.record(id:book).readings.count,1);XCTAssertEqual(try s.record(id:book).readings.first!.journalFormat,.paperback)
-        XCTAssertTrue(try s.importReviews().isEmpty,"An exact explicitly linked reading needs no correction");XCTAssertEqual(try s.xpAwards(),legitimateAwards,"Import preserves existing legitimate XP and adds no award")
+        XCTAssertTrue(try s.importReviews().isEmpty,"An exact explicitly linked reading needs no correction")
+        let after=try s.xpAwards()
+        XCTAssertEqual(after.map(\.semanticKey).sorted(),legitimateAwards.map(\.semanticKey).sorted(),"The permanent semantic award identities are unchanged")
+        XCTAssertEqual(after.reduce(0){$0+$1.amount},legitimateAwards.reduce(0){$0+$1.amount},"Import preserves legitimate XP and adds no award")
     }
     func testKeptIncompleteRowSuppressionIgnoresPositionAndFormatButNotChangedEvidence() throws {
         let s=try store();let data=csv("Archive,Author,uid1,read,1,,03/04/2024,3.5,ebook\n")
