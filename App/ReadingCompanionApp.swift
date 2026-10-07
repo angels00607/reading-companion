@@ -12,7 +12,8 @@ struct ReadingCompanionApp: App {
             Group {
                 if isFoundationQA { FoundationShell() }
                 else if let model {
-                    if let route = visualQARoute { BooksVisualQA(route: route).environmentObject(model) }
+                    if isImportQA { NavigationStack { ImportHome() }.environmentObject(model) }
+                    else if let route = visualQARoute { BooksVisualQA(route: route).environmentObject(model) }
                     else if let route = challengeQARoute { ChallengesVisualQA(route: route).environmentObject(model) }
                     else if let route = statsQARoute { StatsVisualQA(route: route).environmentObject(model) }
                     else if let route = profileQARoute { ProfileVisualQA(route:route).environmentObject(model) }
@@ -28,6 +29,13 @@ struct ReadingCompanionApp: App {
                     #endif
                 }
         }
+    }
+    private var isImportQA:Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-phase8-fixture")
+        #else
+        return false
+        #endif
     }
     private var challengeQAYear: Int? {
         #if DEBUG
@@ -112,7 +120,7 @@ struct ReadingCompanionApp: App {
             #else
             let qa = false
             #endif
-            var storePath = qa ? ":memory:" : root.appendingPathComponent(owner.uuidString + ".sqlite").path
+            var storePath = (qa || isImportQA) ? ":memory:" : root.appendingPathComponent(owner.uuidString + ".sqlite").path
             #if DEBUG
             let args = ProcessInfo.processInfo.arguments
             if let i = args.firstIndex(of:"-phase7-acceptance-store"), i+1 < args.count, let token = UUID(uuidString:args[i+1]) {

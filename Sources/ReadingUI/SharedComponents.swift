@@ -268,8 +268,10 @@ public struct DataChangeReview: View {
     @Environment(\.colorScheme) private var scheme
     public let field: String; public let current: String; public let proposed: String; public let source: String
     public let accept: () -> Void; public let keep: () -> Void; public let edit: () -> Void
-    public init(field: String, current: String, proposed: String, source: String, accept: @escaping () -> Void = {}, keep: @escaping () -> Void = {}, edit: @escaping () -> Void = {}) {
+    public let canAccept: Bool
+    public init(field: String, current: String, proposed: String, source: String, canAccept: Bool = true, accept: @escaping () -> Void = {}, keep: @escaping () -> Void = {}, edit: @escaping () -> Void = {}) {
         self.field = field; self.current = current; self.proposed = proposed; self.source = source; self.accept = accept; self.keep = keep; self.edit = edit
+        self.canAccept=canAccept
     }
     public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -278,8 +280,8 @@ public struct DataChangeReview: View {
             comparison("Proposed", proposed, color: DesignTokens.plumSurface(scheme))
             Label("Source: \(source)", systemImage: "link").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme)).padding(.top, -2)
             ViewThatFits(in: .horizontal) {
-                HStack { AppButton("Keep", kind: .secondary, action: keep); AppButton("Accept", action: accept); AppButton("Edit", kind: .tertiary, action: edit) }
-                VStack(spacing: 8) { AppButton("Keep", kind: .secondary, action: keep); AppButton("Accept", action: accept); AppButton("Edit", kind: .tertiary, action: edit) }
+                HStack { AppButton("Keep", kind: .secondary, action: keep); AppButton("Accept", action: accept).disabled(!canAccept); AppButton("Edit", kind: .tertiary, action: edit) }
+                VStack(spacing: 8) { AppButton("Keep", kind: .secondary, action: keep); AppButton("Accept", action: accept).disabled(!canAccept); AppButton("Edit", kind: .tertiary, action: edit) }
             }
         }.padding(16).background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
             .overlay(RoundedRectangle(cornerRadius: DesignTokens.cardRadius).stroke(DesignTokens.border(scheme)))

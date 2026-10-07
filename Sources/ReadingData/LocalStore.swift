@@ -51,6 +51,10 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
             let url = Bundle.module.url(forResource: "local_v9", withExtension: "sql")!
             try db.execute(sql: String(contentsOf: url, encoding: .utf8))
         }
+        migrator.registerMigration("local_v10") { db in
+            let url = Bundle.module.url(forResource: "local_v10", withExtension: "sql")!
+            try db.execute(sql: String(contentsOf: url, encoding: .utf8))
+        }
         try migrator.migrate(queue)
     }
     public func addBook(_ book: Book, wantsToRead: Bool, mutation: MutationEnvelope) throws {

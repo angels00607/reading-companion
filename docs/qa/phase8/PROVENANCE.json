@@ -1,0 +1,972 @@
+{
+  "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+  "workflow_run": 37632080171,
+  "artifact_id": 11488257243,
+  "status": "Awaiting human functional and visual review",
+  "visual_source": "Native simulator screenshots; fictional CSV is parsed, previewed and confirmed through real repository commands. Current values reflect actual manual edits; no assigned presentation states.",
+  "boards": [
+    {
+      "file": "Light-Standard.png",
+      "sha256": "22d9315de86c55864bcc1d0c33c017255a54f67fcc6306f5b57adb88c42131d3",
+      "sources": [
+        {
+          "route": "Entry",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "87CBE862-1DA7-4793-B915-DB10BA614DA0.png",
+          "attachment": "Phase8-Light-Standard-Entry_0_766F08CC-1D1F-4449-BBB8-15D68E77AD32.png",
+          "timestamp": 1791382050.744,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "17e23954595fc65749e6c9dd32bd74567c8b9d100371403a0c5491a0d1f079f1"
+        },
+        {
+          "route": "New-Books",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "9BB79E19-C33C-4564-9FE4-5A74A630D6B3.png",
+          "attachment": "Phase8-Light-Standard-New-Books_0_41A0B1AA-AC11-4AB4-B94A-EA6734016765.png",
+          "timestamp": 1791382054.459,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "1baffd7180196e9df31411b973eec38c2d039fe28efcdc242847b33a2d63d21e"
+        },
+        {
+          "route": "Preview-Categories",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "97B4C3CF-2BB5-4DA5-92AD-0278ECB574EC.png",
+          "attachment": "Phase8-Light-Standard-Preview-Categories_0_13FC9A70-CB3A-403F-9B6F-1EAEE11EFC0B.png",
+          "timestamp": 1791382060.412,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "5d488abda6f0a67e9f9499e442622fd1feda69306caac0b82abb0bc7cacbf78d"
+        },
+        {
+          "route": "Committed",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "DFF483A5-4B4B-43AB-85E3-3B6D4E1B6764.png",
+          "attachment": "Phase8-Light-Standard-Committed_0_F75CC84C-ECD4-4F91-9E86-4C910159324E.png",
+          "timestamp": 1791382067.464,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "3a3a6672a494410a0d5ba5516f11f80ea858337ca5f2bd149b1b9606418ecfc6"
+        },
+        {
+          "route": "Imported-Library",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "45BC791D-006B-4D4F-BE35-80463330EBA6.png",
+          "attachment": "Phase8-Light-Standard-Imported-Library_0_79D07189-B317-4B35-9BA7-E81302BF9B4F.png",
+          "timestamp": 1791382183.454,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "4efc54e347b5aa7b792e86e07b25a973e9f40815df4578ded1116805d0f782c2"
+        },
+        {
+          "route": "Imported-Unknown-History",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "3547869A-BE8E-4A2B-AE45-7687E5E839CD.png",
+          "attachment": "Phase8-Light-Standard-Imported-Unknown-History_0_AEE043D9-CFFD-4274-B212-1182D17B6DF5.png",
+          "timestamp": 1791382187.229,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "30c31b4744f00bc3e7441495f7036ef9dd7b5d68931e2127201a7cd55c8f8c07"
+        },
+        {
+          "route": "Possible-Updates",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "CC944775-FC2A-4F00-8AF1-E4AE8F96E449.png",
+          "attachment": "Phase8-Light-Standard-Possible-Updates_0_850F2332-AD1F-4381-A532-9D23753B9992.png",
+          "timestamp": 1791382198.193,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "7600ff5fae91410cb62edf586ebdad1a28709075cf6fa6c55a263ce4278e1bb2"
+        },
+        {
+          "route": "Needs-Review",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "BDB870F2-2BE6-4C85-B261-91AA72F81CD8.png",
+          "attachment": "Phase8-Light-Standard-Needs-Review_0_5B1085A1-31C5-4C27-9A0A-7CCDB51EE4F7.png",
+          "timestamp": 1791382202.429,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "d869b8682dd249988ad563059462630fa3b43b7c9ec9be551f7c8ed6b54738ff"
+        },
+        {
+          "route": "Explicit-Confirmation",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "63BBD1DE-4072-470A-86B9-1DBA12D44FEA.png",
+          "attachment": "Phase8-Light-Standard-Explicit-Confirmation_0_A32C76E3-119B-4873-AD93-E7C58E5B435E.png",
+          "timestamp": 1791382210.328,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "c0408f7e6fa5364b8322fe2de46f679da9d254a4a749b61117670a9ee3a542af"
+        },
+        {
+          "route": "Protected-Title",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "F0A3077A-9F82-4631-9911-88F176949F77.png",
+          "attachment": "Phase8-Light-Standard-Protected-Title_0_99902E81-F231-4A68-B614-31E62B6A2C33.png",
+          "timestamp": 1791382214.278,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "ae13c26cf57af9bdd3ce4783b335669116cc42f6dff363256a6742cef6829793"
+        },
+        {
+          "route": "Current-Title",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "0640DE1F-E01E-4936-9ACB-83DB707591BE.png",
+          "attachment": "Phase8-Light-Standard-Current-Title_0_457F5EBD-7734-48F6-84B8-C791ECF691A4.png",
+          "timestamp": 1791382214.761,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "ae13c26cf57af9bdd3ce4783b335669116cc42f6dff363256a6742cef6829793"
+        },
+        {
+          "route": "Title-Actions",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "EC38205B-530A-4E88-B97A-B3E9EE15D7ED.png",
+          "attachment": "Phase8-Light-Standard-Title-Actions_0_231E1567-F268-4994-A60C-8997B670BE2C.png",
+          "timestamp": 1791382215.344,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "ae13c26cf57af9bdd3ce4783b335669116cc42f6dff363256a6742cef6829793"
+        },
+        {
+          "route": "Current-Imported-Date",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "0D11DF0E-4A03-4282-8AC9-AD6793E0F8BC.png",
+          "attachment": "Phase8-Light-Standard-Current-Imported-Date_0_F1F77C91-9961-4E1D-BF78-00B6C1C44EFC.png",
+          "timestamp": 1791382218.434,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "0ad1ad78011b2eb286903e3d719b98c9bd016a11dbe037a74d5f170f08390cc4"
+        },
+        {
+          "route": "Date-Actions",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "D3B5D461-0EEE-42AD-BC84-574D296A0B2D.png",
+          "attachment": "Phase8-Light-Standard-Date-Actions_0_2EABBA2D-8546-4798-AD54-0DF9F0F338FD.png",
+          "timestamp": 1791382219.022,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "0ad1ad78011b2eb286903e3d719b98c9bd016a11dbe037a74d5f170f08390cc4"
+        },
+        {
+          "route": "Rating",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "F95D40BE-79C0-453B-B35B-15079C4D0556.png",
+          "attachment": "Phase8-Light-Standard-Rating_0_D2914DF0-9627-4FB5-B377-31D08667E07F.png",
+          "timestamp": 1791382222.008,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "e91e37f07b155a23b7b4f13b20ec5ce9b28586d40523118f29499c9fe341b561"
+        },
+        {
+          "route": "Ambiguous-Identity",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "60BBC69C-6610-48A3-B19A-3A2D93E19735.png",
+          "attachment": "Phase8-Light-Standard-Ambiguous-Identity_0_C22B41E9-A7B8-4309-89F1-46FBBC44DD49.png",
+          "timestamp": 1791382226.836,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "b22aa339b10a46cb6c8f4e5c55e5743ad6ceaa561a923ea5c4fdafadbf53c889"
+        },
+        {
+          "route": "Identity-Choice",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "EAAEC710-3DFF-403B-A0B9-98EE56A2577A.png",
+          "attachment": "Phase8-Light-Standard-Identity-Choice_0_FE9EB78A-7172-4990-B926-AF094FC3FD6E.png",
+          "timestamp": 1791382227.383,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "b22aa339b10a46cb6c8f4e5c55e5743ad6ceaa561a923ea5c4fdafadbf53c889"
+        },
+        {
+          "route": "Unsupported-Date-Rating",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "0935A5E1-6CE1-45AB-A24D-EE18EAE68563.png",
+          "attachment": "Phase8-Light-Standard-Unsupported-Date-Rating_0_D53DC001-4F68-411F-82E0-8541EC85C221.png",
+          "timestamp": 1791382230.304,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "3889c6b20c50c2b2f253887263bb0282e50acd60860970d50916c227fcc7c1e5"
+        },
+        {
+          "route": "Keep-Unapplied",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "59B828D6-86A9-4265-A56C-266C595C9F41.png",
+          "attachment": "Phase8-Light-Standard-Keep-Unapplied_0_9E794B00-EEEC-4A91-8E67-8BB3F4B1B9F7.png",
+          "timestamp": 1791382230.887,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "3889c6b20c50c2b2f253887263bb0282e50acd60860970d50916c227fcc7c1e5"
+        },
+        {
+          "route": "History",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "329AC33C-1471-4BE1-B095-676A1AC3A599.png",
+          "attachment": "Phase8-Light-Standard-History_0_59042235-F2FD-428C-9D3E-2C7D5C513BA2.png",
+          "timestamp": 1791382234.907,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "64100eaeebc1d64c8ec41f6b06abd81d9dcf739af26a92e884b2c3e5bdf9eb4b"
+        },
+        {
+          "route": "History-Lower",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "B79A63C8-3BF5-4C1D-98FE-A8900324D227.png",
+          "attachment": "Phase8-Light-Standard-History-Lower_0_D4F72C87-BA49-4E70-840F-CDAD893B74C8.png",
+          "timestamp": 1791382236.028,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "64100eaeebc1d64c8ec41f6b06abd81d9dcf739af26a92e884b2c3e5bdf9eb4b"
+        }
+      ]
+    },
+    {
+      "file": "Dark-Standard.png",
+      "sha256": "0fc0125050662abe9c666efc7fddd5c5e11c94c8ad123d6a049ae2deb62216b9",
+      "sources": [
+        {
+          "route": "Entry",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "C79D85B7-B07C-4846-80C9-70435ADC2286.png",
+          "attachment": "Phase8-Dark-Standard-Entry_0_8BB20A97-12CE-4289-A550-28EE797BDF60.png",
+          "timestamp": 1791382242.088,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "fb24b727d91d6fe72d856c90b9b95fca08af2d40ec7f67b7449d9e6411021e1b"
+        },
+        {
+          "route": "New-Books",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "430646FB-B2A3-439C-AFD0-49C056F7A857.png",
+          "attachment": "Phase8-Dark-Standard-New-Books_0_1966B3BF-B424-4E01-B6BE-24B439FD9DD6.png",
+          "timestamp": 1791382245.73,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "e0c2970974eff35657a2b32137e9a285d2e053238da39b4344fa8655cdbbd8f6"
+        },
+        {
+          "route": "Preview-Categories",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "F011E0FD-6A1C-4648-B368-9E01E985B71C.png",
+          "attachment": "Phase8-Dark-Standard-Preview-Categories_0_C06578E9-B8B0-49BD-B525-6C5FCA3FA61B.png",
+          "timestamp": 1791382254.441,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "81a58790311b1640b62ec3cd52c220cef650b1c36a1360d51f04db19b6f249e4"
+        },
+        {
+          "route": "Committed",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "81E5EDDC-DD90-446E-8AAB-106B96D3DACC.png",
+          "attachment": "Phase8-Dark-Standard-Committed_0_EBFB95E4-A514-4283-B48D-D1C06DD1306C.png",
+          "timestamp": 1791382260.601,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "e15764addd8cb7e3dfae7f347ef8f22045cfd170ff0553143081124064431143"
+        },
+        {
+          "route": "Imported-Library",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "BD794CF0-90F6-457A-91AE-6D2F5B006138.png",
+          "attachment": "Phase8-Dark-Standard-Imported-Library_0_FF427ECF-0BEB-48BF-9492-0076AC55ACD1.png",
+          "timestamp": 1791382363.801,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "611decda296b685e7e9d0d6f3df01f28ab8ad5f4d7546114f5f34947254d67dc"
+        },
+        {
+          "route": "Imported-Unknown-History",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "55F05BE2-34CA-47B4-81CA-4E184FC23573.png",
+          "attachment": "Phase8-Dark-Standard-Imported-Unknown-History_0_92447C0D-F14E-49A3-AEED-7EA45D50995C.png",
+          "timestamp": 1791382368.544,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "b555a4817deb90a7d60006bdf6180d9db3e9f80ec5ef5a6f7632d87127154430"
+        },
+        {
+          "route": "Possible-Updates",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "25F6F855-C485-43AC-93CE-2CE659A769F0.png",
+          "attachment": "Phase8-Dark-Standard-Possible-Updates_0_CFC39FB8-5472-4874-A579-63D11DE7BEC7.png",
+          "timestamp": 1791382378.944,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "9740df1facec7c9a086c37ae2f85b98833adba28fe5f6dcc0146a5119000a7e7"
+        },
+        {
+          "route": "Needs-Review",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "04801B74-82A7-4772-B49B-FC7215E4B6CF.png",
+          "attachment": "Phase8-Dark-Standard-Needs-Review_0_F2800F49-7010-46A0-BFB2-3B954EB62514.png",
+          "timestamp": 1791382382.559,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "67c90085dfe9c89d8221d9033384daefcde12d8663f06ed7b3e7d1396dd46634"
+        },
+        {
+          "route": "Explicit-Confirmation",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "CC131944-D2F3-4F99-989E-A768DDD4DEDC.png",
+          "attachment": "Phase8-Dark-Standard-Explicit-Confirmation_0_AEB71F55-35BB-4720-96AB-D58CBF2E71AB.png",
+          "timestamp": 1791382391.117,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "4ce3ccc4ec4ee16dbbfd67ee5d067fed6aeaa20712dc85bae97c08f830c0b269"
+        },
+        {
+          "route": "Protected-Title",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "F7F357E6-65A0-4B24-BAA8-F4CBB80C69D5.png",
+          "attachment": "Phase8-Dark-Standard-Protected-Title_0_C9256F77-A41F-404E-9CE0-AD758C1CC48C.png",
+          "timestamp": 1791382395.638,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "2da4147d49e339c8ca28adc498c437b65e3b31e3ab41e02e4d40f495cd5732ff"
+        },
+        {
+          "route": "Current-Title",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "4EDA7E71-409B-4139-93C0-807BC308E47E.png",
+          "attachment": "Phase8-Dark-Standard-Current-Title_0_8DEF2CC0-ACC9-47CA-8A09-C4C4B4577650.png",
+          "timestamp": 1791382396.386,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "2da4147d49e339c8ca28adc498c437b65e3b31e3ab41e02e4d40f495cd5732ff"
+        },
+        {
+          "route": "Title-Actions",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "FD029917-B6A1-4C0B-90C1-BCD26EC3D909.png",
+          "attachment": "Phase8-Dark-Standard-Title-Actions_0_0171B2A0-F675-41B7-8A8C-B4412CE27D3C.png",
+          "timestamp": 1791382396.94,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "2da4147d49e339c8ca28adc498c437b65e3b31e3ab41e02e4d40f495cd5732ff"
+        },
+        {
+          "route": "Current-Imported-Date",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "0768CA43-841E-4512-BDE2-CD54BD1080FD.png",
+          "attachment": "Phase8-Dark-Standard-Current-Imported-Date_0_1F56B69A-6833-4948-A79F-6B1061EF2E12.png",
+          "timestamp": 1791382398.803,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "15a6c2feb1ce2770071305ea3d2f10e060b68fd4ebf687ded5a87eea21be825d"
+        },
+        {
+          "route": "Date-Actions",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "BC17B00B-524C-4A5C-A819-D11CB4727368.png",
+          "attachment": "Phase8-Dark-Standard-Date-Actions_0_6582431C-1CFB-45DA-A318-8D45490C748F.png",
+          "timestamp": 1791382399.23,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "15a6c2feb1ce2770071305ea3d2f10e060b68fd4ebf687ded5a87eea21be825d"
+        },
+        {
+          "route": "Rating",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "6D0B3D77-6F1D-4EF2-BFE9-FE47DA74F477.png",
+          "attachment": "Phase8-Dark-Standard-Rating_0_4FB7B812-B081-478F-BF65-C3F9449C77E9.png",
+          "timestamp": 1791382401.495,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "84a540021021ca8c76508c39de8b275cef1e289aa6f625831959d380a4e57374"
+        },
+        {
+          "route": "Ambiguous-Identity",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "6F88D584-AA4B-4A92-BBB4-6C0587475619.png",
+          "attachment": "Phase8-Dark-Standard-Ambiguous-Identity_0_4CA1215D-27CA-4A03-8561-181ECF4D3313.png",
+          "timestamp": 1791382404.04,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "d4c8b708977295b9f096e0d7ba3ef894b85558d48df5470c37cbbeb7654a9b09"
+        },
+        {
+          "route": "Identity-Choice",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "542CE8B2-77C1-401B-BC5F-CC7C0E9B3845.png",
+          "attachment": "Phase8-Dark-Standard-Identity-Choice_0_1C9AD7BE-BEF4-4F61-919F-CAD575A60AC1.png",
+          "timestamp": 1791382404.351,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "d4c8b708977295b9f096e0d7ba3ef894b85558d48df5470c37cbbeb7654a9b09"
+        },
+        {
+          "route": "Unsupported-Date-Rating",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "0BAEC01E-8783-4D31-8096-BBA702186EFB.png",
+          "attachment": "Phase8-Dark-Standard-Unsupported-Date-Rating_0_00FB2390-EDB8-49C6-B2FA-0078383841DA.png",
+          "timestamp": 1791382406.474,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "49fd41307d4670a260156333b0da0a83dc4ead4be0ee3e411facf9d39a3db717"
+        },
+        {
+          "route": "Keep-Unapplied",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "DD3D8DDF-45CE-46E8-B805-CF7A5FF2D588.png",
+          "attachment": "Phase8-Dark-Standard-Keep-Unapplied_0_F0E361AD-89B2-4AFF-9430-145B5AEFCF7B.png",
+          "timestamp": 1791382406.96,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "49fd41307d4670a260156333b0da0a83dc4ead4be0ee3e411facf9d39a3db717"
+        },
+        {
+          "route": "History",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "9BBE2D4F-D0C4-4738-BC44-00319093FA76.png",
+          "attachment": "Phase8-Dark-Standard-History_0_763992ED-C8B6-4003-BD16-211C01464F29.png",
+          "timestamp": 1791382409.771,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "0468d75f88d2a632e5d804dccac877b7e0e82d39e78d2eb4893fe7cef00235b7"
+        },
+        {
+          "route": "History-Lower",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "09A06E2F-D4C7-4F0B-8455-BEAB06EB7349.png",
+          "attachment": "Phase8-Dark-Standard-History-Lower_0_68F38477-BED8-4BEA-A96B-808F89C3E078.png",
+          "timestamp": 1791382410.869,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "0468d75f88d2a632e5d804dccac877b7e0e82d39e78d2eb4893fe7cef00235b7"
+        }
+      ]
+    },
+    {
+      "file": "Accessibility-XXXL.png",
+      "sha256": "c40e3ad9cb53def3b0fb4ea9ecd19b81b95947398d9e42f00a0ed0d1ea2de706",
+      "sources": [
+        {
+          "route": "Entry",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "2537619D-3E96-4EA2-B7C9-E4EDD0542584.png",
+          "attachment": "Phase8-Accessibility-XXXL-Entry_0_64F1828D-A034-45C4-AAFE-8A73A0DCBB85.png",
+          "timestamp": 1791382417.063,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "8cd996eae4ec15cabfe015459285b15b1fe9e002bf629406b7728a3989be105d"
+        },
+        {
+          "route": "New-Books",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "F75B321A-56FF-4B14-8ABD-BED0D48D3B7E.png",
+          "attachment": "Phase8-Accessibility-XXXL-New-Books_0_A414365E-CF2B-4CCF-B547-2447BBD1C808.png",
+          "timestamp": 1791382434.096,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "3b0da01dddcc1492dc2c0e5260d1f959370cc30f8089dfff12cfdf5c8ad957e9"
+        },
+        {
+          "route": "Preview-Categories",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "AC2DB59F-35CC-434D-BDE7-0BCF8066AB23.png",
+          "attachment": "Phase8-Accessibility-XXXL-Preview-Categories_0_F9684DA0-B6D6-441B-BED8-9E4DD34B4927.png",
+          "timestamp": 1791382459.15,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "2b2b57c1881819fcd1473ed20e7404a2c8b043c6c80b05a776e890fd460b8081"
+        },
+        {
+          "route": "Committed",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "940EBE98-0966-4CE0-9CA8-1AA1619D5691.png",
+          "attachment": "Phase8-Accessibility-XXXL-Committed_0_95FCC412-676D-4A18-9743-CC8ED1350998.png",
+          "timestamp": 1791382484.824,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "74f0dd3660c93f26634769184c569907ecbf29544e7c497d884f40275e81effa"
+        },
+        {
+          "route": "Imported-Library",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "5013730A-CB3F-4311-BF7C-8A1AE669865C.png",
+          "attachment": "Phase8-Accessibility-XXXL-Imported-Library_0_9573F2C7-618A-454A-9733-2BB4E6E47213.png",
+          "timestamp": 1791382613.08,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "81e02e17c080b60eefe78462f5ef386762d4c57d2fd8ae90157cb7a7cb3931ae"
+        },
+        {
+          "route": "Imported-Unknown-History",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "2474417E-690F-4402-B285-80DBEFE97520.png",
+          "attachment": "Phase8-Accessibility-XXXL-Imported-Unknown-History_0_59F0249D-E3BF-46A9-86F4-8F4AD7896116.png",
+          "timestamp": 1791382627.076,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "5ca635c54f08d53613ada02b50591789d69f8be0eefeeff84156d20884c21e7f"
+        },
+        {
+          "route": "Possible-Updates",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "1AD6347F-990A-4BFB-AAA6-07A4FB8DC0B6.png",
+          "attachment": "Phase8-Accessibility-XXXL-Possible-Updates_0_2000BCF9-15F9-4DFF-9C7A-DD36CDE21E2B.png",
+          "timestamp": 1791382635.786,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "11017f0f906fa5cad5cf31d61a28cfd6e11961fc565df93e5bde51187c4caeec"
+        },
+        {
+          "route": "Needs-Review",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "A6ACEA39-C3CC-46FB-858A-8348EAF5DC25.png",
+          "attachment": "Phase8-Accessibility-XXXL-Needs-Review_0_47BA025E-E3E3-4674-A888-832ABA6C6815.png",
+          "timestamp": 1791382654.354,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "1cea898d6695a2d12e2f9e2d1a287da8084e21ba2ed310c126fd746b8d0514ca"
+        },
+        {
+          "route": "Explicit-Confirmation",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "93356A8C-92FB-4302-9AB4-EBEC3035B997.png",
+          "attachment": "Phase8-Accessibility-XXXL-Explicit-Confirmation_0_1F279CF6-A8BA-4687-A1CA-492D02CC440B.png",
+          "timestamp": 1791382684.056,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "be9728b677df4eb88ed5302996f7c64166951edb04d52b48a8d1bc511f7a78bb"
+        },
+        {
+          "route": "Protected-Title",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "C1761B5A-DCAB-4E15-ACF1-2752734C7378.png",
+          "attachment": "Phase8-Accessibility-XXXL-Protected-Title_0_104FC0E5-BDE5-45F9-855F-E6C4662AAA89.png",
+          "timestamp": 1791382832.413,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "2fb607ea2e91c2897b38d49d59a96c325e2b8b90db37598c4788f8adea2532db"
+        },
+        {
+          "route": "Current-Title",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "21C5086A-4E6B-47D6-BC3E-BDAD57D64610.png",
+          "attachment": "Phase8-Accessibility-XXXL-Current-Title_0_84A66725-81C8-430F-8820-3C67CA500E37.png",
+          "timestamp": 1791382835.591,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "60bf1f776c1d5f7f3c0f04402d92d4f6fab63952f5d4b8e34df65cf07bc8f0ef"
+        },
+        {
+          "route": "Title-Actions",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "52870197-E15C-407C-BBB2-BEEF9EC99254.png",
+          "attachment": "Phase8-Accessibility-XXXL-Title-Actions_0_301A4CE5-9C7C-47C5-8D10-5F0D212552B4.png",
+          "timestamp": 1791382838.728,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "566319f64aa74de26ac35f0b1ddbe19e802f60ec104ac57f067b749eb76d1eda"
+        },
+        {
+          "route": "Current-Imported-Date",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "6B2121A6-4976-4644-8AA5-FB79F9072C1B.png",
+          "attachment": "Phase8-Accessibility-XXXL-Current-Imported-Date_0_88CADC9C-0C35-4A22-BF77-77ED9F1CB1E9.png",
+          "timestamp": 1791382846.334,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "fabad38235fbb565705f93759c41aad13e6be234151f1eff63cefc313f17edfa"
+        },
+        {
+          "route": "Date-Actions",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "3FBD7C12-6D29-4FEE-BF81-C1194AA7C440.png",
+          "attachment": "Phase8-Accessibility-XXXL-Date-Actions_0_FBAFB146-F81F-42BA-B936-CB43A850C751.png",
+          "timestamp": 1791382850.453,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "df7f9862a9ef221348db7b714d9494638103b5d796bdf567e9c7c2fb23a2d421"
+        },
+        {
+          "route": "Rating",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "D6CC8467-7421-4E3E-802B-505FEDD26348.png",
+          "attachment": "Phase8-Accessibility-XXXL-Rating_0_9B08C360-AEF4-4AF8-ADB6-77A5322384EE.png",
+          "timestamp": 1791382855.291,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "fc892bf0ae4df98498835a4f554e330d5e4b2397fb4c1023d20909ffd74ba3e0"
+        },
+        {
+          "route": "Ambiguous-Identity",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "23EB2E80-6537-41B6-9F15-E00DF869D11C.png",
+          "attachment": "Phase8-Accessibility-XXXL-Ambiguous-Identity_0_C0D81077-4F20-4B52-8647-722B8925B202.png",
+          "timestamp": 1791382863.568,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "0b49892d9f83081f1dc099402177f6d45ab8ae6ee7351755c269a696ba18ecb9"
+        },
+        {
+          "route": "Identity-Choice",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "FD931272-B73B-4472-9FA0-165713BB37EC.png",
+          "attachment": "Phase8-Accessibility-XXXL-Identity-Choice_0_605FA7B7-354C-4AF6-98DF-29B50C2EF094.png",
+          "timestamp": 1791382875.929,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "ca613be47c24c23ea7b0bc409bb1aa7de3a4223bee4c93ee9040dec2b9aa86b2"
+        },
+        {
+          "route": "Unsupported-Date-Rating",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "751CF1B0-B1E7-4AA8-B816-D4C0EE06228D.png",
+          "attachment": "Phase8-Accessibility-XXXL-Unsupported-Date-Rating_0_23D02CF2-2704-47C9-B136-2CC272C9F71C.png",
+          "timestamp": 1791382886.578,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "6f81617cf4f907624dcd117ed920fdfc67695b04c95c6f053409a08b013cf28f"
+        },
+        {
+          "route": "Keep-Unapplied",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "5B024974-028F-4834-BE2B-936E60EDDDE3.png",
+          "attachment": "Phase8-Accessibility-XXXL-Keep-Unapplied_0_FC22CB84-9810-4406-ADF0-F276083A5D9B.png",
+          "timestamp": 1791382899.117,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "191a6b97c88ecd20a021e1784a4e8434d3deb028995cb350e0b05cd850bbdbd5"
+        },
+        {
+          "route": "History",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "72A54BB8-C98C-4560-A4B7-0CA1707D5BD3.png",
+          "attachment": "Phase8-Accessibility-XXXL-History_0_4DC62693-6441-4E10-99D5-8E1EBDF6EF8E.png",
+          "timestamp": 1791382904.694,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "be2b722379fe36782bf15895fd14c8350167575cfa17bcb10f3ad03713c0eb66"
+        },
+        {
+          "route": "History-Lower",
+          "application_sha": "f38bb758004181fa18fa215fd65fe4882cb3b65e",
+          "workflow_run": 37632080171,
+          "artifact_id": 11488257243,
+          "source": "36B6E58D-1DBF-4394-9339-FFCD4FCB830E.png",
+          "attachment": "Phase8-Accessibility-XXXL-History-Lower_0_0AC580D7-C926-4CCD-A12E-A037D5835D08.png",
+          "timestamp": 1791382907.439,
+          "device": "iPhone SE (3rd generation)",
+          "native_size": [
+            750,
+            1334
+          ],
+          "sha256": "bacd5b9a62f281c3fd95fa325772f5b90bdee0f172bf19b4b4f75d2a24b7533c"
+        }
+      ]
+    }
+  ]
+}
