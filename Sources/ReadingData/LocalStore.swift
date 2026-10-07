@@ -99,7 +99,7 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
                       let generation = UUID(uuidString: row["generation"]) else { throw DomainError.invalidTransition }
                 return MutationEnvelope(id: id, ownerID: ownerID, entityID: entity,
                     expectedRevision: row["expected_revision"], generation: generation,
-                    kind: row["kind"], payload: row["payload"])
+                    commandVersion: row["command_version"], kind: row["kind"], payload: row["payload"])
             }
         }
     }

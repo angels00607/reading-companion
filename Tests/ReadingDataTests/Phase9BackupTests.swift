@@ -204,4 +204,11 @@ final class Phase9BackupTests: XCTestCase {
         let bytes = try encoded(); let wrapped = Data([0xff]) + bytes
         XCTAssertEqual(try codec.decode(wrapped.dropFirst()).json, json)
     }
+    func testZIPCRCIsVerifiedIndependentlyOfSHA256() throws {
+        var bytes = try zip(unpack(encoded()))
+        let signature = Data([0x50, 0x4b, 0x01, 0x02])
+        let central = try XCTUnwrap(bytes.range(of: signature)).lowerBound
+        bytes[14] ^= 1; bytes[central + 16] ^= 1
+        XCTAssertThrowsError(try codec.decode(bytes)) { XCTAssertEqual($0 as? PortableBackupError, .integrityMismatch) }
+    }
 }

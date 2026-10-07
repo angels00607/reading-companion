@@ -17,7 +17,7 @@ jobs:
         if: ${{ !contains(github.event.head_commit.message, '[phase9-native]') }}
         env:
           PHASE9_INTEROPERABILITY_FILE: /tmp/phase9-interoperable.zip
-        run: swift test --filter '(Phase9|InvariantTests)'
+        run: swift test --filter '(Phase9|InvariantTests|SyncTests|LocalStoreTests)'
       - name: Independent Python ZIP and SHA-256 interoperability
         if: ${{ !contains(github.event.head_commit.message, '[phase9-native]') }}
         run: python3 scripts/test_portable_backup_interop.py /tmp/phase9-interoperable.zip
@@ -27,6 +27,7 @@ jobs:
         if: ${{ !contains(github.event.head_commit.message, '[phase9-native]') }}
         run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
       - name: Native Phase 9 Keychain integration only
+        if: ${{ !contains(github.event.head_commit.message, '[phase9-swift]') }}
         run: |
           xcrun simctl list devices available -j > /tmp/phase9-simulators.json
           SIMULATOR_ID=$(python3 -c "import json; d=json.load(open('/tmp/phase9-simulators.json')); print(next(v['udid'] for group in d['devices'].values() for v in group if 'iPhone' in v['name']))")

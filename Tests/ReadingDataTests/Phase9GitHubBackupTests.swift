@@ -183,4 +183,11 @@ final class Phase9GitHubBackupTests: XCTestCase {
         do { _ = try await transport.download(versions[0]); XCTFail("Corrupt") }
         catch { XCTAssertEqual(error as? PortableBackupError, .invalidArchive) }
     }
+    func testFailedCredentialReplacementPreservesPriorStoredCredential() async throws {
+        let credentials = try storedCredentials(), http = BackupHTTPFixture([.init(status: 401, data: Data())])
+        let transport = GitHubBackupTransport(repository: try repo(), credentials: credentials, client: http)
+        do { try await transport.connect(personalAccessToken: "github_pat_fictionalInvalidReplacement"); XCTFail("Invalid replacement") }
+        catch { XCTAssertEqual(error as? GitHubBackupError, .authenticationRequired) }
+        XCTAssertTrue(credentials.read(account: try repo().credentialAccount) == Data(token.utf8))
+    }
 }

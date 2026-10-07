@@ -97,7 +97,7 @@ public actor GitHubBackupTransport {
     /// scoping are configured on GitHub; repository metadata verifies the destination.
     public func connect(personalAccessToken: String) async throws {
         guard validToken(personalAccessToken) else { throw GitHubBackupError.invalidCredential }
-        try await verifyRepository(token: personalAccessToken)
+        try await verifyRepository(token: personalAccessToken, invalidateStoredCredential: false)
         try credentials.write(Data(personalAccessToken.utf8), account: repository.credentialAccount)
     }
     public func disconnect() throws { try credentials.remove(account: repository.credentialAccount) }
@@ -173,9 +173,9 @@ public actor GitHubBackupTransport {
         }
         return token
     }
-    private func verifyRepository(token: String) async throws {
+    private func verifyRepository(token: String, invalidateStoredCredential: Bool = true) async throws {
         let response = try await send("", method: "GET", token: token)
-        try check(response)
+        try check(response, invalidateStoredCredential: invalidateStoredCredential)
         guard let info = try? JSONDecoder().decode(RepositoryMetadata.self, from: response.data) else { throw GitHubBackupError.invalidResponse }
         guard info.full_name.caseInsensitiveCompare(repository.fullName) == .orderedSame else { throw GitHubBackupError.repositoryMismatch }
         guard info.isPrivate else { throw GitHubBackupError.repositoryNotPrivate }
@@ -209,9 +209,9 @@ public actor GitHubBackupTransport {
         catch let error as GitHubBackupError { throw error }
         catch { throw GitHubBackupError.networkUnavailable }
     }
-    private func check(_ response: GitHubBackupHTTPResponse) throws {
+    private func check(_ response: GitHubBackupHTTPResponse, invalidateStoredCredential: Bool = true) throws {
         if response.status == 401 {
-            try credentials.remove(account: repository.credentialAccount)
+            if invalidateStoredCredential { try credentials.remove(account: repository.credentialAccount) }
             throw GitHubBackupError.authenticationRequired
         }
         if response.status == 429 || (response.status == 403 && (response.retryAfter != nil || response.remainingRateLimit == "0")) { throw GitHubBackupError.rateLimited }

@@ -10,10 +10,10 @@ public struct MutationEnvelope: Codable, Equatable, Sendable {
     public let kind: String
     public let payload: Data
     public init(id: UUID = UUID(), ownerID: UUID, entityID: UUID, expectedRevision: Int,
-                generation: UUID, kind: String, payload: Data) {
+                generation: UUID, commandVersion: Int = 1, kind: String, payload: Data) {
         self.id = id; self.ownerID = ownerID; self.entityID = entityID
         self.expectedRevision = expectedRevision; self.generation = generation
-        commandVersion = 1; self.kind = kind; self.payload = payload
+        self.commandVersion = commandVersion; self.kind = kind; self.payload = payload
     }
 }
 public enum SyncResult: Sendable {
