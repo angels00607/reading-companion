@@ -40,8 +40,26 @@ public struct ProfileVisualQA: View {
                     loaded = true
                 } catch { self.error = "Could not load the existing review fixture." }
             }
+            #if DEBUG
+            .toolbar {
+                if route == "quests" && ProcessInfo.processInfo.arguments.contains("-phase7-fixture") {
+                    Button("Record acceptance activity") { recordAcceptanceActivity() }
+                        .accessibilityIdentifier("phase7.recordActivity").frame(minHeight:44)
+                }
+            }
+            #endif
         }
     }
+    #if DEBUG
+    private func recordAcceptanceActivity() {
+        // Instrumented input uses real repository commands, never presentation-only state.
+        _ = model.perform {
+            let book = try model.repository.add(work:.init(provider:"manual",reference:UUID().uuidString,title:"An acceptance reading",author:"Reader"),edition:nil,choice:.addAnyway)
+            let reading = try model.repository.start(bookID:book,editionID:nil,mode:.page,date:nil)
+            _ = try model.repository.update(readingID:reading,value:.pages(current:10),revision:0,observationID:UUID())
+        }
+    }
+    #endif
 }
 
 public struct HomePrimaryQuest: View {
@@ -71,7 +89,7 @@ public struct ProfileHome:View {
     public var body:some View { BooksScreen("Reader Passport") {
         passportHeader
         if let reward = model.gamificationReward {
-            FeatureCelebration(eyebrow:"LEVEL UP",title:"A new reader level",message:reward)
+            FeatureCelebration(eyebrow:model.gamificationRewardTitle,title:"Your reading milestone",message:reward)
             Button("Continue reading") { model.gamificationReward = nil }.frame(minHeight:44)
         }
         levelCard

@@ -28,7 +28,7 @@ extension LocalStore {
         let active = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM readings WHERE owner_id=? AND status='currently_reading' AND historical=0 AND deleted_at IS NULL",arguments:[ownerID.uuidString]) ?? 0
         let journal = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM journal_components c JOIN readings r ON r.owner_id=c.owner_id AND r.id=c.reading_id WHERE c.owner_id=? AND c.component='book_review' AND c.state='ready' AND r.historical=0",arguments:[ownerID.uuidString]) ?? 0
         let todayCounted = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM gamification_activity WHERE owner_id=? AND family='frequency' AND activity_date=?",arguments:[ownerID.uuidString,period(.daily).key]) ?? 0
-        return QuestCatalog.templates.filter { t in
+        let eligible = QuestCatalog.templates.filter { t in
             guard t.cadences.contains(p.cadence), QuestPeriod.cooldownAllows(t,cadence:p.cadence,periodKey:p.key,history:history,timeZone:gamificationTimeZone) else { return false }
             switch t.family {
             case .progress,.organization: return true // Explicit small actions; no inferred reading activity.
@@ -40,6 +40,13 @@ extension LocalStore {
                 return known.contains(QuestFamily.frequency.rawValue) && p.availableDays > (todayCounted > 0 ? 1 : 0)
             }
         }
+        // Prefer evidenced activity families, then small baseline actions. Vary families
+        // within a set when feasible, while retaining distinct safe templates for clean starts.
+        let preferred = eligible.filter { ![QuestFamily.progress,.organization].contains($0.family) } + eligible.filter { [.progress,.organization].contains($0.family) }
+        var ordered = [QuestTemplate](), families = Set<QuestFamily>()
+        for t in preferred where !families.contains(t.family) { ordered.append(t); families.insert(t.family) }
+        ordered += preferred.filter { t in !ordered.contains(where: { $0.key == t.key }) }
+        return ordered
     }
     private func makeQuest(_ t: QuestTemplate, period p: QuestPeriod, db: Database) throws -> QuestInstance {
         let rows = try Row.fetchAll(db,sql:"SELECT family,activity_date,SUM(quantity) AS amount FROM gamification_activity WHERE owner_id=? GROUP BY family,activity_date ORDER BY activity_date",arguments:[ownerID.uuidString])
@@ -75,7 +82,14 @@ extension LocalStore {
                 }
             }
         }
-        return try questHistory(db).filter { $0.periodKey == period($0.cadence).key && $0.rerolledAt == nil }
+        let persisted = try questHistory(db)
+        var result = [QuestInstance]()
+        for cadence in QuestCadence.allCases {
+            let p = period(cadence)
+            let ids = try String.fetchAll(db,sql:"SELECT q.id FROM quest_instances q JOIN quest_lifecycle l ON l.owner_id=q.owner_id AND l.quest_id=q.id WHERE q.owner_id=? AND q.cadence=? AND q.period_key=? AND q.rerolled_at IS NULL ORDER BY l.slot,l.created_at,q.id LIMIT ?",arguments:[ownerID.uuidString,cadence.rawValue,p.key,cadence.activeCount])
+            for id in ids { if let q = persisted.first(where: { $0.id.uuidString == id }) { result.append(q) } }
+        }
+        return result
     }
     public func currentQuests() throws -> [QuestInstance] { try queue.write { db in
         let current = try ensureCurrentQuests(db); try evaluateAchievements(db); return current

@@ -26,6 +26,7 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
         attach(app,"Phase7-Cosmetic-preview-before-cancel")
         app.buttons["cosmetic.cancel"].tap()
         XCTAssertTrue(app.scrollViews["phase7.collection"].waitForExistence(timeout:5))
+        XCTAssertFalse(app.staticTexts["Equipped"].firstMatch.exists,"Cancel must keep initial equipment unchanged")
         scrollTo(preview,app); preview.tap(); app.buttons["cosmetic.apply"].tap()
         XCTAssertTrue(app.scrollViews["phase7.collection"].waitForExistence(timeout:5))
         app.terminate(); app.launch()
@@ -35,6 +36,7 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
         scrollTo(theme,app); theme.tap()
         XCTAssertTrue(app.buttons["cosmetic.cancel"].waitForExistence(timeout:5)); attach(app,"Phase7-Theme-preview-before-cancel")
         app.buttons["cosmetic.cancel"].tap()
+        XCTAssertFalse(app.staticTexts["Modern Bookish · applied surfaces"].exists,"Cancel must keep the original theme")
         scrollTo(theme,app); theme.tap(); app.buttons["cosmetic.apply"].tap()
         app.terminate(); app.launch()
         XCTAssertTrue(app.scrollViews["phase7.collection"].waitForExistence(timeout:15))
@@ -48,9 +50,19 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
                 let app=XCUIApplication();app.launchArguments=["-phase7-fixture","-phase7-screen",route,"-phase0-appearance",appearance,"-UIPreferredContentSizeCategoryName",size];app.launch();XCUIDevice.shared.orientation = .portrait
                 let screen = route == "reward" ? app.otherElements["phase1.celebration"] : app.scrollViews["phase7." + route]
                 XCTAssertTrue(screen.waitForExistence(timeout:15),"Expected live \(route) screen")
-                if route == "quests" { XCTAssertTrue(app.staticTexts["Completed"].firstMatch.exists) }
                 if route == "achievements" { XCTAssertTrue(app.staticTexts["First Chapter"].exists) }
                 attach(app,"Phase7-\(appearance)-\(size)-\(route)-top")
+                if route == "quests" {
+                    let reroll = app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","quest.reroll.")).firstMatch
+                    scrollTo(reroll,app); XCTAssertTrue(reroll.exists && reroll.isEnabled); reroll.tap()
+                    XCTAssertTrue(app.staticTexts["Reroll unavailable · returns next period"].firstMatch.exists)
+                    attach(app,"Phase7-\(appearance)-\(size)-reroll-consumed")
+                    app.buttons["phase7.recordActivity"].tap()
+                    XCTAssertTrue(app.staticTexts["Completed"].firstMatch.waitForExistence(timeout:5))
+                    attach(app,"Phase7-\(appearance)-\(size)-quest-progress")
+                    app.buttons["phase7.recordActivity"].tap()
+                    attach(app,"Phase7-\(appearance)-\(size)-quest-completed")
+                }
                 if route != "reward" { app.swipeUp(); app.swipeUp(); attach(app,"Phase7-\(appearance)-\(size)-\(route)-lower") }
                 if route == "collection" {
                     let theme = app.buttons["cosmetic.preview.theme.modern-bookish"]

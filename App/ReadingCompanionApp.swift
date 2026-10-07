@@ -125,7 +125,7 @@ struct ReadingCompanionApp: App {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-phase5-fixture") { try seedChallengesQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase6-fixture") { try seedStatsQA(store) }
-            if ProcessInfo.processInfo.arguments.contains("-phase7-fixture") { try seedGamificationQA(store) }
+            if ProcessInfo.processInfo.arguments.contains("-phase7-fixture"), !["quests","collection"].contains(profileQARoute ?? "") { try seedGamificationQA(store) }
             #endif
             _ = try store.currentQuests()
             model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
@@ -147,7 +147,7 @@ struct ReadingCompanionApp: App {
         // no Quest progress, Achievement progress, or XP is assigned for presentation.
         _ = try store.currentQuests()
         var books = [UUID]()
-        for n in 0..<5 {
+        for n in 0..<(profileQARoute == "profile" ? 10 : 5) {
             let book = try store.add(work:.init(provider:"manual",reference:UUID().uuidString,title:"The Reader's Journey \(n+1)",author:"Taylor Reader"),choice:.addAnyway)
             books.append(book)
             let rid = try store.start(bookID:book,editionID:nil,date:nil)

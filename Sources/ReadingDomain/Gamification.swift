@@ -36,8 +36,8 @@ public enum QuestCatalog {
         // Different templates rotate across quiet periods; no activity is fabricated.
         .init(key:"progress.record",family:.progress,cadences:[.daily,.weekly,.monthly],title:"Capture a reading update",unit:"updates",minimum:1,maximum:1,cooldownPeriods:1),
         .init(key:"organization.choose",family:.organization,cadences:[.daily,.weekly,.monthly],title:"Make a library choice",unit:"organized items",minimum:1,maximum:1,cooldownPeriods:1),
-        .init(key:"progress.return",family:.progress,cadences:[.daily,.weekly,.monthly],title:"Check in with your reading",unit:"updates",minimum:1,maximum:1,cooldownPeriods:1),
-        .init(key:"organization.care",family:.organization,cadences:[.daily,.weekly,.monthly],title:"Care for your bookshelf",unit:"organized items",minimum:1,maximum:1,cooldownPeriods:1),
+        .init(key:"progress.return",family:.progress,cadences:[.daily,.weekly,.monthly],title:"Check in with your reading",unit:"updates",minimum:2,maximum:2,cooldownPeriods:1),
+        .init(key:"organization.care",family:.organization,cadences:[.daily,.weekly,.monthly],title:"Care for your bookshelf",unit:"organized items",minimum:2,maximum:2,cooldownPeriods:1),
         .init(key:"progress.note",family:.progress,cadences:[.daily,.weekly,.monthly],title:"Note your reading position",unit:"updates",minimum:1,maximum:1,cooldownPeriods:1),
         .init(key:"organization.tend",family:.organization,cadences:[.daily,.weekly,.monthly],title:"Tend a library item",unit:"organized items",minimum:1,maximum:1,cooldownPeriods:1),
         .init(key:"progress.check",family:.progress,cadences:[.daily,.weekly,.monthly],title:"Keep your progress current",unit:"updates",minimum:1,maximum:1,cooldownPeriods:1),
@@ -59,7 +59,7 @@ public enum QuestRules {
         let recent=Array(values.suffix(6)).sorted(); let smoothed = recent.isEmpty ? template.minimum : recent[recent.count/2]
         let scale = cadence == .daily ? 1 : cadence == .weekly ? 2 : 4
         let cap = (template.family == .frequency || template.family == .consistency) ? (cadence == .daily ? 1 : cadence == .weekly ? 7 : 12) : template.maximum
-        return min(cap,min(template.maximum,max(template.minimum,smoothed*scale)))
+        return min(cap,min(template.maximum,max(template.minimum,min(template.maximum,max(0,smoothed))*scale)))
     }
     public static func candidates(cadence:QuestCadence,periodKey:String,activity:ActivitySummary,history:[QuestInstance],excluding:Set<String>=[]) -> [QuestInstance] {
         let pool=QuestCatalog.templates.filter { template in

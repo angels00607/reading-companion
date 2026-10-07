@@ -42,7 +42,9 @@ final class Phase7ProductionTests: XCTestCase {
         XCTAssertEqual(try reopened.xpAwards().count,awards.count)
     }
     func testFlowsCDCurrentPeriodSlotQuotaAndISOWeekRollover() throws {
-        let clock = Phase7Clock(),s = try store(clock)
+        let clock = Phase7Clock(), owner = UUID(), url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".sqlite")
+        defer { try? FileManager.default.removeItem(at:url) }
+        let s = try store(clock,path:url.path,owner:owner)
         let first = try s.currentQuests(), daily = first.filter { $0.cadence == .daily }
         try s.rerollQuest(daily[1].id)
         let replaced = try s.currentQuests().filter { $0.cadence == .daily }
@@ -72,7 +74,9 @@ final class Phase7ProductionTests: XCTestCase {
         clock.set("2026-10-07T12:00:00Z"); XCTAssertTrue(try s.currentQuests().contains { $0.cadence == .daily && $0.templateKey == t.key })
     }
     func testFlowFAutomaticCatalogAchievementsAndIdempotency() throws {
-        let clock = Phase7Clock(),s = try store(clock)
+        let clock = Phase7Clock(), owner = UUID(), url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".sqlite")
+        defer { try? FileManager.default.removeItem(at:url) }
+        let s = try store(clock,path:url.path,owner:owner)
         for n in 0..<10 {
             clock.set(String(format:"2026-10-%02dT12:00:00Z",5+n))
             let (_,r) = try reading(s)
@@ -89,6 +93,10 @@ final class Phase7ProductionTests: XCTestCase {
         XCTAssertEqual(try s.xpAwards().count,before.count)
         for a in progress where a.isUnlocked && a.definition.xp > 0 { XCTAssertEqual(before.filter { $0.semanticKey == "achievement:"+a.definition.key }.count,1) }
         XCTAssertEqual(progress.first { $0.definition.key == "level.five" }!.isUnlocked,GamificationBalance.level(totalXP:before.reduce(0) { $0+$1.amount }) >= 5)
+        let reopened = try store(clock,path:url.path,owner:owner)
+        _ = try reopened.currentQuests()
+        XCTAssertEqual(try reopened.xpAwards().count,before.count)
+        XCTAssertEqual(try reopened.achievementProgress(),progress)
     }
     func testFlowGRealLevelUnlockAndEssentialsRemainAvailable() throws {
         let s = try store(Phase7Clock())
