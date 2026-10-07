@@ -28,7 +28,7 @@ final class Phase9SyncDurabilityTests: XCTestCase {
         let owner = UUID(), store = try LocalStore(path: url.path, ownerID: owner), mutation = try add(store)
         // Simulate a newer queued command being opened by an older binary. It
         // must remain version 2 for the transport's closed version gate.
-        try store.queue.write { db in try db.execute(sql: "UPDATE outbox SET command_version=2 WHERE id=?", arguments: [mutation.id.uuidString]) }
+        try await store.queue.write { db in try db.execute(sql: "UPDATE outbox SET command_version=2 WHERE id=?", arguments: [mutation.id.uuidString]) }
         let reopened = try LocalStore(path: url.path, ownerID: owner)
         let pending = try await reopened.pending(ownerID: owner)
         XCTAssertEqual(pending.count, 1); XCTAssertEqual(pending[0].commandVersion, 2)
@@ -47,7 +47,7 @@ final class Phase9SyncDurabilityTests: XCTestCase {
         let remaining = try await reopened.pending(ownerID: owner), received = await server.received, applied = await server.applied
         XCTAssertTrue(remaining.isEmpty); XCTAssertEqual(received, [mutation.id, mutation.id]); XCTAssertEqual(applied.count, 1)
         XCTAssertEqual(try reopened.bookCount(), 1)
-        let revision = try reopened.queue.read { try Int.fetchOne($0, sql: "SELECT revision FROM books WHERE owner_id=? AND id=?", arguments: [owner.uuidString, mutation.entityID.uuidString]) }
+        let revision = try await reopened.queue.read { try Int.fetchOne($0, sql: "SELECT revision FROM books WHERE owner_id=? AND id=?", arguments: [owner.uuidString, mutation.entityID.uuidString]) }
         XCTAssertEqual(revision, 1)
     }
 }
