@@ -74,6 +74,15 @@ public struct GitHubBackupVersion: Codable, Equatable, Sendable {
     public let commitSHA: String
 }
 
+/// A file listed from one immutable repository snapshot. Its commit identifies
+/// that snapshot, not an invented creation date; creation comes from the manifest.
+public struct GitHubBackupListing: Equatable, Sendable {
+    public let id: UUID
+    public let path: String
+    public let byteCount: Int
+    public let snapshotCommitSHA: String
+}
+
 public actor GitHubBackupTransport {
     private let repository: GitHubBackupRepository
     private let credentials: any CredentialStore
@@ -87,14 +96,51 @@ public actor GitHubBackupTransport {
     /// V1 accepts fine-grained PAT syntax only. Permission and single-repository
     /// scoping are configured on GitHub; repository metadata verifies the destination.
     public func connect(personalAccessToken: String) async throws {
-        guard personalAccessToken.hasPrefix("github_pat_"), personalAccessToken.count <= 1024,
-              personalAccessToken.count > 11, personalAccessToken.unicodeScalars.allSatisfy({
-                  CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_").contains($0)
-              }) else { throw GitHubBackupError.invalidCredential }
+        guard validToken(personalAccessToken) else { throw GitHubBackupError.invalidCredential }
         try await verifyRepository(token: personalAccessToken)
         try credentials.write(Data(personalAccessToken.utf8), account: repository.credentialAccount)
     }
     public func disconnect() throws { try credentials.remove(account: repository.credentialAccount) }
+
+    public func versions() async throws -> [GitHubBackupListing] {
+        let token = try credential(); try await verifyRepository(token: token)
+        let latest = try await send("commits?per_page=1", method: "GET", token: token)
+        try check(latest)
+        guard let commits = try? JSONDecoder().decode([CommitMetadata].self, from: latest.data),
+              let commitSHA = commits.first?.sha, validSHA(commitSHA) else { throw GitHubBackupError.invalidResponse }
+        let commit = try await send("git/commits/\(commitSHA)", method: "GET", token: token)
+        try check(commit)
+        guard let metadata = try? JSONDecoder().decode(TreeCommit.self, from: commit.data), validSHA(metadata.tree.sha) else {
+            throw GitHubBackupError.invalidResponse
+        }
+        let response = try await send("git/trees/\(metadata.tree.sha)?recursive=1", method: "GET", token: token)
+        try check(response)
+        guard let tree = try? JSONDecoder().decode(TreeListing.self, from: response.data), !tree.truncated else {
+            throw GitHubBackupError.invalidResponse
+        }
+        var values: [GitHubBackupListing] = []; var paths = Set<String>()
+        for entry in tree.tree {
+            guard entry.path.hasPrefix("backups/"), entry.path.hasSuffix(".zip") else { continue }
+            let parts = entry.path.split(separator: "/", omittingEmptySubsequences: false)
+            guard parts.count == 2, let id = UUID(uuidString: String(parts[1].dropLast(4))),
+                  entry.path == "backups/\(id.uuidString.lowercased()).zip",
+                  entry.type == "blob", entry.mode == "100644" || entry.mode == "100755",
+                  validSHA(entry.sha), let size = entry.size, size >= 0, size <= 50 * 1024 * 1024,
+                  paths.insert(entry.path).inserted else { throw GitHubBackupError.invalidResponse }
+            values.append(.init(id: id, path: entry.path, byteCount: size, snapshotCommitSHA: commitSHA))
+        }
+        return values.sorted { $0.path < $1.path }
+    }
+
+    public func download(_ version: GitHubBackupListing) async throws -> ValidatedPortableBackup {
+        guard version.path == "backups/\(version.id.uuidString.lowercased()).zip", validSHA(version.snapshotCommitSHA),
+              version.byteCount >= 0, version.byteCount <= 50 * 1024 * 1024 else { throw GitHubBackupError.invalidResponse }
+        let token = try credential(); try await verifyRepository(token: token)
+        let response = try await send("contents/\(version.path)?ref=\(version.snapshotCommitSHA)", method: "GET", token: token, raw: true)
+        try check(response)
+        guard response.data.count == version.byteCount else { throw PortableBackupError.integrityMismatch }
+        return try codec.decode(response.data)
+    }
 
     /// Stable ID supplied by the caller survives retry. Existing matching bytes
     /// acknowledge a lost-response retry; different bytes never overwrite history.
@@ -122,7 +168,7 @@ public actor GitHubBackupTransport {
 
     private func credential() throws -> String {
         guard let bytes = try credentials.read(account: repository.credentialAccount),
-              let token = String(data: bytes, encoding: .utf8), token.hasPrefix("github_pat_") else {
+              let token = String(data: bytes, encoding: .utf8), validToken(token) else {
             throw GitHubBackupError.authenticationRequired
         }
         return token
@@ -157,6 +203,7 @@ public actor GitHubBackupTransport {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue(raw ? "application/vnd.github.raw+json" : "application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        request.setValue("ReadingCompanion", forHTTPHeaderField: "User-Agent")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         do { return try await client.send(request) }
         catch let error as GitHubBackupError { throw error }
@@ -174,6 +221,11 @@ public actor GitHubBackupTransport {
         guard (200..<300).contains(response.status) else { throw GitHubBackupError.invalidResponse }
     }
     private func validSHA(_ value: String) -> Bool { value.count == 40 && value.allSatisfy { "0123456789abcdef".contains($0) } }
+    private func validToken(_ value: String) -> Bool {
+        value.hasPrefix("github_pat_") && value.count > 11 && value.count <= 1024 && value.unicodeScalars.allSatisfy {
+            CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_").contains($0)
+        }
+    }
     private struct RepositoryMetadata: Decodable {
         let full_name: String
         let isPrivate: Bool
@@ -187,4 +239,7 @@ public actor GitHubBackupTransport {
     private struct UploadResult: Decodable { let content: PathMetadata; let commit: CommitMetadata }
     private struct PathMetadata: Decodable { let path: String }
     private struct CommitMetadata: Decodable { let sha: String }
+    private struct TreeCommit: Decodable { let tree: CommitMetadata }
+    private struct TreeListing: Decodable { let truncated: Bool; let tree: [TreeEntry] }
+    private struct TreeEntry: Decodable { let path: String; let mode: String; let type: String; let sha: String; let size: Int? }
 }

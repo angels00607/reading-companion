@@ -185,4 +185,23 @@ final class Phase9BackupTests: XCTestCase {
         var files = try unpack(encoded()); files.append(("assets/", Data(), .directory))
         XCTAssertThrowsError(try codec.decode(zip(files))) { XCTAssertEqual($0 as? PortableBackupError, .unsafeEntry) }
     }
+    func testAmbiguousDuplicateJSONKeysIncludingEscapesRejected() throws {
+        for text in [#"{"schemaVersion":1,"schemaVersion":1,"entities":{}}"#,
+                     #"{"schemaVersion":1,"entities":{"books":[{"title":"A","title":"B"}]}}"#,
+                     #"{"schemaVersion":1,"entities":{"books":[{"title":"A","\u0074itle":"B"}]}}"#] {
+            XCTAssertThrowsError(try encoded(Data(text.utf8))) { XCTAssertEqual($0 as? PortableBackupError, .invalidPayload) }
+        }
+    }
+    func testExcessiveJSONNestingRejectedBeforeFoundationDecode() throws {
+        let text = #"{"schemaVersion":1,"entities":{"books":[{"nested":"# + String(repeating: "[", count: 100) + "0" + String(repeating: "]", count: 100) + "}]}}"
+        XCTAssertThrowsError(try encoded(Data(text.utf8))) { XCTAssertEqual($0 as? PortableBackupError, .resourceLimit) }
+    }
+    func testUnrecognizedManifestFieldsRejectedInsteadOfIgnoringSecrets() throws {
+        let bytes = try changingManifest { $0["accessToken"] = "fictional" }
+        XCTAssertThrowsError(try codec.decode(bytes)) { XCTAssertEqual($0 as? PortableBackupError, .invalidManifest) }
+    }
+    func testDataSliceOffsetsCannotCrashArchiveValidation() throws {
+        let bytes = try encoded(); let wrapped = Data([0xff]) + bytes
+        XCTAssertEqual(try codec.decode(wrapped.dropFirst()).json, json)
+    }
 }

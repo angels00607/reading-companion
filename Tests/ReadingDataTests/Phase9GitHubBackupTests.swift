@@ -144,4 +144,43 @@ final class Phase9GitHubBackupTests: XCTestCase {
             XCTAssertThrowsError(try GitHubBackupRepository(owner: "reader", name: value))
         }
     }
+    private func listingResponses(size: Int, truncated: Bool = false, mode: String = "100644") throws -> [GitHubBackupHTTPResponse] {
+        [try metadata(),
+         .init(status: 200, data: try JSONSerialization.data(withJSONObject: [["sha": sha]])),
+         .init(status: 200, data: try JSONSerialization.data(withJSONObject: ["tree": ["sha": String(repeating: "b", count: 40)]])),
+         .init(status: 200, data: try JSONSerialization.data(withJSONObject: ["truncated": truncated,
+            "tree": [["path": "backups/\(versionID.uuidString.lowercased()).zip", "mode": mode, "type": "blob", "sha": sha, "size": size]]]))]
+    }
+    func testVersionHistoryAndDownloadUseOneImmutableSnapshot() async throws {
+        let data = try archive()
+        let http = BackupHTTPFixture(try listingResponses(size: data.count) + [metadata(), .init(status: 200, data: data)])
+        let transport = GitHubBackupTransport(repository: try repo(), credentials: try storedCredentials(), client: http)
+        let versions = try await transport.versions(); XCTAssertEqual(versions.count, 1)
+        XCTAssertEqual(versions[0].id, versionID); XCTAssertEqual(versions[0].snapshotCommitSHA, sha)
+        let result = try await transport.download(versions[0]); XCTAssertEqual(result.manifest.entityCounts, ["books": 0])
+        let requests = await http.requests
+        XCTAssertEqual(requests.last?.url?.query, "ref=\(sha)")
+        XCTAssertEqual(requests.last?.value(forHTTPHeaderField: "Accept"), "application/vnd.github.raw+json")
+    }
+    func testTruncatedHistoryIsFailureRatherThanIncompleteSuccess() async throws {
+        let http = BackupHTTPFixture(try listingResponses(size: 1, truncated: true))
+        let transport = GitHubBackupTransport(repository: try repo(), credentials: try storedCredentials(), client: http)
+        do { _ = try await transport.versions(); XCTFail("Partial history") }
+        catch { XCTAssertEqual(error as? GitHubBackupError, .invalidResponse) }
+    }
+    func testRemoteSymlinkCannotMasqueradeAsBackup() async throws {
+        let http = BackupHTTPFixture(try listingResponses(size: 1, mode: "120000"))
+        let transport = GitHubBackupTransport(repository: try repo(), credentials: try storedCredentials(), client: http)
+        do { _ = try await transport.versions(); XCTFail("Symlink") }
+        catch { XCTAssertEqual(error as? GitHubBackupError, .invalidResponse) }
+    }
+    func testDownloadMustValidateBytesBeforePreview() async throws {
+        let data = try archive()
+        let corrupt = Data(repeating: 0, count: data.count)
+        let http = BackupHTTPFixture(try listingResponses(size: data.count) + [metadata(), .init(status: 200, data: corrupt)])
+        let transport = GitHubBackupTransport(repository: try repo(), credentials: try storedCredentials(), client: http)
+        let versions = try await transport.versions()
+        do { _ = try await transport.download(versions[0]); XCTFail("Corrupt") }
+        catch { XCTAssertEqual(error as? PortableBackupError, .invalidArchive) }
+    }
 }

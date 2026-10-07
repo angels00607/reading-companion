@@ -49,8 +49,8 @@ silent partial iteration. These bounds and memory use need large-library validat
 
 ## Still required before Phase 9 acceptance
 
-- Secure PAT adapter/private-repository preflight, revocation handling and versioned
-  manual upload/history.
+- Native setup/credential entry and real private-repository integration verification;
+  the secure transport and version-history boundary described below are implemented.
 - Typed full-domain export, referenced asset inventory and independent local sharing.
 - Restore preview, cancel, explicit approval, ownership/relationship validation,
   stale-state guard, transactional rollback and permanent semantic-key XP union.
@@ -62,3 +62,43 @@ No app UI changed at this checkpoint. Historical Foundation 107/148 findings, th
 absence of an identified live failing element and the lack of established false
 positive remain documented. No finding/test/threshold is suppressed; native/manual
 accessibility certification stays in Phase 12. Missing Challenge content is not inferred.
+
+## Secure GitHub boundary implemented
+
+KeychainCredentialStore uses Security.framework generic-password records, repository-
+scoped credential accounts, no synchronizable credential copies and WhenUnlockedThisDeviceOnly.
+There is no file/UserDefaults fallback or token cache. The transient PAT is sent only
+to fixed HTTPS `api.github.com` requests. The production HTTP client uses an ephemeral
+session without cookies/cache and refuses redirects; raw provider error bodies and
+URLSession errors are replaced with safe typed failures.
+
+Connect validates fine-grained PAT syntax and verifies the exact configured repository,
+private visibility, active state and user write permission before storing credentials.
+GitHub remains the authority for the PAT's actual permissions: the reader must scope
+it to Metadata read/Contents read-write on that one dedicated private repository.
+Preflight repeats before upload/history/download. Revocation/expiration (401) removes
+the invalid credential and requires reconnect; permission and rate-limit failures
+preserve the credential and fail visibly. No classic PAT or GitHub App is used.
+
+Manual upload takes a stable caller-supplied version UUID. A new immutable ZIP path is
+created without an overwrite SHA. An identical existing file acknowledges a retry;
+different existing bytes are a version collision. Creation reports the actual commit.
+History uses the Git tree API and rejects truncated/unsafe results; download pins the
+listed immutable commit, checks length and validates the full ZIP before preview.
+History never invents creation dates from unrelated Git commits; manifest UTC is the
+source of creation metadata. Raw Contents media supports larger binaries without
+depending on the <=1 MiB base64 response. Remote versions have a 50 MiB operation bound;
+local portable export remains independent. An empty/unavailable repository may still
+report a typed history failure until its first successful backup exists.
+
+Tests use fictional credentials and an injected HTTP client. A real private repository,
+PAT, simulator/device Keychain lifecycle and redirect behavior still require native
+integration verification; mock transport tests alone are not that certification.
+
+## Permanent XP merge refinement
+
+Existing XPPolicy union now retains current award identity/timestamp for equal semantic
+keys, rejects mismatched source or amount, validates decoded negative/empty/non-finite
+awards and detects integer-total overflow. A+B plus A+C stays A+B+C exactly once. This
+does not yet validate an imported award against all typed domain/catalog evidence or
+apply restore data transactionally. It is one prerequisite for that later restore gate.

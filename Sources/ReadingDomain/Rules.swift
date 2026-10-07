@@ -108,10 +108,26 @@ public enum XPPolicy {
     public static func merge(existing: [XPAward], restored: [XPAward]) throws -> [XPAward] {
         var awards = [String: XPAward]()
         for award in existing + restored {
-            if let prior = awards[award.semanticKey], prior.amount != award.amount {
-                throw DomainError.staleRevision // Review invalid/conflicting award evidence; never reduce silently.
+            // Decodable can bypass the validating initializer. An archive remains
+            // untrusted even when its file checksums match its manifest.
+            guard !award.semanticKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  award.amount >= 0, award.awardedAt.timeIntervalSinceReferenceDate.isFinite else {
+                throw GamificationError.invalidAward
+            }
+            if let prior = awards[award.semanticKey] {
+                guard prior.amount == award.amount, prior.source == award.source else {
+                    throw DomainError.staleRevision // Conflicting semantic evidence requires review.
+                }
+                // Preserve the current permanent award's identity and timestamp.
+                continue
             }
             awards[award.semanticKey] = award
+        }
+        var total = 0
+        for award in awards.values {
+            let sum = total.addingReportingOverflow(award.amount)
+            guard !sum.overflow else { throw GamificationError.invalidAward }
+            total = sum.partialValue
         }
         return awards.values.sorted { $0.semanticKey < $1.semanticKey }
     }

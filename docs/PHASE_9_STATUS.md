@@ -16,6 +16,17 @@ actual collection counts, SHA-256, ZIP CRC, exact inventory, resource bounds, pa
 duplicate rejection and readonly validation. Versioned logical JSON remains independent
 of internal SQLite. The codec has no restore writes or live-event replay path.
 
+Secure platform Keychain adapter and GitHub transport now provide private/exact-repository
+preflight, repository-scoped fine-grained PAT storage, explicit revocation/permission/
+rate-limit failures, immutable manual versions, idempotent byte-identical retries,
+snapshot-pinned history/download and checksum validation before preview. Native setup
+UI and real private-repository/device credential verification are still outstanding.
+
+Permanent XP semantic-key union retains current metadata and rejects conflicting source/
+amount, invalid decoded awards and overflow. Typed award-evidence validation and actual
+transactional restore remain outstanding. Duplicate JSON keys are rejected rather than
+silently selecting a value; excessive nesting fails before Foundation decoding.
+
 Added adversarial archive tests and independent Python interoperability validation of
 an actual Swift-produced ZIP. Targeted development CI builds the iOS application; it
 does not claim a final Phase 9 candidate or A–L acceptance. Existing full regression
@@ -24,12 +35,17 @@ run the relevant new boundary tests instead of repeating the completed Phase 8 m
 
 ## Validation
 
-Targeted Swift/iOS validation: pending first run. No Phase 9 simulator acceptance or
-visual boards yet. No Phase 9 schema migration or live Supabase deployment yet.
+First targeted run [37642617729](https://github.com/angels00607/reading-companion/actions/runs/37642617729)
+at `583a01a08e0ad039615ade40bf4721dfbb1da16c` passed 38 Swift boundary tests (24 archive /
+14 GitHub), independent Python ZIP/CRC/SHA-256/count interoperability and the iOS build.
+Additional JSON, remote history and XP refinements require their next targeted run;
+the earlier result is not claimed as validation of those changes. Local Python script
+syntax validation passed. No Phase 9 simulator acceptance or visual boards yet.
+No Phase 9 schema migration or live Supabase deployment yet.
 
 ## Remaining work, in order
 
-1. Complete secure GitHub PAT transport/private repository checks and manual versions.
+1. Integrate native secure GitHub setup and verify the real private-repository/Keychain lifecycle.
 2. Typed complete portable export and preview/atomic restore, including valid XP union,
    overrides, cross-owner/relationship checks, rollback and no historical event replay.
 3. Full durable sync transport/pull, receipts/retry, conflicts/review and tombstones.

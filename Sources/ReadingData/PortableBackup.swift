@@ -86,7 +86,8 @@ public struct PortableBackupCodec: Sendable {
         return result
     }
 
-    public func decode(_ bytes: Data) throws -> ValidatedPortableBackup {
+    public func decode(_ input: Data) throws -> ValidatedPortableBackup {
+        let bytes = Data(input) // Normalize Data slices before bounded ZIP offset reads.
         guard bytes.count <= limits.archiveBytes else { throw PortableBackupError.resourceLimit }
         let advertisedCount = try zipEntryCount(bytes)
         guard advertisedCount <= limits.entries else { throw PortableBackupError.resourceLimit }
@@ -111,7 +112,16 @@ public struct PortableBackupCodec: Sendable {
         guard manifestEntry.uncompressedSize <= UInt64(max(0, limits.manifestBytes)) else { throw PortableBackupError.resourceLimit }
         let manifestData = try read(manifestEntry, archive: archive, maximum: limits.manifestBytes)
         let manifest: BackupManifest
-        do { manifest = try JSONDecoder().decode(BackupManifest.self, from: manifestData) }
+        do {
+            try BackupJSONValidation.rejectDuplicateKeys(manifestData)
+            guard let object = try JSONSerialization.jsonObject(with: manifestData) as? [String: Any],
+                  Set(object.keys) == ["backupFormatVersion", "schemaVersion", "appVersion", "createdAt", "sourceDevice", "entityCounts", "checksumAlgorithm", "files"],
+                  let files = object["files"] as? [[String: Any]],
+                  files.allSatisfy({ Set($0.keys) == ["path", "byteCount", "sha256"] }) else {
+                throw PortableBackupError.invalidManifest
+            }
+            manifest = try JSONDecoder().decode(BackupManifest.self, from: manifestData)
+        }
         catch { throw PortableBackupError.invalidManifest }
         try validateManifest(manifest)
         let expected = Set(manifest.files.map(\.path)).union(["manifest.json"])
@@ -167,6 +177,7 @@ public struct PortableBackupCodec: Sendable {
     /// The upcoming domain exporter is responsible for its strict field allowlists.
     private func payloadCounts(_ data: Data) throws -> [String: Int] {
         guard data.count <= limits.entryBytes else { throw PortableBackupError.resourceLimit }
+        try BackupJSONValidation.rejectDuplicateKeys(data)
         let value: Any
         do { value = try JSONSerialization.jsonObject(with: data) }
         catch { throw PortableBackupError.invalidPayload }
