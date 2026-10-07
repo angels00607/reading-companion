@@ -42,6 +42,14 @@ distinct book IDs per period, preventing repeated toggles from multiplying it.
 There is no genuine session recorder, so Session templates are ineligible.
 
 Generation prefers evidenced eligible families and family variety. Before there
+is new Phase 7 activity, genuine resolved Page observations, explicit reading
+dates, known nonhistorical finish dates and copied-review timestamps from older
+versions also inform targets. Unknown dates, historical imports and unresolved
+observations are excluded. Matching event keys prevent duplicate history. This
+adapter never replays old facts as live progress or ordinary reading XP. Recording
+another reading on a date already explicitly recorded preserves both Stats facts
+without advancing a new day goal a second time.
+Before there
 is history, small fixed progress/organization action goals provide reachable
 sets; they do not claim past activity. Targets remain in the typed catalog,
 smoothed from actual recorded activity where available and capped. Day goals

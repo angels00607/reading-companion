@@ -77,10 +77,11 @@ extension LocalStore: StatsRepository {
         try queue.write { db in
             let reading = try reading(readingID,db:db)
             if try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM reading_activity_dates WHERE owner_id=? AND reading_id=? AND activity_date=?",arguments:[ownerID.uuidString,readingID.uuidString,date.isoString]) == 1 { return }
-            try db.execute(sql:"INSERT INTO reading_activity_dates(owner_id,reading_id,activity_date,source,source_reference,recorded_at) VALUES(?,?,?,'user',?,?)",arguments:[ownerID.uuidString,readingID.uuidString,date.isoString,sourceReference,stamp()])
-            if !reading.historical, reading.status != .dnf {
+            let alreadyRecordedDay = try recordedGenuineDay(date.isoString,db:db)
+            if !reading.historical, reading.status != .dnf, !alreadyRecordedDay {
                 try recordGamificationActivity(key:"reading-day:\(readingID.uuidString):\(date.isoString)",family:.frequency,entity:readingID,activityDate:date.isoString,db:db)
             }
+            try db.execute(sql:"INSERT INTO reading_activity_dates(owner_id,reading_id,activity_date,source,source_reference,recorded_at) VALUES(?,?,?,'user',?,?)",arguments:[ownerID.uuidString,readingID.uuidString,date.isoString,sourceReference,stamp()])
             try enqueueStats(readingID,"stats.activity.record",0,["date":date.isoString,"sourceReference":sourceReference],db)
         }
     }

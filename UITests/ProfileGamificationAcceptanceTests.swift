@@ -55,6 +55,10 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
                     XCTAssertTrue(app.staticTexts["3 of 3 featured"].exists,"Exactly three genuinely unlocked selections must persist")
                 }
                 attach(app,"Phase7-\(appearance)-\(size)-\(route)-top")
+                if route == "profile" {
+                    scrollTo(app.descendants(matching:.any)["profile.level"].firstMatch,app)
+                    attach(app,"Phase7-\(appearance)-\(size)-profile-level")
+                }
                 if route == "quests" {
                     for cadence in ["WEEKLY","MONTHLY"] {
                         scrollTo(app.staticTexts[cadence].firstMatch,app)
@@ -72,6 +76,8 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
                 }
                 if route != "reward" { app.swipeUp(); app.swipeUp(); attach(app,"Phase7-\(appearance)-\(size)-\(route)-lower") }
                 if route == "achievements" {
+                    scrollTo(app.buttons["Featured"].firstMatch,app)
+                    attach(app,"Phase7-\(appearance)-\(size)-featured-selection")
                     scrollTo(app.staticTexts["Gentle Momentum"],app)
                     attach(app,"Phase7-\(appearance)-\(size)-achievement-progress")
                 }

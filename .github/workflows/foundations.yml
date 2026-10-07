@@ -21,7 +21,7 @@ jobs:
       - run: swift --version
       - name: Targeted Phase 7 Swift tests
         if: ${{ ((github.event_name == 'workflow_dispatch' && (inputs.stage == 'targeted' || inputs.stage == 'qa')) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[phase7-targeted]') || contains(github.event.head_commit.message, '[phase7-qa]')))) }}
-        run: swift test --filter Phase7
+        run: swift test
       - name: Full Swift regression suite
         if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
         run: swift test

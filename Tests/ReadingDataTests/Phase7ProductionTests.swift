@@ -151,6 +151,58 @@ final class Phase7ProductionTests: XCTestCase {
         XCTAssertTrue(try s.currentQuests().allSatisfy { $0.progress == 0 })
         XCTAssertEqual(try s.xpAwards().count,1)
     }
+    func testPrePhase7HistoryAdaptsTargetsWithoutReplayingProgress() throws {
+        let clock = Phase7Clock(), s = try store(clock)
+        let b = try s.add(work:.init(provider:"legacy",reference:"observed",title:"Existing activity",author:"Author"))
+        let r = try s.start(bookID:b,editionID:nil,mode:.page,date:nil)
+        try s.queue.write { db in
+            let observation = UUID().uuidString
+            try db.execute(sql:"INSERT INTO progress_observations(owner_id,id,reading_id,mutation_id,mode,previous_page,new_page,recorded_at,ordinal) VALUES(?,?,?,?,'page',0,80,'2026-10-04T12:00:00Z',1)",arguments:[s.ownerID.uuidString,observation,r.uuidString,observation])
+            try db.execute(sql:"UPDATE readings SET current_page=80,revision=1 WHERE owner_id=? AND id=?",arguments:[s.ownerID.uuidString,r.uuidString])
+            try db.execute(sql:"INSERT INTO reading_activity_dates(owner_id,reading_id,activity_date,source,source_reference,recorded_at) VALUES(?,?,'2026-10-04','user','legacy explicit day','2026-10-04T12:00:00Z')",arguments:[s.ownerID.uuidString,r.uuidString])
+        }
+        let activity = try s.queue.read { try s.adaptiveQuestActivity($0) }
+        XCTAssertEqual(activity.genuinePagesPerDay,[80]); XCTAssertEqual(activity.readingDaysPerWeek,[1])
+        XCTAssertTrue(activity.sessionsPerWeek.isEmpty)
+        let quests = try s.currentQuests()
+        XCTAssertEqual(quests.first { $0.cadence == .daily && $0.templateKey == "pages.genuine" }?.target,80)
+        XCTAssertTrue(quests.allSatisfy { $0.progress == 0 }); XCTAssertTrue(try s.xpAwards().isEmpty)
+        XCTAssertEqual(try s.queue.read { try Int.fetchOne($0,sql:"SELECT COUNT(*) FROM gamification_activity") },0)
+        let today = try ReadingDate(year:2026,month:10,day:5)
+        try s.recordReadingActivity(readingID:r,date:today,sourceReference:"actual current day")
+        XCTAssertTrue(try s.currentQuests().contains { $0.cadence == .daily && $0.templateKey == "frequency.reading-days" && $0.isComplete })
+        let secondBook = try s.add(work:.init(provider:"legacy",reference:"second",title:"Another reading",author:"Author"))
+        let second = try s.start(bookID:secondBook,editionID:nil,mode:.page,date:nil)
+        let awards = try s.xpAwards()
+        try s.recordReadingActivity(readingID:second,date:today,sourceReference:"same genuine date")
+        XCTAssertEqual(try s.xpAwards().count,awards.count)
+        XCTAssertEqual(try s.queue.read { try Int.fetchOne($0,sql:"SELECT COUNT(*) FROM gamification_activity WHERE family='frequency'") },1)
+        XCTAssertEqual(try s.queue.read { try Int.fetchOne($0,sql:"SELECT COUNT(*) FROM reading_activity_dates WHERE activity_date='2026-10-05'") },2)
+    }
+    func testHistoricalAndUnresolvedHistoryCannotAdaptLiveTargets() throws {
+        let s = try store(Phase7Clock())
+        let b = try s.add(work:.init(provider:"import",reference:"historical",title:"Imported record",author:"Author"))
+        let r = try s.recordCompleted(bookID:b,editionID:nil,date:try ReadingDate(year:2026,month:10,day:4),rating:.unknown)
+        try s.recordReadingActivity(readingID:r,date:try ReadingDate(year:2026,month:10,day:4),sourceReference:"historical explicit date")
+        try s.queue.write { db in
+            for review in [0,1] {
+                let id = UUID().uuidString
+                try db.execute(sql:"INSERT INTO progress_observations(owner_id,id,reading_id,mutation_id,mode,previous_page,new_page,recorded_at,requires_review,ordinal) VALUES(?,?,?,?,'page',0,90,'2026-10-04T12:00:00Z',?,?)",arguments:[s.ownerID.uuidString,id,r.uuidString,id,review,review+1])
+            }
+        }
+        var activity = try s.queue.read { try s.adaptiveQuestActivity($0) }
+        XCTAssertTrue(activity.genuinePagesPerDay.isEmpty); XCTAssertTrue(activity.readingDaysPerWeek.isEmpty); XCTAssertTrue(activity.completionsPerMonth.isEmpty)
+        // Only the unresolved observation remains on a genuine reading.
+        try s.queue.write { db in
+            try db.execute(sql:"DELETE FROM progress_observations WHERE requires_review=0")
+            try db.execute(sql:"DELETE FROM reading_activity_dates")
+            try db.execute(sql:"UPDATE readings SET historical=0,status='currently_reading',finish_date=NULL WHERE id=?",arguments:[r.uuidString])
+        }
+        activity = try s.queue.read { try s.adaptiveQuestActivity($0) }
+        XCTAssertTrue(activity.genuinePagesPerDay.isEmpty)
+        XCTAssertFalse(try s.currentQuests().contains { $0.templateKey == "pages.genuine" })
+        XCTAssertTrue(try s.xpAwards().isEmpty)
+    }
     func testLatePeriodDayCapsAndWeekYear() {
         let late = ISO8601DateFormatter().date(from:"2026-10-31T12:00:00Z")!
         XCTAssertEqual(QuestPeriod(cadence:.monthly,now:late,timeZone:zone).availableDays,1)
