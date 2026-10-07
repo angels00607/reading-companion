@@ -89,6 +89,8 @@ final class StoryGraphImportAcceptanceTests:XCTestCase {
             app.buttons["Import supported history"].tap();XCTAssertTrue(app.staticTexts["import.result"].waitForExistence(timeout:10))
             tap(app,app.buttons["import.needsReview"])
             let title=app.otherElements["import.review.title"];reveal(app,title);capture(app,label+"-Protected-Title")
+            let currentTitle=title.staticTexts["The Lantern Archive · My corrected title"]
+            reveal(app,currentTitle);capture(app,label+"-Current-Title")
             reveal(app,title.buttons["Keep"]);capture(app,label+"-Title-Actions")
             tap(app,title.buttons["Keep"])
             let finish=app.otherElements["import.review.finish_date"];reveal(app,finish);capture(app,label+"-Current-Imported-Date")
