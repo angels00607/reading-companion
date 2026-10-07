@@ -110,10 +110,11 @@ final class Phase8ImportsTests:XCTestCase {
         let s=try store();let book=try s.add(work:.init(provider:"manual",reference:"a",title:"Archive",author:"Author"))
         let reading=try s.recordCompleted(bookID:book,editionID:nil,date:try ReadingDate(year:2024,month:2,day:3),rating:.stars(4))
         try s.editReading(readingID:reading,start:nil,finish:try ReadingDate(year:2024,month:2,day:3),rating:.stars(4),genre:nil,format:.paperback,revision:0)
+        let legitimateAwards=try s.xpAwards()
         try apply(s,csv());let candidate=try s.pendingImportCandidates().first!
         try s.linkImportCandidate(id:candidate.id,bookID:book,readingIDs:[reading],confirmed:true)
         XCTAssertEqual(try s.record(id:book).readings.count,1);XCTAssertEqual(try s.record(id:book).readings.first!.journalFormat,.paperback)
-        XCTAssertTrue(try s.importReviews().isEmpty);XCTAssertTrue(try s.xpAwards().isEmpty)
+        XCTAssertTrue(try s.importReviews().isEmpty,"An exact explicitly linked reading needs no correction");XCTAssertEqual(try s.xpAwards(),legitimateAwards,"Import preserves existing legitimate XP and adds no award")
     }
     func testKeptIncompleteRowSuppressionIgnoresPositionAndFormatButNotChangedEvidence() throws {
         let s=try store();let data=csv("Archive,Author,uid1,read,1,,03/04/2024,3.5,ebook\n")
@@ -140,5 +141,14 @@ final class Phase8ImportsTests:XCTestCase {
         let run=try s.applyImport(preview,confirmed:true);XCTAssertEqual(run.newBooks,1);XCTAssertEqual(run.newReadings,1)
         let other=try store();let conflict=try other.previewStoryGraph(csv(line+"Different title,Author,uid1,read,1,,2024/02/03,4,ebook\n"))
         XCTAssertEqual(conflict.count(.review),2);try other.applyImport(conflict,confirmed:true);XCTAssertEqual(try other.bookCount(),0)
+    }
+    func testReviewShowsLiveCurrentValueAndRejectsAnUnseenLaterEdit() throws {
+        let s=try store();try apply(s,csv());let book=try s.library().first!;try apply(s,csv("Archive Revised,Author,uid1,read,1,,2024/02/03,4,ebook\n"))
+        try s.edit(bookID:book.id,values:[.title:"My current title"],revision:book.revision)
+        let displayed=try s.importReviews().first!;XCTAssertEqual(displayed.current,"My current title")
+        try s.edit(bookID:book.id,values:[.title:"A later edit"],revision:s.record(id:book.id).revision)
+        XCTAssertThrowsError(try s.decideImport(id:displayed.id,accept:true,currentFingerprint:displayed.currentFingerprint))
+        let refreshed=try s.importReviews().first!;try s.decideImport(id:refreshed.id,accept:true,currentFingerprint:refreshed.currentFingerprint)
+        XCTAssertEqual(try s.record(id:book.id).book.title,"Archive Revised")
     }
 }

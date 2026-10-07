@@ -181,20 +181,30 @@ extension LocalStore: ImportsRepository {
     public func importReviews() throws -> [ImportReview] {
         try queue.read { db in
             try Row.fetchAll(db,sql:"SELECT p.*,COALESCE(f.user_overridden,0) AS protected FROM data_change_proposals p LEFT JOIN field_provenance f ON f.owner_id=p.owner_id AND f.entity_id=p.entity_id AND f.entity_type=substr(p.entity_type,8) AND f.field=p.field WHERE p.owner_id=? AND p.entity_type IN ('import_book','import_reading') AND p.status='pending' ORDER BY p.rowid",arguments:[ownerID.uuidString]).map { row in
-                let current = try JSONDecoder().decode(String?.self,from:Data((row["current_json"] as String).utf8))
+                let entity=UUID(uuidString:row["entity_id"])!,field:String=row["field"],type:String=row["entity_type"]
+                let current=try importCurrent(entity:entity,type:type,field:field,db:db)
                 let proposed = try JSONDecoder().decode(String?.self,from:Data((row["proposed_json"] as String).utf8))
-                return ImportReview(id:UUID(uuidString:row["id"])!,entityID:UUID(uuidString:row["entity_id"])!,field:row["field"],current:importDisplay(current,field:row["field"]),proposed:importDisplay(proposed,field:row["field"]),source:row["source"],userOverridden:row["protected"])
+                let canAccept = type == "import_book" ? true : try reading(entity,db:db).historical
+                return ImportReview(id:UUID(uuidString:row["id"])!,entityID:entity,field:field,current:importDisplay(current,field:field),proposed:importDisplay(proposed,field:field),source:row["source"],userOverridden:row["protected"],currentFingerprint:importHash(Data(try importJSON(current).utf8)),canAccept:canAccept)
             }
         }
     }
     public func decideImport(id: UUID, accept: Bool) throws {
+        try decideImport(id:id,accept:accept,currentFingerprint:nil)
+    }
+    public func decideImport(id: UUID, accept: Bool, currentFingerprint:String?) throws {
         try queue.write { db in
             guard let row = try Row.fetchOne(db,sql:"SELECT * FROM data_change_proposals WHERE owner_id=? AND id=? AND entity_type IN ('import_book','import_reading') AND status='pending'",arguments:[ownerID.uuidString,id.uuidString]) else { throw ImportError.invalidResolution }
             let entity = UUID(uuidString:row["entity_id"])!, field:String=row["field"], type:String=row["entity_type"]
-            let previous = try JSONDecoder().decode(String?.self,from:Data((row["current_json"] as String).utf8))
+            var previous = try JSONDecoder().decode(String?.self,from:Data((row["current_json"] as String).utf8))
             let proposed = try JSONDecoder().decode(String?.self,from:Data((row["proposed_json"] as String).utf8))
             if accept {
                 guard let proposed else { throw ImportError.invalidResolution }
+                if let currentFingerprint {
+                    let live=try importCurrent(entity:entity,type:type,field:field,db:db)
+                    guard currentFingerprint == importHash(Data(try importJSON(live).utf8)) else { throw ImportError.stalePreview }
+                    previous=live
+                }
                 if type == "import_book" {
                     guard ["title","author"].contains(field) else { throw ImportError.invalidResolution }
                     let current = try String.fetchOne(db,sql:"SELECT \(field) FROM books WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,entity.uuidString])
@@ -312,6 +322,19 @@ extension LocalStore: ImportsRepository {
         return importHash(Data(parts.joined(separator:"\n").utf8))
     }
     private func importHash(_ data:Data) -> String { SHA256.hash(data:data).map { String(format:"%02x",$0) }.joined() }
+    private func importCurrent(entity:UUID,type:String,field:String,db:Database) throws -> String? {
+        if type == "import_book" {
+            guard ["title","author"].contains(field) else { throw ImportError.invalidResolution }
+            return try String.fetchOne(db,sql:"SELECT \(field) FROM books WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,entity.uuidString])
+        }
+        let reading=try reading(entity,db:db)
+        switch field {
+        case "start_date":return reading.startDate?.isoString
+        case "finish_date":return reading.finishDate?.isoString
+        case "rating":return try importJSON(reading.rating)
+        default:throw ImportError.invalidResolution
+        }
+    }
     private func importRowFingerprint(_ row:StoryGraphRow) throws -> String {
         var value=try JSONSerialization.jsonObject(with:JSONEncoder().encode(row)) as! [String:Any]
         value.removeValue(forKey:"number")

@@ -137,7 +137,8 @@ struct ImportNeedsReview:View {
         ForEach(reviews) { review in
             VStack(alignment:.leading,spacing:12) {
                 if review.userOverridden { StatusChip("Your correction is protected",symbol:"hand.raised").accessibilityIdentifier("import.protected") }
-                DataChangeReview(field:fieldLabel(review.field),current:review.current,proposed:review.proposed,source:"StoryGraph CSV",accept:{ decide(review,true) },keep:{ decide(review,false) },edit:{ editID=review.entityID })
+                DataChangeReview(field:fieldLabel(review.field),current:review.current,proposed:review.proposed,source:"StoryGraph CSV",canAccept:review.canAccept,accept:{ decide(review,true) },keep:{ decide(review,false) },edit:{ editID=review.entityID })
+                if !review.canAccept { Text("This is a live reading. Use Edit for a manual correction; importing must not alter its live lifecycle.").font(DesignTokens.functionalFont(size:14)).fixedSize(horizontal:false,vertical:true) }
                 Text("Accept is your explicit correction; Keep suppresses the same source evidence.").font(DesignTokens.functionalFont(size:14)).fixedSize(horizontal:false,vertical:true)
             }.accessibilityElement(children:.contain).accessibilityIdentifier("import.review."+review.field)
         }
@@ -150,7 +151,7 @@ struct ImportNeedsReview:View {
     } }
     @State private var editID:UUID?
     private func fieldLabel(_ field:String) -> String { switch field { case "start_date":"Start date";case "finish_date":"Finish date";case "rating":"Rating";case "title":"Title";case "author":"Author";default:field } }
-    private func decide(_ review:ImportReview,_ accept:Bool) { do { try (model.repository as? any ImportsRepository)?.decideImport(id:review.id,accept:accept);model.version+=1;reload() } catch { self.error=error.localizedDescription } }
+    private func decide(_ review:ImportReview,_ accept:Bool) { do { try (model.repository as? any ImportsRepository)?.decideImport(id:review.id,accept:accept,currentFingerprint:review.currentFingerprint);model.version+=1;reload() } catch { self.error=error.localizedDescription;reload() } }
     private func reload() { do { let repo=model.repository as? any ImportsRepository;candidates=try repo?.pendingImportCandidates() ?? [];reviews=try repo?.importReviews() ?? [] } catch { self.error="Could not load pending review." } }
 }
 
@@ -226,7 +227,7 @@ struct ImportHistoryScreen:View {
         ForEach(history) { run in
             VStack(alignment:.leading,spacing:8) {
                 Text("StoryGraph CSV").font(DesignTokens.functionalFont(size:18,relativeTo:.headline,weight:.semiBold))
-                Text(run.completedAt).font(DesignTokens.functionalFont(size:14)).fixedSize(horizontal:false,vertical:true)
+                Text(ISO8601DateFormatter().date(from:run.completedAt)?.formatted(date:.abbreviated,time:.shortened) ?? "Recorded date unavailable").font(DesignTokens.functionalFont(size:14)).fixedSize(horizontal:false,vertical:true)
                 Text("\(run.rows) source rows · \(run.newBooks) new books · \(run.newReadings) historical readings").fixedSize(horizontal:false,vertical:true)
                 Text("\(run.review) queued for review · \(run.unchanged) already up to date").fixedSize(horizontal:false,vertical:true)
                 StatusChip("Committed · No live rewards",symbol:"checkmark")

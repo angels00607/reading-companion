@@ -70,8 +70,11 @@ public struct ImportReview: Identifiable, Sendable {
     public let proposed: String
     public let source: String
     public let userOverridden: Bool
-    public init(id: UUID, entityID: UUID, field: String, current: String, proposed: String, source: String, userOverridden: Bool) {
+    public let currentFingerprint: String
+    public let canAccept: Bool
+    public init(id: UUID, entityID: UUID, field: String, current: String, proposed: String, source: String, userOverridden: Bool, currentFingerprint: String, canAccept: Bool) {
         self.id=id; self.entityID=entityID; self.field=field; self.current=current; self.proposed=proposed; self.source=source; self.userOverridden=userOverridden
+        self.currentFingerprint=currentFingerprint; self.canAccept=canAccept
     }
 }
 public protocol ImportsRepository: Sendable {
@@ -80,6 +83,7 @@ public protocol ImportsRepository: Sendable {
     func importHistory() throws -> [ImportHistory]
     func importReviews() throws -> [ImportReview]
     func decideImport(id: UUID, accept: Bool) throws
+    func decideImport(id: UUID, accept: Bool, currentFingerprint: String?) throws
     func pendingImportCandidates() throws -> [ImportCandidate]
     func resolveImportCandidate(id: UUID, bookID: UUID?, createSeparateBook: Bool, confirmed: Bool) throws
     func linkImportCandidate(id: UUID, bookID: UUID, readingIDs: [UUID], confirmed: Bool) throws
