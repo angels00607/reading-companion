@@ -98,6 +98,7 @@ public struct ProfileHome:View {
         NavigationLink("Open Quest Center") { QuestCenter(quests:quests) }.buttonStyle(ProfileLinkStyle())
         NavigationLink("View all Achievements") { AchievementsScreen(values:achievements) }.buttonStyle(ProfileLinkStyle())
         NavigationLink("Open Collection") { CollectionScreen(level:level,states:cosmetics) }.buttonStyle(ProfileLinkStyle())
+        NavigationLink("Data · StoryGraph Import") { ImportHome() }.buttonStyle(ProfileLinkStyle()).accessibilityIdentifier("import.open")
         if let error { StatePresentation(kind:.error,title:"Profile unavailable",message:error) }
     }.task(id:model.version) { load() }.accessibilityIdentifier("phase7.profile") }
     private var passportHeader: some View {
@@ -142,7 +143,7 @@ public struct ProfileHome:View {
     private var featured:some View { VStack(alignment:.leading,spacing:10){Text("FEATURED ACHIEVEMENTS").font(DesignTokens.functionalFont(size:12,weight:.semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme)); ForEach(achievements.filter{passport.featuredAchievementKeys.contains($0.definition.key)}) { AchievementBadgeView(value:$0) }; Text("Choose exactly 3 from Achievements").font(DesignTokens.functionalFont(size:13)).foregroundStyle(DesignTokens.secondaryText(scheme))} }
     private func load(){ do { guard let repo=model.gamificationRepository else{return}; passport=try repo.passport();awards=try repo.xpAwards();achievements=try repo.achievementProgress();quests=try repo.currentQuests();cosmetics=try repo.cosmeticStates(); if let stats=try model.statsRepository?.stats(period:.lifetime){bookCount=stats.books;pageCount=stats.pages.display} } catch { self.error="Existing local data has not changed." } }
 }
-private struct ProfileLinkStyle:ButtonStyle { func makeBody(configuration:Configuration)->some View { configuration.label.font(DesignTokens.functionalFont(size:16,weight:.semiBold)).frame(maxWidth:.infinity,minHeight:48).background(.thinMaterial,in:RoundedRectangle(cornerRadius:12)).opacity(configuration.isPressed ? 0.7:1) } }
+struct ProfileLinkStyle:ButtonStyle { func makeBody(configuration:Configuration)->some View { configuration.label.font(DesignTokens.functionalFont(size:16,weight:.semiBold)).frame(maxWidth:.infinity,minHeight:48).background(.thinMaterial,in:RoundedRectangle(cornerRadius:12)).opacity(configuration.isPressed ? 0.7:1) } }
 
 public struct QuestCenter: View {
     @Environment(\.colorScheme) private var scheme

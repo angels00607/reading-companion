@@ -157,6 +157,13 @@ extension LocalStore: JournalRepository {
         let id = UUID(); let number = (try Int.fetchOne(db, sql: "SELECT COALESCE(MAX(number),0)+1 FROM journal_volumes WHERE owner_id=?", arguments: [ownerID.uuidString])) ?? 1
         try db.execute(sql: "INSERT INTO journal_volumes(owner_id,id,number,created_at) VALUES(?,?,?,?)", arguments: [ownerID.uuidString,id.uuidString,number,stamp()]); return id
     }
+    func refreshCopiedReviewCorrections(readingID: UUID, db: Database) throws {
+        guard let old = try copiedSnapshot(readingID,db:db) else { return }
+        let reading = try reading(readingID,db:db), record = try catalog(reading.bookID,db:db), entry = try entry(readingID,db:db)
+        guard let format=reading.journalFormat else { return }
+        let current = ReviewSnapshot(title:record.book.title,author:record.book.author,pages:entry.pageCount,rating:reading.rating,format:format,start:reading.startDate,finish:reading.finishDate,summary:entry.summary ?? "")
+        try createCorrections(readingID:readingID,old:old,current:current,db:db)
+    }
     private func copiedSnapshot(_ readingID: UUID, db: Database) throws -> ReviewSnapshot? {
         guard let payload = try String.fetchOne(db, sql: "SELECT copied_payload FROM journal_components WHERE owner_id=? AND reading_id=? AND component='book_review' AND state='copied'", arguments: [ownerID.uuidString,readingID.uuidString]) else { return nil }
         return try JSONDecoder().decode(ReviewSnapshot.self, from: Data(payload.utf8))

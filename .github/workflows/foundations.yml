@@ -1,15 +1,15 @@
-name: Phase 7 Profile and Gamification
+name: Phase 8 StoryGraph Import and Reconcile
 on:
   push:
     branches: ['**']
   workflow_dispatch:
     inputs:
       stage:
-        description: Targeted tests, Profile self-QA, or final candidate regression
+        description: Targeted tests, Import self-QA, or final candidate regression
         required: true
         default: candidate
         type: choice
-        options: [targeted, qa, candidate]
+        options: [targeted, qa, candidate, foundations]
 permissions:
   contents: read
 jobs:
@@ -19,18 +19,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: swift --version
-      - name: Targeted Phase 7 Swift tests
-        if: ${{ !contains(github.event.head_commit.message, '[passport-labels]') && ((github.event_name == 'workflow_dispatch' && (inputs.stage == 'targeted' || inputs.stage == 'qa')) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[phase7-targeted]') || contains(github.event.head_commit.message, '[phase7-qa]')))) }}
-        run: swift test
+      - name: Targeted Phase 8 Swift tests
+        if: ${{ !contains(github.event.head_commit.message, '[passport-labels]') && ((github.event_name == 'workflow_dispatch' && (inputs.stage == 'targeted' || inputs.stage == 'qa')) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[phase8-targeted]') || contains(github.event.head_commit.message, '[phase8-qa]')))) }}
+        run: swift test --filter Phase8ImportsTests
       - name: Full Swift regression suite
-        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
+        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase8-targeted]') && !contains(github.event.head_commit.message, '[phase8-qa]'))) }}
         run: swift test
       - run: brew install xcodegen
       - run: xcodegen generate
       - name: iOS build
         run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
       - name: Select available iPhone simulator
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase7-targeted]')) }}
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase8-targeted]')) }}
         run: |
           xcrun simctl list devices available -j > /tmp/reading-simulators.json
           python3 - <<'PY'
@@ -40,75 +40,76 @@ jobs:
           print('Acceptance device:',phone['name'],phone['udid'])
           with open(os.environ['GITHUB_ENV'],'a') as env:env.write('READING_SIMULATOR_ID='+phone['udid']+'\n')
           PY
-      - name: Phase 7 self visual QA and acceptance
-        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'qa') || (github.event_name == 'push' && contains(github.event.head_commit.message, '[phase7-qa]'))) }}
+      - name: Phase 8 self visual QA and acceptance
+        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'qa') || (github.event_name == 'push' && contains(github.event.head_commit.message, '[phase8-qa]'))) }}
         env:
-          PHASE7_SELECTION: ${{ contains(github.event.head_commit.message, '[passport-labels]') && 'FoundationAcceptanceTests/ProfileGamificationAcceptanceTests/testPassportLabelCorrectionVisualQA' || 'FoundationAcceptanceTests/ProfileGamificationAcceptanceTests' }}
+          PHASE8_SELECTION: FoundationAcceptanceTests/StoryGraphImportAcceptanceTests
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase7.xcresult -only-testing:"$PHASE7_SELECTION" CODE_SIGNING_ALLOWED=NO test
-      - name: Candidate Phase 7 functional acceptance and fonts
-        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase8.xcresult -only-testing:"$PHASE8_SELECTION" CODE_SIGNING_ALLOWED=NO test
+      - name: Candidate Phase 8 functional acceptance and fonts
+        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase8-targeted]') && !contains(github.event.head_commit.message, '[phase8-qa]'))) }}
         run: |
           xcrun simctl bootstatus "$READING_SIMULATOR_ID" -b
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase7.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/ProfileGamificationAcceptanceTests CODE_SIGNING_ALLOWED=NO test
-      - name: Export Phase 7 evidence
-        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase7-targeted]')) }}
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase8.xcresult -only-testing:FoundationFontTests -only-testing:FoundationAcceptanceTests/StoryGraphImportAcceptanceTests CODE_SIGNING_ALLOWED=NO test
+      - name: Export Phase 8 evidence
+        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase8-targeted]')) }}
         run: |
-          if [ -d work/Phase7.xcresult ]; then xcrun xcresulttool export attachments --path work/Phase7.xcresult --output-path work/phase7-screenshots; fi
+          if [ -d work/Phase8.xcresult ]; then xcrun xcresulttool export attachments --path work/Phase8.xcresult --output-path work/phase8-screenshots; fi
       - uses: actions/upload-artifact@v4
-        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase7-targeted]')) }}
+        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase8-targeted]')) }}
         with:
-          name: phase-7-profile-gamification-visual-qa
+          name: phase-8-storygraph-visual-qa
           path: |
-            work/Phase7.xcresult
-            work/phase7-screenshots
+            work/Phase8.xcresult
+            work/phase8-screenshots
       - uses: actions/upload-artifact@v4
-        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase7-targeted]')) }}
+        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'targeted') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase8-targeted]')) }}
         with:
-          name: phase-7-review-evidence
+          name: phase-8-review-evidence
           path: |
-            work/Phase7.xcresult/database.sqlite3
-            work/phase7-screenshots/*
-            work/phase7-screenshots/manifest.json
-      - name: Books and Challenges functional regression
-        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
+            work/Phase8.xcresult/database.sqlite3
+            work/phase8-screenshots/*
+            work/phase8-screenshots/manifest.json
+      - name: Books, Journal, Series, Challenges, Stats and Profile functional regression
+        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase8-targeted]') && !contains(github.event.head_commit.message, '[phase8-qa]'))) }}
         run: |
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Regression.xcresult -only-testing:FoundationAcceptanceTests/BooksCoreAcceptanceTests/testOfficialAcceptanceFlow -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testExplicitConfirmOccupancyAndIndependentNextChallenge -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testRejectNextBestAndNoReasonOrRecurrence -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testManualAndSameWeekReplacement CODE_SIGNING_ALLOWED=NO test
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Regression.xcresult -only-testing:FoundationAcceptanceTests/JournalAcceptanceTests -only-testing:FoundationAcceptanceTests/SeriesAcceptanceTests -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testMonthIncompleteDataRatingAndManualYearChoice -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testRereadLifetimeUnknownAndJournalReuse -only-testing:FoundationAcceptanceTests/ProfileGamificationAcceptanceTests/testCleanProductionLaunchA -only-testing:FoundationAcceptanceTests/ProfileGamificationAcceptanceTests/testProductionCollectionCancelApplyReopenHIJ -only-testing:FoundationAcceptanceTests/BooksCoreAcceptanceTests/testOfficialAcceptanceFlow -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testExplicitConfirmOccupancyAndIndependentNextChallenge -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testRejectNextBestAndNoReasonOrRecurrence -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testManualAndSameWeekReplacement CODE_SIGNING_ALLOWED=NO test
       - name: Default-size foundation acceptance
-        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.stage == 'foundations' }}
         run: |
           xcrun simctl ui "$READING_SIMULATOR_ID" appearance dark
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
           xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationDefault.xcresult -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkDefault -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testSystemFollowsSimulatorDarkAppearance CODE_SIGNING_ALLOWED=NO test
       - name: Largest-accessibility-size foundation acceptance
-        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.stage == 'foundations' }}
         run: |
           xcrun simctl ui "$READING_SIMULATOR_ID" content_size accessibility-extra-extra-extra-large
           xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/FoundationAccessibility.xcresult -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testLightAccessibilityXXXL -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testDarkAccessibilityXXXLLandscape CODE_SIGNING_ALLOWED=NO test
       - uses: actions/upload-artifact@v4
-        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
+        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase8-targeted]') && !contains(github.event.head_commit.message, '[phase8-qa]'))) }}
         with:
-          name: phase-7-regression-and-foundation-results
+          name: phase-8-regression-results
           path: |
             work/Regression.xcresult
             work/Foundation*.xcresult
   sqlite:
-    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.stage == 'qa') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase7-qa]')) }}
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.stage == 'qa') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase8-qa]')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: python3 scripts/test_imports_schema.py
       - run: python3 scripts/test_stats_schema.py
       - run: python3 scripts/test_gamification_schema.py
-      - if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
+      - if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase8-targeted]') && !contains(github.event.head_commit.message, '[phase8-qa]'))) }}
         run: |
           python3 scripts/test_local_schema.py
           python3 scripts/test_books_schema.py
           python3 scripts/test_challenges_schema.py
   supabase:
-    if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase7-targeted]') && !contains(github.event.head_commit.message, '[phase7-qa]'))) }}
+    if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase8-targeted]') && !contains(github.event.head_commit.message, '[phase8-qa]'))) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
