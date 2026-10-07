@@ -22,11 +22,16 @@ extension LocalStore: ImportsRepository {
         let known = links.count == 1 && exact.count == 1 ? UUID(uuidString: links[0]) : nil
         let group: ImportGroup
         let explanation: String
-        if !row.issues.isEmpty { group = .review; explanation = row.issues.joined(separator: " ") }
+        let kept = try String.fetchOne(db,sql:"SELECT status FROM import_candidates WHERE owner_id=? AND fingerprint=?",arguments:[ownerID.uuidString,try importRowFingerprint(row)]) == "kept"
+        if kept { group = .unchanged; explanation = "You kept this source row unapplied. The same normalized evidence is suppressed." }
+        else if !row.issues.isEmpty { group = .review; explanation = row.issues.joined(separator: " ") }
         else if let known {
             let changes = try importDifferences(row, bookID: known, db: db)
             let stored = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM import_occurrences WHERE owner_id=? AND source_identity=? AND occurrence>0", arguments: [ownerID.uuidString,row.identity]) ?? 0
-            if stored != row.finishes.count || row.status != "read" && row.status != "to-read" { group = .review; explanation = "The source reading history or status changed. Your local readings will not be replaced." }
+            let expectedCount = row.status == "read" ? row.finishes.count : row.status == "to-read" ? 0 : 1
+            let expectedStatus = row.status == "currently-reading" ? "currently_reading" : row.status == "did-not-finish" ? "dnf" : row.status
+            let differentStatus = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM import_occurrences i JOIN readings r ON r.owner_id=i.owner_id AND r.id=i.reading_id WHERE i.owner_id=? AND i.source_identity=? AND (r.status<>? OR r.deleted_at IS NOT NULL)",arguments:[ownerID.uuidString,row.identity,expectedStatus]) ?? 0
+            if stored != expectedCount || differentStatus > 0 { group = .review; explanation = "The source reading history or status changed. Your local readings will not be replaced." }
             else { group = changes.isEmpty ? .unchanged : .updates; explanation = changes.isEmpty ? "Previously imported identity and supplied facts match, or unchanged rejected evidence is kept." : "Known imported identity. Differences will become proposals; current values remain unchanged." }
         } else if !matches.isEmpty { group = .review; explanation = "Possible existing book. ISBN or title/author evidence needs your explicit identity decision." }
         else { group = .newBooks; explanation = "No existing identity or conservative title/author match. Supplied history will be stored without live rewards." }
@@ -88,7 +93,7 @@ extension LocalStore: ImportsRepository {
             let history = ImportHistory(id: preview.id, completedAt: stamp(), rows: candidates.count, newBooks: afterBooks-beforeBooks, newReadings: afterReadings-beforeReadings, review: pending.count+candidates.filter { $0.group == .updates }.count, unchanged: unchanged)
             try db.execute(sql: "INSERT INTO import_runs VALUES(?,?,?,?,?,?,?,?,?)", arguments: [ownerID.uuidString,history.id.uuidString,preview.fingerprint,history.completedAt,history.rows,history.newBooks,history.newReadings,history.review,history.unchanged])
             for candidate in pending {
-                let fingerprint = importHash(Data(try importJSON(candidate.row).utf8))
+                let fingerprint = try importRowFingerprint(candidate.row)
                 try db.execute(sql: "INSERT OR IGNORE INTO import_candidates VALUES(?,?,?,?,?,'pending')", arguments: [ownerID.uuidString,candidate.id.uuidString,history.id.uuidString,try importJSON(candidate),fingerprint])
                 if db.changesCount > 0 { try importAttention(candidate.id, reason: "Review imported identity or incomplete information", db: db) }
             }
@@ -231,6 +236,26 @@ extension LocalStore: ImportsRepository {
             try importCommand(id:id,kind:"import.skip",payload:["decision":"kept"],db:db)
         }
     }
+    public func linkImportCandidate(id:UUID,bookID:UUID,readingIDs:[UUID],confirmed:Bool) throws {
+        guard confirmed else { throw ImportError.confirmationRequired }
+        try queue.write { db in
+            guard let json=try String.fetchOne(db,sql:"SELECT candidate_json FROM import_candidates WHERE owner_id=? AND id=? AND status='pending'",arguments:[ownerID.uuidString,id.uuidString]) else { throw ImportError.invalidResolution }
+            let candidate=try JSONDecoder().decode(ImportCandidate.self,from:Data(json.utf8))
+            guard candidate.row.issues.isEmpty,candidate.row.status == "read",candidate.matches.contains(bookID) || candidate.bookID == bookID,
+                  readingIDs.count == candidate.row.finishes.count,Set(readingIDs).count == readingIDs.count,
+                  try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM import_occurrences WHERE owner_id=? AND source_identity=?",arguments:[ownerID.uuidString,candidate.row.identity]) == 0 else { throw ImportError.invalidResolution }
+            let record=try catalog(bookID,db:db)
+            for id in readingIDs { guard record.readings.contains(where:{$0.id == id && $0.status == .read}) else { throw ImportError.invalidResolution } }
+            try db.execute(sql:"INSERT INTO import_occurrences VALUES(?,?,0,?,NULL,NULL)",arguments:[ownerID.uuidString,candidate.row.identity,bookID.uuidString])
+            for (index,readingID) in readingIDs.enumerated() {
+                try db.execute(sql:"INSERT INTO import_occurrences VALUES(?,?,?,?,?,NULL)",arguments:[ownerID.uuidString,candidate.row.identity,index+1,bookID.uuidString,readingID.uuidString])
+            }
+            // Only explicit identity links are written. Existing live/historical status, Format and origin never change.
+            try importProposals(candidate.row,bookID:bookID,db:db)
+            try db.execute(sql:"UPDATE import_candidates SET status='resolved' WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,id.uuidString])
+            try importResolveAttention(id,db:db);try importCommand(id:id,kind:"import.link",payload:readingIDs,db:db)
+        }
+    }
     public func importHistory() throws -> [ImportHistory] { try queue.read { db in try Row.fetchAll(db,sql:"SELECT * FROM import_runs WHERE owner_id=? ORDER BY rowid DESC",arguments:[ownerID.uuidString]).map(importHistoryRow) } }
     private func importRun(fingerprint: String, db: Database) throws -> ImportHistory? { try Row.fetchOne(db,sql:"SELECT * FROM import_runs WHERE owner_id=? AND fingerprint=?",arguments:[ownerID.uuidString,fingerprint]).map(importHistoryRow) }
     private func importHistoryRow(_ row: Row) -> ImportHistory { ImportHistory(id:UUID(uuidString:row["id"])!,completedAt:row["completed_at"],rows:row["rows_count"],newBooks:row["new_books"],newReadings:row["new_readings"],review:row["review_count"],unchanged:row["unchanged_count"]) }
@@ -252,10 +277,15 @@ extension LocalStore: ImportsRepository {
         return importHash(Data(parts.joined(separator:"\n").utf8))
     }
     private func importHash(_ data:Data) -> String { SHA256.hash(data:data).map { String(format:"%02x",$0) }.joined() }
+    private func importRowFingerprint(_ row:StoryGraphRow) throws -> String {
+        var value=try JSONSerialization.jsonObject(with:JSONEncoder().encode(row)) as! [String:Any]
+        value.removeValue(forKey:"number")
+        return importHash(try JSONSerialization.data(withJSONObject:value,options:[.sortedKeys]))
+    }
     private func importJSON<T:Encodable>(_ value:T) throws -> String { let encoder=JSONEncoder();encoder.outputFormatting=[.sortedKeys];return String(data:try encoder.encode(value),encoding:.utf8)! }
     private func importDisplay(_ text:String?,field:String) -> String {
         guard let text else { return "Unknown" }
         guard field == "rating", let rating=try? JSONDecoder().decode(Rating.self,from:Data(text.utf8)) else { return text }
-        switch rating { case .unknown:"Unknown";case .noRating:"No rating";case .stars(let n):"\(n) stars" }
+        return switch rating { case .unknown:"Unknown";case .noRating:"No rating";case .stars(let n):"\(n) stars" }
     }
 }

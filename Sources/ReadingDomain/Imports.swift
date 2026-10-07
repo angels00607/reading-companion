@@ -82,6 +82,7 @@ public protocol ImportsRepository: Sendable {
     func decideImport(id: UUID, accept: Bool) throws
     func pendingImportCandidates() throws -> [ImportCandidate]
     func resolveImportCandidate(id: UUID, bookID: UUID?, createSeparateBook: Bool, confirmed: Bool) throws
+    func linkImportCandidate(id: UUID, bookID: UUID, readingIDs: [UUID], confirmed: Bool) throws
     func skipImportCandidate(id: UUID, confirmed: Bool) throws
 }
 

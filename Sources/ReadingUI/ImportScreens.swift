@@ -144,6 +144,8 @@ private struct ImportIdentityReview:View {
     let candidate:ImportCandidate
     @State private var selected:UUID?
     @State private var separate=false
+    @State private var readingMap=[Int:UUID]()
+    @State private var linking=false
     @State private var confirm=false
     @State private var skip=false
     @State private var error:String?
@@ -153,18 +155,36 @@ private struct ImportIdentityReview:View {
             Text("Select the canonical book explicitly. Existing readings stay intact; this adds distinct historical occurrences, never a live completion.").fixedSize(horizontal:false,vertical:true)
             ForEach(candidate.matches,id:\.self) { id in
                 if let record=try? model.repository.record(id:id) {
-                    AppButton("Use existing: "+record.book.title,kind:.secondary,action:{selected=id;separate=false}).accessibilityIdentifier("import.identity.existing")
+                    AppButton("Use existing: "+record.book.title,kind:.secondary,action:{selected=id;separate=false;readingMap=[:];linking=false}).accessibilityIdentifier("import.identity.existing")
                     if selected == id { StatusChip("Selected existing book",symbol:"checkmark") }
+                    if selected == id,candidate.row.status == "read",!record.readings.filter({$0.status == .read}).isEmpty {
+                        AppButton("Match existing readings",kind:.secondary,action:{linking=true;readingMap=[:]}).accessibilityIdentifier("import.identity.link")
+                        AppButton("Add distinct historical readings",kind:.secondary,action:{linking=false;readingMap=[:]}).accessibilityIdentifier("import.identity.newReadings")
+                        if linking {
+                            ForEach(Array(candidate.row.finishes.indices),id:\.self) { index in
+                                Text("Imported occurrence \(index+1) · \(candidate.row.finishes[index]?.isoString ?? "Date unknown")").fixedSize(horizontal:false,vertical:true)
+                                ForEach(record.readings.filter{$0.status == .read},id:\.id) { reading in
+                                    AppButton("Use reading · \(reading.finishDate?.isoString ?? "Date unknown")",kind:.secondary,action:{readingMap[index]=reading.id}).accessibilityIdentifier("import.identity.reading."+String(index))
+                                    if readingMap[index] == reading.id { StatusChip("Selected reading",symbol:"checkmark") }
+                                }
+                            }
+                        } else { Text("Distinct history selected. Use Match existing readings if these occurrences already exist locally.").fixedSize(horizontal:false,vertical:true) }
+                    }
                 }
             }
-            AppButton("Create a separate book",kind:.secondary,action:{selected=nil;separate=true}).accessibilityIdentifier("import.identity.separate")
+            AppButton("Create a separate book",kind:.secondary,action:{selected=nil;separate=true;linking=false;readingMap=[:]}).accessibilityIdentifier("import.identity.separate")
             if separate { StatusChip("Selected separate book",symbol:"checkmark") }
-            AppButton("Confirm identity and history",action:{confirm=true}).disabled(selected == nil && !separate).accessibilityIdentifier("import.identity.confirm")
+            AppButton("Confirm identity and history",action:{confirm=true}).disabled((selected == nil && !separate) || (linking && (readingMap.count != candidate.row.finishes.count || Set(readingMap.values).count != readingMap.count))).accessibilityIdentifier("import.identity.confirm")
         } else { Text("Correct the CSV and import it again, or keep this row unapplied. Missing dates remain unknown; unsupported content is never inferred.").fixedSize(horizontal:false,vertical:true) }
         AppButton("Keep row unapplied",kind:.secondary,action:{skip=true}).accessibilityIdentifier("import.identity.skip")
         if let error { StatePresentation(kind:.error,title:"Review not applied",message:error) }
     }.confirmationDialog("Confirm imported identity and distinct history?",isPresented:$confirm,titleVisibility:.visible) {
-        Button("Apply selected identity") { do { try (model.repository as? any ImportsRepository)?.resolveImportCandidate(id:candidate.id,bookID:selected,createSeparateBook:separate,confirmed:true);model.version+=1;dismiss() } catch { self.error=error.localizedDescription } }
+        Button("Apply selected identity") { do {
+            let repo=model.repository as? any ImportsRepository
+            if linking,let selected { try repo?.linkImportCandidate(id:candidate.id,bookID:selected,readingIDs:candidate.row.finishes.indices.compactMap { readingMap[$0] },confirmed:true) }
+            else { try repo?.resolveImportCandidate(id:candidate.id,bookID:selected,createSeparateBook:separate,confirmed:true) }
+            model.version+=1;dismiss()
+        } catch { self.error=error.localizedDescription } }
     }.confirmationDialog("Keep this row unapplied?",isPresented:$skip,titleVisibility:.visible) {
         Button("Keep unapplied") { do { try (model.repository as? any ImportsRepository)?.skipImportCandidate(id:candidate.id,confirmed:true);model.version+=1;dismiss() } catch { self.error=error.localizedDescription } }
     } }
