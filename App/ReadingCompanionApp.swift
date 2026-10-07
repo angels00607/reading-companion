@@ -120,6 +120,7 @@ struct ReadingCompanionApp: App {
             if ProcessInfo.processInfo.arguments.contains("-phase6-fixture") { try seedStatsQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase7-fixture") { try seedGamificationQA(store) }
             #endif
+            _ = try store.currentQuests()
             model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
         } catch { storageError = "Could not open the local database. Existing files have not been reset or deleted." }
     }

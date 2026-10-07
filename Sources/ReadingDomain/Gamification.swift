@@ -14,7 +14,7 @@ public enum GamificationError: Error { case invalidAward, duplicateAward, invali
 
 public enum QuestCadence: String, Codable, CaseIterable, Sendable { case daily, weekly, monthly
     public var activeCount:Int { switch self { case .daily:2; case .weekly,.monthly:3 } }
-    public var xp:Int { switch self { case .daily:20; case .weekly:60; case .monthly:150 } }
+    public var xp:Int { GamificationBalance.amount(for: xpSource) }
     public var xpSource:XPSource { switch self { case .daily:.dailyQuest; case .weekly:.weeklyQuest; case .monthly:.monthlyQuest } }
 }
 public enum QuestFamily: String, Codable, CaseIterable, Sendable { case frequency, pages, sessions, progress, completion, journalActivity, organization, consistency }
@@ -32,6 +32,16 @@ public struct QuestInstance: Identifiable, Codable, Equatable, Sendable {
 }
 public enum QuestCatalog {
     public static let templates:[QuestTemplate] = [
+        // Fixed, conservative action goals are available even before there is reading history.
+        // Different templates rotate across quiet periods; no activity is fabricated.
+        .init(key:"progress.record",family:.progress,cadences:[.daily,.weekly,.monthly],title:"Capture a reading update",unit:"updates",minimum:1,maximum:1,cooldownPeriods:1),
+        .init(key:"organization.choose",family:.organization,cadences:[.daily,.weekly,.monthly],title:"Make a library choice",unit:"organized items",minimum:1,maximum:1,cooldownPeriods:1),
+        .init(key:"progress.return",family:.progress,cadences:[.daily,.weekly,.monthly],title:"Check in with your reading",unit:"updates",minimum:1,maximum:1,cooldownPeriods:1),
+        .init(key:"organization.care",family:.organization,cadences:[.daily,.weekly,.monthly],title:"Care for your bookshelf",unit:"organized items",minimum:1,maximum:1,cooldownPeriods:1),
+        .init(key:"progress.note",family:.progress,cadences:[.daily,.weekly,.monthly],title:"Note your reading position",unit:"updates",minimum:1,maximum:1,cooldownPeriods:1),
+        .init(key:"organization.tend",family:.organization,cadences:[.daily,.weekly,.monthly],title:"Tend a library item",unit:"organized items",minimum:1,maximum:1,cooldownPeriods:1),
+        .init(key:"progress.check",family:.progress,cadences:[.daily,.weekly,.monthly],title:"Keep your progress current",unit:"updates",minimum:1,maximum:1,cooldownPeriods:1),
+        .init(key:"organization.arrange",family:.organization,cadences:[.daily,.weekly,.monthly],title:"Arrange your reading shelf",unit:"organized items",minimum:1,maximum:1,cooldownPeriods:1),
         .init(key:"frequency.reading-days",family:.frequency,cadences:[.daily,.weekly,.monthly],title:"Make time to read",unit:"reading days",minimum:1,maximum:12,cooldownPeriods:1),
         .init(key:"pages.genuine",family:.pages,cadences:[.daily,.weekly,.monthly],title:"Turn a few pages",unit:"recorded pages",minimum:10,maximum:600,cooldownPeriods:1),
         .init(key:"sessions.recorded",family:.sessions,cadences:[.daily,.weekly,.monthly],title:"Return to your reading",unit:"sessions",minimum:1,maximum:18,cooldownPeriods:1),
@@ -48,12 +58,14 @@ public enum QuestRules {
         switch template.family { case .pages: values=activity.genuinePagesPerDay; case .sessions,.frequency,.consistency: values=activity.sessionsPerWeek; case .completion: values=activity.completionsPerMonth; case .journalActivity: values=activity.journalActionsPerWeek; default: values=[] }
         let recent=Array(values.suffix(6)).sorted(); let smoothed = recent.isEmpty ? template.minimum : recent[recent.count/2]
         let scale = cadence == .daily ? 1 : cadence == .weekly ? 2 : 4
-        return min(template.maximum,max(template.minimum,smoothed*scale))
+        let cap = (template.family == .frequency || template.family == .consistency) ? (cadence == .daily ? 1 : cadence == .weekly ? 7 : 12) : template.maximum
+        return min(cap,min(template.maximum,max(template.minimum,smoothed*scale)))
     }
     public static func candidates(cadence:QuestCadence,periodKey:String,activity:ActivitySummary,history:[QuestInstance],excluding:Set<String>=[]) -> [QuestInstance] {
-        let recent=Set(history.suffix(12).map(\.templateKey)).union(excluding)
-        let preferred=QuestCatalog.templates.filter { $0.cadences.contains(cadence) && !recent.contains($0.key) }
-        let pool=preferred.isEmpty ? QuestCatalog.templates.filter { $0.cadences.contains(cadence) && !excluding.contains($0.key) } : preferred
+        let pool=QuestCatalog.templates.filter { template in
+            template.cadences.contains(cadence) && !excluding.contains(template.key) &&
+            QuestPeriod.cooldownAllows(template, cadence:cadence, periodKey:periodKey, history:history)
+        }
         return pool.prefix(cadence.activeCount).map { .init(templateKey:$0.key,cadence:cadence,periodKey:periodKey,title:$0.title,unit:$0.unit,target:target(for:$0,cadence:cadence,activity:activity)) }
     }
 }
@@ -81,6 +93,9 @@ public struct ReaderPassport:Codable,Equatable,Sendable { public var name:String
 public protocol GamificationRepository:Sendable {
     func passport() throws -> ReaderPassport; func savePassport(_ value:ReaderPassport) throws
     func xpAwards() throws -> [XPAward]; func awardXP(_ award:XPAward) throws -> Bool
+    func currentQuests() throws -> [QuestInstance]
+    func rerollQuest(_ id: UUID) throws
+    func rerollAvailable(_ cadence: QuestCadence) throws -> Bool
     func quests() throws -> [QuestInstance]; func saveQuests(_ values:[QuestInstance]) throws
     func achievementProgress() throws -> [AchievementProgress]; func saveAchievementProgress(_ values:[AchievementProgress]) throws
     func cosmeticStates() throws -> [String:CosmeticState]; func setCosmetic(_ key:String,state:CosmeticState) throws

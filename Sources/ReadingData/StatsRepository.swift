@@ -75,9 +75,12 @@ extension LocalStore: StatsRepository {
     public func recordReadingActivity(readingID: UUID, date: ReadingDate, sourceReference: String) throws {
         guard !sourceReference.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty else { throw StatsError.invalidActivity }
         try queue.write { db in
-            _ = try reading(readingID,db:db)
+            let reading = try reading(readingID,db:db)
             if try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM reading_activity_dates WHERE owner_id=? AND reading_id=? AND activity_date=?",arguments:[ownerID.uuidString,readingID.uuidString,date.isoString]) == 1 { return }
             try db.execute(sql:"INSERT INTO reading_activity_dates(owner_id,reading_id,activity_date,source,source_reference,recorded_at) VALUES(?,?,?,'user',?,?)",arguments:[ownerID.uuidString,readingID.uuidString,date.isoString,sourceReference,stamp()])
+            if !reading.historical, reading.status != .dnf {
+                try recordGamificationActivity(key:"reading-day:\(readingID.uuidString):\(date.isoString)",family:.frequency,entity:readingID,activityDate:date.isoString,db:db)
+            }
             try enqueueStats(readingID,"stats.activity.record",0,["date":date.isoString,"sourceReference":sourceReference],db)
         }
     }
