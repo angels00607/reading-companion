@@ -6,7 +6,10 @@ import ReadingDomain
 public final class LocalStore: @unchecked Sendable, OutboxRepository {
     let queue: DatabaseQueue
     public let ownerID: UUID
-    public init(path: String, ownerID: UUID) throws {
+    let gamificationNow: @Sendable () -> Date
+    let gamificationTimeZone: TimeZone
+    public init(path: String, ownerID: UUID, gamificationNow: @escaping @Sendable () -> Date = { Date() }, timeZone: TimeZone = .current) throws {
+        self.gamificationNow = gamificationNow; self.gamificationTimeZone = timeZone
         self.ownerID = ownerID
         var configuration = Configuration()
         configuration.foreignKeysEnabled = true
@@ -38,6 +41,14 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
         }
         migrator.registerMigration("local_v7") { db in
             let url = Bundle.module.url(forResource: "local_v7", withExtension: "sql")!
+            try db.execute(sql: String(contentsOf: url, encoding: .utf8))
+        }
+        migrator.registerMigration("local_v8") { db in
+            let url = Bundle.module.url(forResource: "local_v8", withExtension: "sql")!
+            try db.execute(sql: String(contentsOf: url, encoding: .utf8))
+        }
+        migrator.registerMigration("local_v9") { db in
+            let url = Bundle.module.url(forResource: "local_v9", withExtension: "sql")!
             try db.execute(sql: String(contentsOf: url, encoding: .utf8))
         }
         try migrator.migrate(queue)

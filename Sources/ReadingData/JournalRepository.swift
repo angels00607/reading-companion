@@ -71,6 +71,12 @@ extension LocalStore: JournalRepository {
 
     public func setFavorite(bookID: UUID, decision: JournalDecision) throws {
         try queue.write { db in
+            _ = try catalog(bookID,db:db)
+            let previous = try String.fetchOne(db,sql:"SELECT decision FROM favorites WHERE owner_id=? AND book_id=?",arguments:[ownerID.uuidString,bookID.uuidString])
+            if previous != decision.rawValue {
+                let day = QuestPeriod(cadence:.daily,now:gamificationNow(),timeZone:gamificationTimeZone).key
+                try recordGamificationActivity(key:"organization:favorite:\(bookID.uuidString):\(day)",family:.organization,entity:bookID,db:db)
+            }
             try db.execute(sql: "INSERT INTO favorites(owner_id,book_id,decision) VALUES(?,?,?) ON CONFLICT(owner_id,book_id) DO UPDATE SET decision=excluded.decision", arguments: [ownerID.uuidString,bookID.uuidString,decision.rawValue])
             let state = decision == .selected ? "ready" : decision == .none ? "none" : "pending"
             try db.execute(sql: "UPDATE journal_components SET state=? WHERE owner_id=? AND component='favorite' AND reading_id IN (SELECT reading_id FROM journal_entries WHERE owner_id=? AND book_id=?) AND state<>'copied'", arguments: [state,ownerID.uuidString,ownerID.uuidString,bookID.uuidString])
@@ -120,6 +126,11 @@ extension LocalStore: JournalRepository {
         let volume = try ensureVolume(db)
         try db.execute(sql: "UPDATE journal_components SET state='copied',copied_payload=?,copied_at=? WHERE owner_id=? AND reading_id=? AND component='book_review'", arguments: [payload,stamp(),ownerID.uuidString,readingID.uuidString])
         try db.execute(sql: "UPDATE journal_entries SET volume_id=? WHERE owner_id=? AND reading_id=?", arguments: [volume.uuidString,ownerID.uuidString,readingID.uuidString])
+
+        if !item.reading.historical {
+            _ = try insertXPAward(try XPAward(semanticKey:"journal-work:\(readingID.uuidString):book-review",source:.journalWork,amount:GamificationBalance.amount(for:.journalWork)),db:db)
+            try recordGamificationActivity(key:"journal-work:\(readingID.uuidString):book-review",family:.journalActivity,entity:readingID,db:db)
+        }
         try enqueueJournal(readingID, "journal.review.copied", ["volume":volume.uuidString], db)
     } }
     public func corrections() throws -> [JournalCorrection] { try queue.read { db in try Row.fetchAll(db, sql: "SELECT * FROM journal_corrections WHERE owner_id=? ORDER BY status,created_at DESC", arguments: [ownerID.uuidString]).map { row in JournalCorrection(id: UUID(uuidString: row["id"])!, readingID: UUID(uuidString: row["reading_id"])!, component: JournalComponent(rawValue: row["component"])!, field: row["field"], previousValue: row["previous_value"], currentValue: row["current_value"], resolved: (row["status"] as String) == "resolved") } } }

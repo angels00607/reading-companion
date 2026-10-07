@@ -10,16 +10,38 @@ public final class BooksModel: ObservableObject {
     public let challengesRepository: (any ChallengesRepository)?
     public let seriesRepository: (any SeriesRepository)?
     public let statsRepository: (any StatsRepository)?
+    public let gamificationRepository: (any GamificationRepository)?
     public let assetDirectory: URL
     @Published public var version = 0
     @Published public var error: String?
     @Published public var feedback: String?
     @Published public var feedbackReadingID: UUID?
+    @Published public var gamificationReward: String?
+    @Published public var gamificationRewardTitle = "LEVEL UP"
     public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL) {
-        self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository; self.statsRepository = repository as? any StatsRepository; self.provider = provider; self.assetDirectory = assetDirectory
+        self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository; self.statsRepository = repository as? any StatsRepository; self.gamificationRepository = repository as? any GamificationRepository; self.provider = provider; self.assetDirectory = assetDirectory
     }
     @discardableResult public func perform<T>(_ body: () throws -> T) -> T? {
-        do { let value = try body(); error = nil; version += 1; return value }
+        do {
+            let prior = try? gamificationRepository?.xpAwards()
+            let value = try body()
+            if let before = prior, let after = try? gamificationRepository?.xpAwards() {
+                let oldLevel = GamificationBalance.level(totalXP:before.reduce(0) { $0+$1.amount }), newLevel = GamificationBalance.level(totalXP:after.reduce(0) { $0+$1.amount })
+                let previous = Set(before.map(\.semanticKey)), added = after.filter { !previous.contains($0.semanticKey) }
+                if newLevel > oldLevel {
+                    gamificationRewardTitle = "LEVEL UP"
+                    gamificationReward = "Level \(newLevel). Your configured cosmetics are available. Every reading feature remains available."
+                } else if let achievement = added.first(where: { $0.source == .achievement }) {
+                    gamificationRewardTitle = "ACHIEVEMENT UNLOCKED"
+                    let key = String(achievement.semanticKey.dropFirst("achievement:".count))
+                    gamificationReward = "\(AchievementCatalog.all.first { $0.key == key }?.name ?? "Achievement"). +\(achievement.amount) XP awarded once."
+                } else if let quest = added.first(where: { [.dailyQuest,.weeklyQuest,.monthlyQuest].contains($0.source) }) {
+                    gamificationRewardTitle = "QUEST COMPLETED"
+                    gamificationReward = "+\(quest.amount) XP awarded once. Your reading progress has been saved."
+                }
+            }
+            error = nil; version += 1; return value
+        }
         catch DomainError.staleRevision { error = "The record changed. Reload and review before applying this change." }
         catch DomainError.invalidProgress { error = "Enter a valid position: pages must be whole numbers within the known total; percentage must be between 0 and 100." }
         catch BooksError.activeReadingExists { error = "This book already has an active reading. Open it to update progress." }

@@ -66,6 +66,7 @@ extension LocalStore: ChallengesRepository {
         let key = ChallengeRules.rejectionKey(bookID: record.book.id, promptID: prompt.id, evidence: evidence)
         guard try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM challenge_rejections WHERE owner_id=? AND rejection_key=?", arguments: [ownerID.uuidString,key]) == 0 else { throw ChallengeError.staleProposal }
         try db.execute(sql: "UPDATE challenge_assignments SET status='confirmed' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
+        _ = try insertXPAward(try XPAward(semanticKey:"challenge-confirmation:\(id.uuidString)",source:.challengeConfirmation,amount:GamificationBalance.amount(for:.challengeConfirmation)),db:db)
         try afterChallengeAssignment(config, record, db)
         try enqueueChallenge(id, "challenge.confirm", ["assignment":id.uuidString], db)
     } }

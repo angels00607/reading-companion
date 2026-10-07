@@ -15,7 +15,8 @@ struct ReadingCompanionApp: App {
                     if let route = visualQARoute { BooksVisualQA(route: route).environmentObject(model) }
                     else if let route = challengeQARoute { ChallengesVisualQA(route: route).environmentObject(model) }
                     else if let route = statsQARoute { StatsVisualQA(route: route).environmentObject(model) }
-                    else { FoundationShell(homeContent: AnyView(BooksHome()), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear)), statsContent:AnyView(StatsHome())).environmentObject(model) }
+                    else if let route = profileQARoute { ProfileVisualQA(route:route).environmentObject(model) }
+                    else { FoundationShell(homeContent: AnyView(VStack(alignment:.leading,spacing:20){BooksHome();HomePrimaryQuest()}), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear)), statsContent:AnyView(StatsHome()), profileContent:AnyView(ProfileHome())).environmentObject(model) }
                 }
                 else if let storageError { StatePresentation(kind: .error, title: "Library unavailable", message: storageError) }
                 else { SkeletonRow() }
@@ -38,6 +39,13 @@ struct ReadingCompanionApp: App {
         #if DEBUG
         let args=ProcessInfo.processInfo.arguments
         if let index=args.firstIndex(of:"-phase6-screen"),index+1<args.count { return args[index+1] }
+        #endif
+        return nil
+    }
+    private var profileQARoute:String? {
+        #if DEBUG
+        let args=ProcessInfo.processInfo.arguments
+        if let index=args.firstIndex(of:"-phase7-screen"),index+1<args.count{return args[index+1]}
         #endif
         return nil
     }
@@ -100,21 +108,58 @@ struct ReadingCompanionApp: App {
                 owner = value
             } else { owner = UUID(); try owner.uuidString.write(to: identity, atomically: true, encoding: .utf8) }
             #if DEBUG
-            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture")
+            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture") || ProcessInfo.processInfo.arguments.contains("-phase7-fixture")
             #else
             let qa = false
             #endif
-            let store = try LocalStore(path: qa ? ":memory:" : root.appendingPathComponent(owner.uuidString + ".sqlite").path, ownerID: owner)
+            var storePath = qa ? ":memory:" : root.appendingPathComponent(owner.uuidString + ".sqlite").path
+            #if DEBUG
+            let args = ProcessInfo.processInfo.arguments
+            if let i = args.firstIndex(of:"-phase7-acceptance-store"), i+1 < args.count, let token = UUID(uuidString:args[i+1]) {
+                storePath = root.appendingPathComponent("acceptance-"+token.uuidString+".sqlite").path
+            }
+            #endif
+            let store = try LocalStore(path:storePath,ownerID:owner)
             if ProcessInfo.processInfo.arguments.contains("-phase3-fixture") { try seedJournalQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase4-fixture") { try seedSeriesQA(store) }
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-phase5-fixture") { try seedChallengesQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase6-fixture") { try seedStatsQA(store) }
+            if ProcessInfo.processInfo.arguments.contains("-phase7-fixture"), !["quests","collection"].contains(profileQARoute ?? "") { try seedGamificationQA(store) }
             #endif
+            _ = try store.currentQuests()
             model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
+            #if DEBUG
+            if profileQARoute == "reward", qa {
+                // Genuine live finish actions cross the next 500-XP boundary.
+                for _ in 0..<5 { _ = model?.perform {
+                    let b = try store.add(work:.init(provider:"manual",reference:UUID().uuidString,title:"Another reading journey",author:"Taylor Reader"),choice:.addAnyway)
+                    let rid = try store.start(bookID:b,editionID:nil,date:nil)
+                    try store.finish(readingID:rid,confirmed:true,date:BooksModel.today,revision:0)
+                } }
+            }
+            #endif
         } catch { storageError = "Could not open the local database. Existing files have not been reset or deleted." }
     }
     #if DEBUG
+    private func seedGamificationQA(_ store:LocalStore) throws {
+        // Visual scenario replay. Every mutation below uses the same production lifecycle;
+        // no Quest progress, Achievement progress, or XP is assigned for presentation.
+        _ = try store.currentQuests()
+        var books = [UUID]()
+        for n in 0..<(["profile","achievements"].contains(profileQARoute ?? "") ? 10 : 5) {
+            let book = try store.add(work:.init(provider:"manual",reference:UUID().uuidString,title:"The Reader's Journey \(n+1)",author:"Taylor Reader"),choice:.addAnyway)
+            books.append(book)
+            let rid = try store.start(bookID:book,editionID:nil,date:nil)
+            _ = try store.update(readingID:rid,value:.pages(current:10),revision:0)
+            try store.finish(readingID:rid,confirmed:true,date:BooksModel.today,revision:1)
+            try store.saveBookReview(readingID:rid,draft:.init(summary:"My reading notes",pageCount:10,rating:.noRating,format:.paperback,start:nil,finish:BooksModel.today))
+            try store.markBookReviewCopied(readingID:rid)
+        }
+        let unlocked = try store.achievementProgress().filter(\.isUnlocked)
+        let featured = unlocked.count >= 3 ? Array(unlocked.prefix(3).map { $0.definition.key }) : []
+        try store.savePassport(.init(name:"Sarah Reader",readingSince:2020,favoriteBooks:books,featuredAchievementKeys:featured))
+    }
     private func seedStatsQA(_ store:LocalStore) throws {
         func completed(_ title:String,_ month:Int,_ day:Int,_ rating:Rating,_ format:JournalFormat?,_ pages:Int?,year:Int=2026,bookID:UUID?=nil) throws -> (UUID,UUID) {
             let book:UUID

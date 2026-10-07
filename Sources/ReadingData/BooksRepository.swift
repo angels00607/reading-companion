@@ -82,7 +82,11 @@ extension LocalStore: BooksRepository {
         return try JSONDecoder().decode(ReadingDate.self, from: JSONEncoder().encode(string))
     }
     public func add(work: WorkCandidate, edition: EditionCandidate? = nil, choice: DuplicateChoice = .review) throws -> UUID {
-        try queue.write { db in try addRecord(work: work, edition: edition, choice: choice, db: db) }
+        try queue.write { db in
+            let id = try addRecord(work:work,edition:edition,choice:choice,db:db)
+            if work.provider == "manual" { try recordGamificationActivity(key:"organization:add:\(id.uuidString)",family:.organization,entity:id,db:db) }
+            return id
+        }
     }
     private func addRecord(work: WorkCandidate, edition: EditionCandidate?, choice: DuplicateChoice, db: Database) throws -> UUID {
         let title = try BooksRules.validatedText(work.title), author = try BooksRules.validatedText(work.author)
@@ -184,6 +188,9 @@ extension LocalStore: BooksRepository {
                 try save(value, db: db); try provenance(id: readingID, type: "reading", field: "primary_genre", source: "manual", reference: nil, db: db)
                 try command(id: readingID, kind: "reading.edit", revision: 0, payload: value, db: db)
             }
+            if work.provider == "manual", case .alreadyRead = intent {} else if work.provider == "manual" {
+                try recordGamificationActivity(key:"organization:add:\(id.uuidString)",family:.organization,entity:id,db:db)
+            }
             return id
         }
     }
@@ -208,6 +215,12 @@ extension LocalStore: BooksRepository {
                 try command(id: readingID, kind: "reading.progress", revision: revision, payload: observation, mutationID: observationID, db: db)
                 if observation.requiresReview { try db.execute(sql: "UPDATE outbox SET state='review' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,observationID.uuidString]) }
             }
+            if !reading.historical, !observation.requiresReview, observation.previous != observation.value {
+                try recordGamificationActivity(key:"progress:\(observation.id.uuidString)",family:.progress,entity:readingID,db:db)
+                if let delta = observation.genuinePageDelta, delta > 0 {
+                    try recordGamificationActivity(key:"pages:\(observation.id.uuidString)",family:.pages,entity:readingID,quantity:delta,db:db)
+                }
+            }
             return result
         }
     }
@@ -220,6 +233,8 @@ extension LocalStore: BooksRepository {
             try save(reading, db: db)
             if effects.journalInbox { try createJournalCompletionWork(reading: reading, db: db) }
             if effects.challengeAnalysis { try createChallengeCompletionWork(reading: reading, db: db) }
+            if reading.status == .read, !reading.historical { _ = try insertXPAward(try XPAward(semanticKey:"finish-book:\(readingID.uuidString)",source:.finishBook,amount:GamificationBalance.amount(for:.finishBook)),db:db) }
+            if reading.status == .read, !reading.historical { try recordGamificationActivity(key:"completion:\(readingID.uuidString)",family:.completion,entity:readingID,db:db) }
             try command(id: readingID, kind: "reading.finish", revision: revision, payload: reading, db: db)
         }
     }
