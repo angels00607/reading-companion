@@ -60,7 +60,7 @@ public struct ProfileHome:View {
         NavigationLink("Open Collection") { CollectionScreen(level:level,states:cosmetics) }.buttonStyle(ProfileLinkStyle())
         if let error { StatePresentation(kind:.error,title:"Profile unavailable",message:error) }
     }.task { load() }.accessibilityIdentifier("phase7.profile") }
-    private var passportHeader:some View { HStack(spacing:16) { ZStack { Circle().fill(DesignTokens.blueSurface(scheme)).frame(width:84,height:84); Image(systemName:passport.avatarSymbol).font(.system(size:48)).foregroundStyle(DesignTokens.primary(scheme)); Circle().stroke(DesignTokens.secondary(scheme),lineWidth:3).frame(width:92,height:92) }.accessibilityLabel("Reader avatar with equipped frame"); VStack(alignment:.leading,spacing:5){ Text(passport.name).font(DesignTokens.functionalFont(size:26,relativeTo:.title,weight:.semiBold)); Text("READING HISTORY SINCE \(passport.readingSince)").font(DesignTokens.functionalFont(size:12,relativeTo:.caption,weight:.medium)).foregroundStyle(DesignTokens.secondaryText(scheme)) } }.padding(.vertical,8) }
+    private var passportHeader:some View { HStack(spacing:16) { ZStack { Circle().fill(DesignTokens.blueSurface(scheme)).frame(width:84,height:84); Image(systemName:passport.avatarSymbol).font(.system(size:48)).foregroundStyle(DesignTokens.primary(scheme)); Circle().stroke(DesignTokens.secondary(scheme),lineWidth:3).frame(width:92,height:92) }.accessibilityLabel("Reader avatar with equipped frame"); VStack(alignment:.leading,spacing:5){ Text(passport.name).font(DesignTokens.functionalFont(size:26,relativeTo:.title,weight:.semiBold)); Text("READING HISTORY SINCE \(String(passport.readingSince))").font(DesignTokens.functionalFont(size:12,relativeTo:.caption,weight:.medium)).foregroundStyle(DesignTokens.secondaryText(scheme)) } }.padding(.vertical,8) }
     private var levelCard:some View { VStack(alignment:.leading,spacing:10){ HStack { VStack(alignment:.leading){Text("LEVEL \(level)").font(DesignTokens.functionalFont(size:13,weight:.semiBold));Text("\(xp.formatted()) XP").font(DesignTokens.functionalFont(size:24,relativeTo:.title2,weight:.semiBold))};Spacer();Text("\(GamificationBalance.xpPerLevel-GamificationBalance.progress(totalXP:xp)) XP to Level \(level+1)").font(DesignTokens.functionalFont(size:13)).foregroundStyle(DesignTokens.secondaryText(scheme)).multilineTextAlignment(.trailing) }; ReadingProgressBar(.percentage(Double(GamificationBalance.progress(totalXP:xp))/5.0)) }.padding(16).background(DesignTokens.blueSurface(scheme),in:RoundedRectangle(cornerRadius:14)).accessibilityElement(children:.contain).accessibilityIdentifier("profile.level") }
     private var metrics:some View { ViewThatFits { HStack(spacing:8){metric("Books","\(bookCount)");metric("Pages",pageCount);metric("Achievements","\(achievements.filter(\.isUnlocked).count)")}; VStack(spacing:8){metric("Books","\(bookCount)");metric("Pages",pageCount);metric("Achievements","\(achievements.filter(\.isUnlocked).count)")} } }
     private func metric(_ label:String,_ value:String)->some View { VStack(spacing:3){Text(value).font(DesignTokens.functionalFont(size:20,weight:.semiBold));Text(label).font(DesignTokens.functionalFont(size:12)).foregroundStyle(DesignTokens.secondaryText(scheme))}.frame(maxWidth:.infinity,minHeight:64).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:12)) }
@@ -73,10 +73,73 @@ private struct ProfileLinkStyle:ButtonStyle { func makeBody(configuration:Config
 public struct QuestCenter:View { @Environment(\.colorScheme) private var scheme; @EnvironmentObject private var model:BooksModel; @State private var quests:[QuestInstance]; init(quests:[QuestInstance]){_quests=State(initialValue:quests)}; public var body:some View { BooksScreen("Quest Center") { Text("Activity-based goals that adapt gently to genuine recent reading.").foregroundStyle(DesignTokens.secondaryText(scheme)); ForEach(QuestCadence.allCases,id:\.self){ cadence in VStack(alignment:.leading,spacing:10){ Text(cadence.rawValue.uppercased()).font(DesignTokens.functionalFont(size:13,weight:.semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme)); ForEach(quests.filter{$0.cadence==cadence && $0.rerolledAt == nil}) { QuestCard(quest:$0) }; if cadence != .monthly { let used=quests.contains{$0.cadence==cadence && $0.rerolledAt != nil}; Button(used ? "Reroll used · available next period" : "Use free \(cadence.rawValue.capitalized) reroll"){reroll(cadence)}.disabled(used).font(DesignTokens.functionalFont(size:13,weight:.semiBold)).frame(minHeight:44) } } } }.accessibilityIdentifier("phase7.quests") }
     private func reroll(_ cadence:QuestCadence){ guard let index=quests.firstIndex(where:{$0.cadence==cadence && !$0.isComplete && $0.rerolledAt==nil}),let repo=model.gamificationRepository else{return};quests[index].rerolledAt=Date();let excluded=Set(quests.map(\.templateKey));if let next=QuestRules.candidates(cadence:cadence,periodKey:quests[index].periodKey,activity:.init(),history:quests,excluding:excluded).first{quests.append(next)};try? repo.saveQuests(quests) }
 }
-private struct QuestCard:View { @Environment(\.colorScheme) private var scheme; let quest:QuestInstance; var body:some View { VStack(alignment:.leading,spacing:8){HStack{Text(quest.title).font(DesignTokens.functionalFont(size:17,weight:.semiBold));Spacer();StatusChip(quest.isComplete ? "Completed" : "+\(quest.cadence.xp) XP",symbol:quest.isComplete ? "checkmark":"sparkles",tone:quest.isComplete ? .special:.active)};Text("\(quest.progress) of \(quest.target) \(quest.unit)").foregroundStyle(DesignTokens.secondaryText(scheme));ReadingProgressBar(.percentage(quest.target == 0 ? 0 : Double(quest.progress)*100/Double(quest.target)))}.padding(14).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:14)).overlay{RoundedRectangle(cornerRadius:14).stroke(DesignTokens.border(scheme))} } }
+private struct QuestCard: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
+    let quest: QuestInstance
+    private var title: some View { Text(quest.title).font(DesignTokens.functionalFont(size:17,weight:.semiBold)).fixedSize(horizontal:false,vertical:true) }
+    private var status: some View { StatusChip(quest.isComplete ? "Completed" : "+\(quest.cadence.xp) XP", symbol:quest.isComplete ? "checkmark":"sparkles", tone:quest.isComplete ? .special:.active) }
+    var body: some View {
+        VStack(alignment:.leading,spacing:8) {
+            if typeSize.isAccessibilitySize { VStack(alignment:.leading,spacing:8) { title; status } }
+            else { HStack { title; Spacer(); status } }
+            Text("\(quest.progress) of \(quest.target) \(quest.unit)").foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true)
+            ReadingProgressBar(.percentage(quest.target == 0 ? 0 : Double(quest.progress)*100/Double(quest.target)))
+        }.frame(maxWidth:.infinity,alignment:.leading).padding(14)
+            .background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:14))
+            .overlay { RoundedRectangle(cornerRadius:14).stroke(DesignTokens.border(scheme)) }
+    }
+}
 public struct AchievementsScreen:View { @Environment(\.colorScheme) private var scheme; @EnvironmentObject private var model:BooksModel; let values:[AchievementProgress]; @State private var selected=[String](); public var body:some View { BooksScreen("Achievements") { Text("All Achievements are visible. Select exactly 3 to feature on your Passport.").foregroundStyle(DesignTokens.secondaryText(scheme)); Text("\(selected.count) of 3 featured").font(DesignTokens.functionalFont(size:13,weight:.semiBold)); ForEach(values){ value in VStack(alignment:.leading,spacing:4){AchievementBadgeView(value:value);Button(selected.contains(value.definition.key) ? "Featured" : "Feature on Passport"){toggle(value.definition.key)}.disabled(!value.isUnlocked || (!selected.contains(value.definition.key) && selected.count==3)).frame(minHeight:44)} } }.task{selected=(try? model.gamificationRepository?.passport().featuredAchievementKeys) ?? []}.accessibilityIdentifier("phase7.achievements") }
     private func toggle(_ key:String){if let i=selected.firstIndex(of:key){selected.remove(at:i)}else if selected.count<3{selected.append(key)};guard selected.count==3,let repo=model.gamificationRepository,var passport=try? repo.passport() else{return};passport.featuredAchievementKeys=selected;try? repo.savePassport(passport)}
 }
-private struct AchievementBadgeView:View { @Environment(\.colorScheme) private var scheme; let value:AchievementProgress; var body:some View { HStack(spacing:14){ZStack{Circle().fill(value.isUnlocked ? DesignTokens.plumSurface(scheme):DesignTokens.blueSurface(scheme)).frame(width:54,height:54);Image(systemName:value.definition.symbol).font(.system(size:23))};VStack(alignment:.leading,spacing:4){Text(value.definition.name).font(DesignTokens.functionalFont(size:16,weight:.semiBold));Text(value.isUnlocked ? "Unlocked" : value.definition.condition).foregroundStyle(DesignTokens.secondaryText(scheme));if !value.isUnlocked {Text("\(min(value.progress,value.definition.target)) of \(value.definition.target)").font(DesignTokens.functionalFont(size:12));ReadingProgressBar(.percentage(Double(value.progress)*100/Double(value.definition.target)))}};Spacer();if value.isUnlocked{Image(systemName:"checkmark.circle.fill").accessibilityLabel("Unlocked")}}.padding(12).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:14)).accessibilityElement(children:.contain) } }
-public struct CollectionScreen:View { @Environment(\.colorScheme) private var scheme; let level:Int; let states:[String:CosmeticState]; public var body:some View { BooksScreen("Collection") { Text("Cosmetics personalize surfaces and your Passport without changing semantic colors, typography or navigation.").foregroundStyle(DesignTokens.secondaryText(scheme));ForEach(CosmeticCategory.allCases,id:\.self){category in Text(category.rawValue.uppercased()).font(DesignTokens.functionalFont(size:12,weight:.semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme));ForEach(CosmeticCatalog.all.filter{$0.category == category}){item in let state:CosmeticState=states[item.key] ?? (level >= item.unlockLevel ? .unlocked:.locked); HStack{Image(systemName:category == .frames ? "circle.dashed":"paintpalette");VStack(alignment:.leading){Text(item.name).font(DesignTokens.functionalFont(size:16,weight:.semiBold));Text(state == .locked ? "Unlocks at Level \(item.unlockLevel)" : state.rawValue.capitalized).foregroundStyle(DesignTokens.secondaryText(scheme))};Spacer();Image(systemName:state == .equipped ? "checkmark.circle.fill" : state == .locked ? "lock.fill":"circle")}.frame(minHeight:58).padding(.horizontal,12).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:12)).accessibilityElement(children:.combine)} }; FeatureCelebration(eyebrow:"LEVEL UP",title:"Level 5",message:"A new cosmetic is now available. Every reading feature remains available at every level.") }.accessibilityIdentifier("phase7.collection") } }
+private struct AchievementBadgeView: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
+    let value: AchievementProgress
+    private var icon: some View { ZStack { Circle().fill(value.isUnlocked ? DesignTokens.plumSurface(scheme):DesignTokens.blueSurface(scheme)).frame(width:54,height:54); Image(systemName:value.definition.symbol).font(.system(size:23)) } }
+    @ViewBuilder private var check: some View { if value.isUnlocked { Image(systemName:"checkmark.circle.fill").accessibilityLabel("Unlocked") } }
+    private var details: some View {
+        VStack(alignment:.leading,spacing:4) {
+            Text(value.definition.name).font(DesignTokens.functionalFont(size:16,weight:.semiBold)).fixedSize(horizontal:false,vertical:true)
+            Text(value.isUnlocked ? "Unlocked":value.definition.condition).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true)
+            if !value.isUnlocked {
+                Text("\(min(value.progress,value.definition.target)) of \(value.definition.target)").font(DesignTokens.functionalFont(size:12))
+                ReadingProgressBar(.percentage(Double(value.progress)*100/Double(value.definition.target)))
+            }
+        }.frame(maxWidth:.infinity,alignment:.leading)
+    }
+    var body: some View {
+        Group {
+            if typeSize.isAccessibilitySize { VStack(alignment:.leading,spacing:12) { HStack { icon; Spacer(); check }; details } }
+            else { HStack(spacing:14) { icon; details; Spacer(); check } }
+        }.frame(maxWidth:.infinity,alignment:.leading).padding(12)
+            .background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:14))
+            .accessibilityElement(children:.contain)
+    }
+}
+public struct CollectionScreen:View { @Environment(\.colorScheme) private var scheme; let level:Int; let states:[String:CosmeticState]; public var body:some View { BooksScreen("Collection") { Text("Cosmetics personalize surfaces and your Passport without changing semantic colors, typography or navigation.").foregroundStyle(DesignTokens.secondaryText(scheme));ForEach(CosmeticCategory.allCases,id:\.self){category in Text(category.rawValue.uppercased()).font(DesignTokens.functionalFont(size:12,weight:.semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme));ForEach(CosmeticCatalog.all.filter{$0.category == category}){item in let state:CosmeticState=states[item.key] ?? (level >= item.unlockLevel ? .unlocked:.locked); CosmeticRow(item:item,state:state)} }; FeatureCelebration(eyebrow:"LEVEL UP",title:"Level 5",message:"A new cosmetic is now available. Every reading feature remains available at every level.") }.accessibilityIdentifier("phase7.collection") } }
 
+
+private struct CosmeticRow: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
+    let item: CosmeticDefinition
+    let state: CosmeticState
+    private var icon: some View { Image(systemName:item.category == .frames ? "circle.dashed":"paintpalette") }
+    private var marker: some View { Image(systemName:state == .equipped ? "checkmark.circle.fill":state == .locked ? "lock.fill":"circle") }
+    private var details: some View {
+        VStack(alignment:.leading) {
+            Text(item.name).font(DesignTokens.functionalFont(size:16,weight:.semiBold)).fixedSize(horizontal:false,vertical:true)
+            Text(state == .locked ? "Unlocks at Level \(item.unlockLevel)":state.rawValue.capitalized).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true)
+        }.frame(maxWidth:.infinity,alignment:.leading)
+    }
+    var body: some View {
+        Group {
+            if typeSize.isAccessibilitySize { VStack(alignment:.leading,spacing:8) { HStack { icon; Spacer(); marker }; details }.padding(.vertical,12) }
+            else { HStack { icon; details; Spacer(); marker } }
+        }.frame(maxWidth:.infinity,minHeight:58,alignment:.leading).padding(.horizontal,12)
+            .background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:12))
+            .accessibilityElement(children:.combine)
+    }
+}
