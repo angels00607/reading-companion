@@ -1,0 +1,242 @@
+{
+  "application_sha": "d6b455483b353cb9560cc8e96eb68f0352131628",
+  "workflow_run": 37588608227,
+  "artifact_id": 11466714847,
+  "status": "Diagnostic candidate; Phase 7 functional implementation incomplete",
+  "boards": [
+    {
+      "file": "Light-Standard.png",
+      "sha256": "6c105d5608d65d31c194f7c922a740f44c79cd805a2c377ddbd5f08658d5c6d1",
+      "sources": [
+        {
+          "route": "profile-top",
+          "source": "20C213F1-A261-4961-A95F-3F2F05AA58E1.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryL-profile-top_0_B8CC1173-ECDD-439A-90C1-F92CA81F05BF.png",
+          "timestamp": 1791359015.957,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "7fcb1a5e384909ee2f3232e95dfd309c142976609010ab3172d69f61cce9654c"
+        },
+        {
+          "route": "profile-lower",
+          "source": "63880D19-153C-4762-B663-A4D473FDAA28.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryL-profile-lower_0_649C4757-B2B4-4C39-BAF3-C17475207A35.png",
+          "timestamp": 1791359018.376,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "c977137b1a39536a79db2d9c52a4e39dd511ffdcda18fe0fac2774e073803c1b"
+        },
+        {
+          "route": "quests-top",
+          "source": "7C955BF8-1D08-4F52-BDE3-7CFC64C8DAE7.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryL-quests-top_0_49C75927-4190-49B1-A7D4-057D168CAF0F.png",
+          "timestamp": 1791359023.031,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "08329ee09edca979160a18c938577ab30eb803ae333db917c021b53f4ff4e177"
+        },
+        {
+          "route": "quests-lower",
+          "source": "80965331-D300-4220-97E4-477311E6CF5E.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryL-quests-lower_0_8BE229A5-7B07-43F2-82B0-06EEA69ADE13.png",
+          "timestamp": 1791359026.68,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "56014c35fb974e3fe6aa0903324f00979dc374c1b70263c0ea448e87e9c15f02"
+        },
+        {
+          "route": "achievements-top",
+          "source": "FE109C03-E76F-4589-B48E-D2BA1D85D500.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryL-achievements-top_0_0797DB87-9C6D-4423-BF2B-B42B5B974807.png",
+          "timestamp": 1791359031.203,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "c7cbe04593327cd271e42c4f7549086ccc069057b4e1b25bd1e8d7c379db2088"
+        },
+        {
+          "route": "achievements-lower",
+          "source": "861DD68F-4D6B-4DB5-B9B9-DD84E9A3A032.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryL-achievements-lower_0_91751530-D85C-4CA1-BF22-86C207225A8B.png",
+          "timestamp": 1791359033.334,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "3f99c758a79d187ea9670a5ffb7155cc0198e3626e2f54b185b085ca39870627"
+        },
+        {
+          "route": "collection-top",
+          "source": "510FE829-9C36-4400-AFF3-A7D0D06B24D2.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryL-collection-top_0_8AF7F2D5-1E58-4230-8C09-ABE840116E8B.png",
+          "timestamp": 1791359037.851,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "bfdb98e4cbd3289550db42ed4633edea3f4cbd4ef703bb0b4b52791e3dc6e24b"
+        },
+        {
+          "route": "collection-lower",
+          "source": "4BC07763-1324-4E35-8DA9-AA21D391A743.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryL-collection-lower_0_B63597C5-776B-4CA5-990D-459756940AF4.png",
+          "timestamp": 1791359040.147,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "bd4219a6c120dd553f864a6dc5bb322a3d351bf9d13fdf454e89033e0cf94bc2"
+        },
+        {
+          "route": "reward-top",
+          "source": "CD128BE9-2E46-499A-866C-36551C14B377.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryL-reward-top_0_8D40BF01-F789-4575-BE9F-F4560D1FCFC4.png",
+          "timestamp": 1791359044.637,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "6969f9864479e7452269a0d0ae1790ade8f48203accfe5bf699e1d10695c81cf"
+        }
+      ]
+    },
+    {
+      "file": "Dark-Standard.png",
+      "sha256": "659b4332a4fe8d3f74b6f7437bc418183d48910c81d383bad490b3c072687dfc",
+      "sources": [
+        {
+          "route": "profile-top",
+          "source": "759752EF-A160-4ACC-AC3D-2017F0245C98.png",
+          "attachment": "Phase7-Dark-UICTContentSizeCategoryL-profile-top_0_B4EF4B79-13C1-4EDE-9E73-E4729AA744B5.png",
+          "timestamp": 1791359049.18,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "14b3fa125162f47ec417f90caf354899638a635a082b0abf36763ecd0d7515fe"
+        },
+        {
+          "route": "profile-lower",
+          "source": "513096C6-C4AA-4196-865F-EF12F3A66875.png",
+          "attachment": "Phase7-Dark-UICTContentSizeCategoryL-profile-lower_0_433BE21E-3234-42EB-B78E-CD0E4FE9E124.png",
+          "timestamp": 1791359051.429,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "55b002fb40519e71c4a08cbda3f420ed7a7436e44c5fd8763ad3b96f0dfd9160"
+        },
+        {
+          "route": "quests-top",
+          "source": "DC0F1687-3C6A-4685-AD47-046A956657BC.png",
+          "attachment": "Phase7-Dark-UICTContentSizeCategoryL-quests-top_0_804FAF60-5C8D-4D00-945F-35362AFBA77F.png",
+          "timestamp": 1791359055.982,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "c95323699798f69f141c692a3c7fa5c257d815edca1aa06131ef6b2558b53f64"
+        },
+        {
+          "route": "quests-lower",
+          "source": "48E28D60-A6CC-4E03-99F2-8EEA0B325FD3.png",
+          "attachment": "Phase7-Dark-UICTContentSizeCategoryL-quests-lower_0_4CAD39CE-078A-4DAA-894A-7AFFBB6B2862.png",
+          "timestamp": 1791359059.609,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "2ceb89c5f0db14ce9dff86393702eeb58dc4c493e1854c07f742a4ed279fe996"
+        },
+        {
+          "route": "achievements-top",
+          "source": "AE234A3B-69E6-46C3-88F7-2B794B09D8CE.png",
+          "attachment": "Phase7-Dark-UICTContentSizeCategoryL-achievements-top_0_C6EB69DF-6D67-4D4B-B5F4-F1C240254BA6.png",
+          "timestamp": 1791359064.209,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "046ff1e2879a61ad043682401cc4fd7a8e374b097a56bb0f6fc94422a31aafe1"
+        },
+        {
+          "route": "achievements-lower",
+          "source": "314324CD-F6CE-48F8-8734-8CCDBD85B626.png",
+          "attachment": "Phase7-Dark-UICTContentSizeCategoryL-achievements-lower_0_00072495-EB2F-4587-AAB4-6A569A12DD22.png",
+          "timestamp": 1791359066.319,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "cb72ac63c46f79723604dc8f4b6c23456f3244457d2cd75f9d6c10e7fa058d33"
+        },
+        {
+          "route": "collection-top",
+          "source": "72BF980F-E6F3-42DD-BA1A-B4DE04771CB2.png",
+          "attachment": "Phase7-Dark-UICTContentSizeCategoryL-collection-top_0_E2A334AE-29D9-4DA5-98E7-5523CE414969.png",
+          "timestamp": 1791359070.868,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "8a8b88b9b8e0cf56f28c71816fdccef170d15c1978e7f1305a21ea485884ef70"
+        },
+        {
+          "route": "collection-lower",
+          "source": "A7CA9B11-BD23-44FA-B38F-23165DE2DBC3.png",
+          "attachment": "Phase7-Dark-UICTContentSizeCategoryL-collection-lower_0_43865CFC-3162-4795-92CE-76FD583F1126.png",
+          "timestamp": 1791359073.132,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "404d5f972a9b4197386161506e3b434c0ac52dd81fcd35573febcb9098a26a8c"
+        },
+        {
+          "route": "reward-top",
+          "source": "AF474D73-65F9-41BD-A721-FC9E1479E59C.png",
+          "attachment": "Phase7-Dark-UICTContentSizeCategoryL-reward-top_0_05BA58BE-C879-44D2-8A99-B6DD0B617997.png",
+          "timestamp": 1791359077.503,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "a48f34c3f5ef5dc180612b7c26bfa2bf88732239d6018afa8d310fa4e6b44e31"
+        }
+      ]
+    },
+    {
+      "file": "Accessibility-XXXL.png",
+      "sha256": "c338d51f24ed86c7f65882ea5153c252c41482a60a283066f74eed11bac8142d",
+      "sources": [
+        {
+          "route": "profile-top",
+          "source": "15F5B911-D1F9-4CDB-B1E6-1239CAC72C29.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryAccessibilityXXXL-profile-top_0_3E9A4555-8995-4D7C-B97C-5A11838BB0B4.png",
+          "timestamp": 1791359081.927,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "83a022ef1042d2d7c1a32ccffbc1518cbaed3f1d576a878acd608c1a68d923a1"
+        },
+        {
+          "route": "profile-lower",
+          "source": "98C46428-49BF-4630-8320-95B1211E0ABF.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryAccessibilityXXXL-profile-lower_0_84504D26-E24F-4300-9C4D-A261969E4DBD.png",
+          "timestamp": 1791359087.178,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "42703a993178db62eadda54307d5e39d660977d070599ba399081ac4d8ceddf6"
+        },
+        {
+          "route": "quests-top",
+          "source": "B5021F23-B492-48A9-99A7-01BCBDB8AFB6.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryAccessibilityXXXL-quests-top_0_F51E4E35-87C6-4CF2-97A3-F0B25D5E9195.png",
+          "timestamp": 1791359102.076,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "6e0e9a7daf64c9278c715f9382de606a547cca634f923171723dbf4eec1ac8ce"
+        },
+        {
+          "route": "quests-lower",
+          "source": "C1D41237-9D6E-408A-9B2D-39A21BFF4A10.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryAccessibilityXXXL-quests-lower_0_41B19A86-9274-49D0-A487-D4FE9071D897.png",
+          "timestamp": 1791359107.414,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "4ef87aa65cdbb87e6f656e31031ac88718daae6451f60a067482b9879f094362"
+        },
+        {
+          "route": "achievements-top",
+          "source": "8A3DF2BE-FED2-4E65-8132-2D9590EC5929.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryAccessibilityXXXL-achievements-top_0_968E9CF6-94B1-4A24-9281-B312A1CA97ED.png",
+          "timestamp": 1791359112.823,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "526551a994830b84b278294eac414afd3e3144586488778336a97fa282b62acc"
+        },
+        {
+          "route": "achievements-lower",
+          "source": "2E42CAD4-7401-4C97-B18D-5E34C8789D46.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryAccessibilityXXXL-achievements-lower_0_4BB193EF-085D-4432-9789-E271112BE1F7.png",
+          "timestamp": 1791359118.071,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "7f0922f392885c40afb3612bbf3ac5f1ce5b0a6d1e6ab764193685d082dff5c3"
+        },
+        {
+          "route": "collection-top",
+          "source": "513A8178-2286-42F0-97A7-35964D684879.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryAccessibilityXXXL-collection-top_0_CD45ADE9-667C-4512-B7E9-407850D82C35.png",
+          "timestamp": 1791359122.696,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "3eda94ab860d244e364a3ba1cb6678410e1926c52f3aa2aa90e3b7d1734c9233"
+        },
+        {
+          "route": "collection-lower",
+          "source": "59B55489-F036-44D0-B8AD-C3D1545DDAD7.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryAccessibilityXXXL-collection-lower_0_AA607314-2EC7-49F5-A5E3-3FCCE0E0497F.png",
+          "timestamp": 1791359127.914,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "1b90f881c4eff21bc22cb9ff335bcce1f5039661be5c59eaaa8ec3cf64b29e00"
+        },
+        {
+          "route": "reward-top",
+          "source": "F0B44CEF-67C4-40E1-BFF2-8C0D4D95D313.png",
+          "attachment": "Phase7-Light-UICTContentSizeCategoryAccessibilityXXXL-reward-top_0_6AFE9EBC-55AE-4002-9C5D-264AC3482457.png",
+          "timestamp": 1791359146.585,
+          "device": "iPhone SE (3rd generation)",
+          "sha256": "591e5498784e3ce6957c2d107b7885b1e82d30f7e69472e32df14934abd2d692"
+        }
+      ]
+    }
+  ]
+}
