@@ -107,6 +107,10 @@ final class Phase7ProductionTests: XCTestCase {
         XCTAssertEqual(try reopened.achievementProgress(),progress)
     }
     func testFlowGRealLevelUnlockAndEssentialsRemainAvailable() throws {
+        XCTAssertEqual(GamificationBalance.level(totalXP:499),1)
+        XCTAssertEqual(GamificationBalance.level(totalXP:500),2)
+        XCTAssertEqual(GamificationBalance.progress(totalXP:500),0)
+        XCTAssertEqual(GamificationBalance.level(totalXP:501),2)
         let s = try store(Phase7Clock())
         XCTAssertEqual(try s.cosmeticStates()["accent.berry"],.locked)
         for _ in 0..<5 { let (_,r) = try reading(s); try s.finish(readingID:r,confirmed:true,date:nil,revision:0) }
