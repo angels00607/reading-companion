@@ -55,6 +55,8 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: ReadingCompanion
+      - package: Foundations
+        product: ReadingData
   FoundationAcceptanceTests:
     type: bundle.ui-testing
     platform: iOS

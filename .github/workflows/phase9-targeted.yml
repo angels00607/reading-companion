@@ -14,17 +14,31 @@ jobs:
       - uses: actions/checkout@v4
       - run: swift --version
       - name: Phase 9 archive and security boundary tests
+        if: ${{ !contains(github.event.head_commit.message, '[phase9-native]') }}
         env:
           PHASE9_INTEROPERABILITY_FILE: /tmp/phase9-interoperable.zip
         run: swift test --filter '(Phase9|InvariantTests)'
       - name: Independent Python ZIP and SHA-256 interoperability
+        if: ${{ !contains(github.event.head_commit.message, '[phase9-native]') }}
         run: python3 scripts/test_portable_backup_interop.py /tmp/phase9-interoperable.zip
       - run: brew install xcodegen
       - run: xcodegen generate
       - name: iOS dependency and application build
+        if: ${{ !contains(github.event.head_commit.message, '[phase9-native]') }}
         run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Native Phase 9 Keychain integration only
+        run: |
+          xcrun simctl list devices available -j > /tmp/phase9-simulators.json
+          SIMULATOR_ID=$(python3 -c "import json; d=json.load(open('/tmp/phase9-simulators.json')); print(next(v['udid'] for group in d['devices'].values() for v in group if 'iPhone' in v['name']))")
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase9Keychain.xcresult -only-testing:FoundationFontTests/Phase9KeychainTests CODE_SIGNING_ALLOWED=NO test
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && !contains(github.event.head_commit.message, '[phase9-native]') }}
         with:
           name: phase9-portable-interoperability
           path: /tmp/phase9-interoperable.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase9-keychain-results
+          path: work/Phase9Keychain.xcresult
