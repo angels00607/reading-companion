@@ -135,14 +135,31 @@ final class Phase7ProductionTests: XCTestCase {
         XCTAssertEqual(try s.achievementProgress().first { $0.definition.key == "books.first" }?.progress,0)
         XCTAssertFalse(try s.xpAwards().contains { $0.source == .finishBook })
     }
+    func testExistingDomainFactsRemainAuthoritativeWithoutOrdinaryXPBackfill() throws {
+        let s = try store(Phase7Clock())
+        let b = try s.add(work:.init(provider:"legacy",reference:"live",title:"An existing reading",author:"Author"))
+        let existing = try s.recordCompleted(bookID:b,editionID:nil,date:nil,rating:.noRating)
+        // Simulate a pre-gamification, genuine nonhistorical domain record. Migration
+        // does not manufacture an event or rewrite the ordinary XP ledger.
+        try s.queue.write { try $0.execute(sql:"UPDATE readings SET historical=0 WHERE owner_id=? AND id=?",arguments:[s.ownerID.uuidString,existing.uuidString]) }
+        let h = try s.add(work:.init(provider:"import",reference:"past",title:"A historical import",author:"Author"))
+        _ = try s.recordCompleted(bookID:h,editionID:nil,date:nil,rating:.unknown)
+        _ = try s.currentQuests()
+        XCTAssertEqual(try s.achievementProgress().first { $0.definition.key == "books.ten" }?.progress,1)
+        XCTAssertTrue(try s.achievementProgress().first { $0.definition.key == "books.first" }!.isUnlocked)
+        XCTAssertFalse(try s.xpAwards().contains { $0.source == .finishBook || $0.source == .journalWork })
+        XCTAssertTrue(try s.currentQuests().allSatisfy { $0.progress == 0 })
+        XCTAssertEqual(try s.xpAwards().count,1)
+    }
     func testLatePeriodDayCapsAndWeekYear() {
         let late = ISO8601DateFormatter().date(from:"2026-10-31T12:00:00Z")!
         XCTAssertEqual(QuestPeriod(cadence:.monthly,now:late,timeZone:zone).availableDays,1)
         let year = ISO8601DateFormatter().date(from:"2027-01-01T12:00:00Z")!
         XCTAssertEqual(QuestPeriod(cadence:.weekly,now:year,timeZone:zone).key,"2026-W53")
         for t in QuestCatalog.templates where t.family == .frequency || t.family == .consistency {
-            XCTAssertLessThanOrEqual(QuestRules.target(for:t,cadence:.daily,activity:.init(sessionsPerWeek:[999])),1)
-            XCTAssertLessThanOrEqual(QuestRules.target(for:t,cadence:.weekly,activity:.init(sessionsPerWeek:[999])),7)
+            XCTAssertLessThanOrEqual(QuestRules.target(for:t,cadence:.daily,activity:.init(readingDaysPerWeek:[999])),1)
+            XCTAssertLessThanOrEqual(QuestRules.target(for:t,cadence:.weekly,activity:.init(readingDaysPerWeek:[999])),7)
+            XCTAssertEqual(QuestRules.target(for:t,cadence:.daily,activity:.init(sessionsPerWeek:[999])),1,"Sessions must not be interpreted as recorded days")
         }
     }
 }

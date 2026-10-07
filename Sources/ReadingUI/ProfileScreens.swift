@@ -82,7 +82,7 @@ public struct HomePrimaryQuest: View {
 }
 
 public struct ProfileHome:View {
-    @EnvironmentObject private var model:BooksModel; @Environment(\.colorScheme) private var scheme
+    @EnvironmentObject private var model:BooksModel; @Environment(\.colorScheme) private var scheme; @Environment(\.dynamicTypeSize) private var typeSize
     @State private var passport=ReaderPassport(); @State private var awards=[XPAward](); @State private var achievements=[AchievementProgress](); @State private var quests=[QuestInstance](); @State private var cosmetics=[String:CosmeticState](); @State private var bookCount=0; @State private var pageCount="Unknown"; @State private var error:String?
     public init(){}
     private var xp:Int { awards.reduce(0){$0+$1.amount} }; private var level:Int { GamificationBalance.level(totalXP:xp) }
@@ -100,8 +100,42 @@ public struct ProfileHome:View {
         NavigationLink("Open Collection") { CollectionScreen(level:level,states:cosmetics) }.buttonStyle(ProfileLinkStyle())
         if let error { StatePresentation(kind:.error,title:"Profile unavailable",message:error) }
     }.task(id:model.version) { load() }.accessibilityIdentifier("phase7.profile") }
-    private var passportHeader:some View { HStack(spacing:16) { ZStack { Circle().fill(cosmetics["background.midnight"] == .equipped ? DesignTokens.plumSurface(scheme) : DesignTokens.blueSurface(scheme)).frame(width:84,height:84); Image(systemName:passport.avatarSymbol).font(.system(size:48)).foregroundStyle(DesignTokens.primary(scheme)); Circle().stroke(cosmetics["frame.classic"] == .equipped ? DesignTokens.secondary(scheme) : DesignTokens.border(scheme),lineWidth:3).frame(width:92,height:92) }.accessibilityLabel(cosmetics["frame.classic"] == .equipped ? "Reader avatar with equipped frame" : "Reader avatar"); VStack(alignment:.leading,spacing:5){ Text(passport.name).font(DesignTokens.functionalFont(size:26,relativeTo:.title,weight:.semiBold)); Text("READING HISTORY SINCE \(String(passport.readingSince))").font(DesignTokens.functionalFont(size:12,relativeTo:.caption,weight:.medium)).foregroundStyle(DesignTokens.secondaryText(scheme)) } }.padding(.vertical,8) }
-    private var levelCard:some View { VStack(alignment:.leading,spacing:10){ HStack { VStack(alignment:.leading){Text("LEVEL \(level)").font(DesignTokens.functionalFont(size:13,weight:.semiBold));Text("\(xp.formatted()) XP").font(DesignTokens.functionalFont(size:24,relativeTo:.title2,weight:.semiBold))};Spacer();Text("\(GamificationBalance.xpPerLevel-GamificationBalance.progress(totalXP:xp)) XP to Level \(level+1)").font(DesignTokens.functionalFont(size:13)).foregroundStyle(DesignTokens.secondaryText(scheme)).multilineTextAlignment(.trailing) }; ReadingProgressBar(.percentage(Double(GamificationBalance.progress(totalXP:xp))/5.0)) }.padding(16).background(DesignTokens.blueSurface(scheme),in:RoundedRectangle(cornerRadius:14)).accessibilityElement(children:.contain).accessibilityIdentifier("profile.level") }
+    private var passportHeader: some View {
+        Group {
+            if typeSize.isAccessibilitySize { VStack(alignment:.leading,spacing:16) { avatar; identity } }
+            else { HStack(spacing:16) { avatar; identity } }
+        }.padding(.vertical,8)
+    }
+    private var avatar: some View {
+        ZStack {
+            Circle().fill(cosmetics["background.midnight"] == .equipped ? DesignTokens.plumSurface(scheme) : DesignTokens.blueSurface(scheme)).frame(width:84,height:84)
+            Image(systemName:passport.avatarSymbol).font(.system(size:48)).foregroundStyle(DesignTokens.primary(scheme))
+            Circle().stroke(cosmetics["frame.classic"] == .equipped ? DesignTokens.secondary(scheme) : DesignTokens.border(scheme),lineWidth:3).frame(width:92,height:92)
+        }.accessibilityLabel(cosmetics["frame.classic"] == .equipped ? "Reader avatar with equipped frame" : "Reader avatar")
+    }
+    private var identity: some View {
+        VStack(alignment:.leading,spacing:5) {
+            Text(passport.name).font(DesignTokens.functionalFont(size:26,relativeTo:.title,weight:.semiBold)).fixedSize(horizontal:false,vertical:true)
+            Text("READING HISTORY SINCE \(String(passport.readingSince))").font(DesignTokens.functionalFont(size:12,relativeTo:.caption,weight:.medium)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true)
+        }.frame(maxWidth:.infinity,alignment:.leading)
+    }
+    private var levelIdentity: some View {
+        VStack(alignment:.leading) {
+            Text("LEVEL \(level)").font(DesignTokens.functionalFont(size:13,weight:.semiBold))
+            Text("\(xp.formatted()) XP").font(DesignTokens.functionalFont(size:24,relativeTo:.title2,weight:.semiBold)).fixedSize(horizontal:false,vertical:true)
+        }
+    }
+    private var remainingXP: some View {
+        Text("\(GamificationBalance.xpPerLevel-GamificationBalance.progress(totalXP:xp)) XP to Level \(level+1)")
+            .font(DesignTokens.functionalFont(size:13)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true)
+    }
+    private var levelCard: some View {
+        VStack(alignment:.leading,spacing:10) {
+            if typeSize.isAccessibilitySize { VStack(alignment:.leading,spacing:10) { levelIdentity; remainingXP } }
+            else { HStack { levelIdentity; Spacer(); remainingXP.multilineTextAlignment(.trailing) } }
+            ReadingProgressBar(.percentage(Double(GamificationBalance.progress(totalXP:xp))/5.0))
+        }.padding(16).background(DesignTokens.blueSurface(scheme),in:RoundedRectangle(cornerRadius:14)).accessibilityElement(children:.contain).accessibilityIdentifier("profile.level")
+    }
     private var metrics:some View { ViewThatFits { HStack(spacing:8){metric("Books","\(bookCount)");metric("Pages",pageCount);metric("Achievements","\(achievements.filter(\.isUnlocked).count)")}; VStack(spacing:8){metric("Books","\(bookCount)");metric("Pages",pageCount);metric("Achievements","\(achievements.filter(\.isUnlocked).count)")} } }
     private func metric(_ label:String,_ value:String)->some View { VStack(spacing:3){Text(value).font(DesignTokens.functionalFont(size:20,weight:.semiBold));Text(label).font(DesignTokens.functionalFont(size:12)).foregroundStyle(DesignTokens.secondaryText(scheme))}.frame(maxWidth:.infinity,minHeight:64).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:12)) }
     private var favorites:some View { VStack(alignment:.leading,spacing:8){ Text("FAVORITES").font(DesignTokens.functionalFont(size:12,weight:.semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme)); Text("Favorite Books Â· \(passport.favoriteBooks.count) selected"); Text("Series Â· \(passport.favoriteSeries ?? "Not configured")\nAuthor Â· \(passport.favoriteAuthor ?? "Not configured")\nGenre Â· \(passport.favoriteGenre ?? "Not configured")").foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true) } }

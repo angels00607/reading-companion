@@ -19,8 +19,8 @@ public enum QuestCadence: String, Codable, CaseIterable, Sendable { case daily, 
 }
 public enum QuestFamily: String, Codable, CaseIterable, Sendable { case frequency, pages, sessions, progress, completion, journalActivity, organization, consistency }
 public struct ActivitySummary: Equatable, Sendable {
-    public let genuinePagesPerDay: [Int]; public let sessionsPerWeek: [Int]; public let completionsPerMonth: [Int]; public let journalActionsPerWeek: [Int]
-    public init(genuinePagesPerDay:[Int]=[],sessionsPerWeek:[Int]=[],completionsPerMonth:[Int]=[],journalActionsPerWeek:[Int]=[]) { self.genuinePagesPerDay=genuinePagesPerDay; self.sessionsPerWeek=sessionsPerWeek; self.completionsPerMonth=completionsPerMonth; self.journalActionsPerWeek=journalActionsPerWeek }
+    public let genuinePagesPerDay: [Int]; public let sessionsPerWeek: [Int]; public let completionsPerMonth: [Int]; public let journalActionsPerWeek: [Int]; public let readingDaysPerWeek: [Int]
+    public init(genuinePagesPerDay:[Int]=[],sessionsPerWeek:[Int]=[],completionsPerMonth:[Int]=[],journalActionsPerWeek:[Int]=[],readingDaysPerWeek:[Int]=[]) { self.genuinePagesPerDay=genuinePagesPerDay; self.sessionsPerWeek=sessionsPerWeek; self.completionsPerMonth=completionsPerMonth; self.journalActionsPerWeek=journalActionsPerWeek; self.readingDaysPerWeek=readingDaysPerWeek }
 }
 public struct QuestTemplate: Identifiable, Codable, Equatable, Sendable {
     public var id:String { key }; public let key:String; public let family:QuestFamily; public let cadences:Set<QuestCadence>; public let title:String; public let unit:String; public let minimum:Int; public let maximum:Int; public let cooldownPeriods:Int
@@ -55,9 +55,14 @@ public enum QuestCatalog {
 public enum QuestRules {
     public static func target(for template:QuestTemplate,cadence:QuestCadence,activity:ActivitySummary) -> Int {
         let values:[Int]
-        switch template.family { case .pages: values=activity.genuinePagesPerDay; case .sessions,.frequency,.consistency: values=activity.sessionsPerWeek; case .completion: values=activity.completionsPerMonth; case .journalActivity: values=activity.journalActionsPerWeek; default: values=[] }
+        switch template.family { case .pages: values=activity.genuinePagesPerDay; case .sessions: values=activity.sessionsPerWeek; case .frequency,.consistency: values=activity.readingDaysPerWeek; case .completion: values=activity.completionsPerMonth; case .journalActivity: values=activity.journalActionsPerWeek; default: values=[] }
         let recent=Array(values.suffix(6)).sorted(); let smoothed = recent.isEmpty ? template.minimum : recent[recent.count/2]
-        let scale = cadence == .daily ? 1 : cadence == .weekly ? 2 : 4
+        let scale: Int
+        switch template.family {
+        case .frequency,.consistency,.journalActivity: scale = cadence == .monthly ? 2 : 1
+        case .completion: scale = 1
+        default: scale = cadence == .daily ? 1 : cadence == .weekly ? 2 : 4
+        }
         let cap = (template.family == .frequency || template.family == .consistency) ? (cadence == .daily ? 1 : cadence == .weekly ? 7 : 12) : template.maximum
         return min(cap,min(template.maximum,max(template.minimum,min(template.maximum,max(0,smoothed))*scale)))
     }

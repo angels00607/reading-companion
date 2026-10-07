@@ -56,10 +56,13 @@ a new slot. Progress and completion timestamps are monotonic. Quest XP uses
 
 ## Achievements and levels
 
-The five V1 conditions evaluate transactionally from the verified live finish
-and Journal award keys, completed persisted Quests and permanent XP level.
+The five V1 conditions evaluate transactionally from nonhistorical completed
+ReadingInstances, genuine copied Book Reviews, completed persisted Quests and
+permanent XP level. Verified live finish/Journal award IDs retain earned facts
+after deletion, without counting them twice alongside the underlying records.
 Historical import has no backfill migration or replay. Existing legitimate live
-awards remain facts. Catalog progress is known from these aggregates; database
+records/awards remain facts; evaluating a new catalog condition does not backfill
+ordinary Finish/Journal XP. Catalog progress is known from these aggregates; database
 read failures show the visible catalog with **Progress unknown**, not fake zero.
 Unlock timestamps/progress are monotonic; `achievement:<catalog key>` deduplicates
 configured 50–250 XP, with 0 XP for the Level-only condition. Level is always

@@ -261,6 +261,12 @@ retroactive awards.
 No currency/rarity/paywall fields are required by product.
 
 Phase 7 persists private `reader_profiles`, period-keyed `quest_instances`,
+with additive `quest_lifecycle` slot/creation-baseline metadata and immutable
+`gamification_activity` facts for real live commands. Local v9 and Supabase
+`202610070002_live_gamification.sql` add these without rewriting prior migrations
+or backfilling ordinary XP. Exact periods, cooldowns, rerolls, derived Achievement
+conditions and cosmetic eligibility are specified in [PHASE_7_LIFECYCLE.md](PHASE_7_LIFECYCLE.md).
+Phase 7 also preserves
 monotonic `achievement_progress`, and `user_cosmetics`. Quest rows preserve reroll
 history rather than deleting rejected candidates. Locked cosmetics are derived from
 the catalog and level; only unlocked/equipped state is persisted.

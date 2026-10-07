@@ -51,8 +51,16 @@ extension LocalStore {
     private func makeQuest(_ t: QuestTemplate, period p: QuestPeriod, db: Database) throws -> QuestInstance {
         let rows = try Row.fetchAll(db,sql:"SELECT family,activity_date,SUM(quantity) AS amount FROM gamification_activity WHERE owner_id=? GROUP BY family,activity_date ORDER BY activity_date",arguments:[ownerID.uuidString])
         let pages = rows.filter { ($0["family"] as String) == "pages" }.map { $0["amount"] as Int }
-        let journal = rows.filter { ($0["family"] as String) == "journalActivity" }.map { $0["amount"] as Int }
-        let activity = ActivitySummary(genuinePagesPerDay:pages,journalActionsPerWeek:journal)
+        var journal = [String:Int](), days = [String:Int](), completions = [String:Int]()
+        for row in rows {
+            let date: String = row["activity_date"], family: String = row["family"], amount: Int = row["amount"]
+            if family == "completion" { completions[String(date.prefix(7)),default:0] += amount }
+            guard let start = QuestPeriod.start(cadence:.daily,key:date,timeZone:gamificationTimeZone) else { continue }
+            let week = QuestPeriod(cadence:.weekly,now:start,timeZone:gamificationTimeZone).key
+            if family == "journalActivity" { journal[week,default:0] += amount }
+            if family == "frequency" { days[week,default:0] += 1 }
+        }
+        let activity = ActivitySummary(genuinePagesPerDay:pages,completionsPerMonth:completions.keys.sorted().map { completions[$0]! },journalActionsPerWeek:journal.keys.sorted().map { journal[$0]! },readingDaysPerWeek:days.keys.sorted().map { days[$0]! })
         var target = QuestRules.target(for:t,cadence:p.cadence,activity:activity)
         if t.family == .frequency || t.family == .consistency {
             // A date already counted at creation cannot be counted again. Bound late starts.
@@ -131,10 +139,24 @@ extension LocalStore {
         try evaluateAchievements(db)
     }
     func evaluateAchievements(_ db: Database) throws {
-        func count(_ source: String, _ prefix: String) throws -> Int {
-            try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM xp_awards x JOIN xp_award_metadata m ON m.owner_id=x.owner_id AND m.semantic_key=x.semantic_key WHERE x.owner_id=? AND m.source=? AND x.semantic_key LIKE ?",arguments:[ownerID.uuidString,source,prefix+"%"] ) ?? 0
-        }
-        let books = try count("finishBook","finish-book:"), journal = try count("journalWork","journal-work:")
+        // Persisted nonhistorical domain facts are authoritative even when they
+        // predate the XP hook. Permanent award IDs preserve earned facts after deletion.
+        // This evaluates catalog conditions; it does not backfill Finish/Journal XP.
+        let books = try Int.fetchOne(db,sql:"""
+            SELECT COUNT(*) FROM (
+              SELECT lower(id) FROM readings WHERE owner_id=? AND historical=0 AND status='read' AND deleted_at IS NULL
+              UNION SELECT lower(substr(x.semantic_key,13)) FROM xp_awards x JOIN xp_award_metadata m ON m.owner_id=x.owner_id AND m.semantic_key=x.semantic_key
+              WHERE x.owner_id=? AND m.source='finishBook' AND x.semantic_key LIKE 'finish-book:%'
+            )
+            """,arguments:[ownerID.uuidString,ownerID.uuidString]) ?? 0
+        let journal = try Int.fetchOne(db,sql:"""
+            SELECT COUNT(*) FROM (
+              SELECT lower(c.reading_id) FROM journal_components c JOIN readings r ON r.owner_id=c.owner_id AND r.id=c.reading_id
+              WHERE c.owner_id=? AND c.component='book_review' AND c.state='copied' AND r.historical=0
+              UNION SELECT lower(substr(x.semantic_key,14,36)) FROM xp_awards x JOIN xp_award_metadata m ON m.owner_id=x.owner_id AND m.semantic_key=x.semantic_key
+              WHERE x.owner_id=? AND m.source='journalWork' AND x.semantic_key LIKE 'journal-work:%:book-review'
+            )
+            """,arguments:[ownerID.uuidString,ownerID.uuidString]) ?? 0
         let quests = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM quest_instances WHERE owner_id=? AND completed_at IS NOT NULL",arguments:[ownerID.uuidString]) ?? 0
         for definition in AchievementCatalog.all {
             let total = try Int.fetchOne(db,sql:"SELECT COALESCE(SUM(amount),0) FROM xp_awards WHERE owner_id=?",arguments:[ownerID.uuidString]) ?? 0
