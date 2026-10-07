@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(14);
 select has_table('public','gamification_activity','live activity facts');
 select has_table('public','quest_lifecycle','slot and baseline metadata');
 select is((select relrowsecurity from pg_class where oid='public.gamification_activity'::regclass),true,'activity RLS');
@@ -19,4 +19,6 @@ select is((select count(*)::int from public.gamification_activity),0,'other owne
 select is((select count(*)::int from public.quest_lifecycle),0,'other owner cannot read slots');
 select throws_ok($$insert into public.gamification_activity values('00000000-0000-0000-0000-000000000071','wrong-owner','progress','00000000-0000-0000-0000-000000000072',1,'2026-10-05',now())$$,'42501',null,'cross-owner insert rejected');
 reset role;
+select throws_ok($$insert into public.user_cosmetics values('00000000-0000-0000-0000-000000000071','invented','equipped',now())$$,'23514','Unknown or locked cosmetic','unknown catalog key rejected');
+select throws_ok($$insert into public.user_cosmetics values('00000000-0000-0000-0000-000000000071','accent.berry','equipped',now())$$,'23514','Unknown or locked cosmetic','locked cosmetic rejected');
 select * from finish(); rollback;

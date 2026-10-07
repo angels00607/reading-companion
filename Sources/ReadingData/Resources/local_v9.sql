@@ -14,3 +14,19 @@ CREATE TABLE quest_lifecycle (
  baseline INTEGER NOT NULL CHECK(baseline>=0), created_at TEXT NOT NULL,
  PRIMARY KEY(owner_id,quest_id), FOREIGN KEY(owner_id,quest_id) REFERENCES quest_instances(owner_id,id)
 );
+-- Defense in depth for the six V1 keys; one key per category plus the PK
+-- enforces one equipped choice. Future catalog additions need a matching migration.
+CREATE TRIGGER cosmetic_eligibility_insert BEFORE INSERT ON user_cosmetics
+WHEN NEW.cosmetic_key NOT IN ('background.midnight','accent.berry','frame.classic','card.frosted','decoration.sparkle','theme.modern-bookish') OR (CASE NEW.cosmetic_key
+ WHEN 'background.midnight' THEN 1 WHEN 'accent.berry' THEN 2
+ WHEN 'frame.classic' THEN 1 WHEN 'card.frosted' THEN 3
+ WHEN 'decoration.sparkle' THEN 4 WHEN 'theme.modern-bookish' THEN 1 ELSE 2147483647 END)
+ > (SELECT COALESCE(SUM(amount),0)/500+1 FROM xp_awards WHERE owner_id=NEW.owner_id)
+BEGIN SELECT RAISE(ABORT,'Unknown or locked cosmetic'); END;
+CREATE TRIGGER cosmetic_eligibility_update BEFORE UPDATE ON user_cosmetics
+WHEN NEW.cosmetic_key NOT IN ('background.midnight','accent.berry','frame.classic','card.frosted','decoration.sparkle','theme.modern-bookish') OR (CASE NEW.cosmetic_key
+ WHEN 'background.midnight' THEN 1 WHEN 'accent.berry' THEN 2
+ WHEN 'frame.classic' THEN 1 WHEN 'card.frosted' THEN 3
+ WHEN 'decoration.sparkle' THEN 4 WHEN 'theme.modern-bookish' THEN 1 ELSE 2147483647 END)
+ > (SELECT COALESCE(SUM(amount),0)/500+1 FROM xp_awards WHERE owner_id=NEW.owner_id)
+BEGIN SELECT RAISE(ABORT,'Unknown or locked cosmetic'); END;

@@ -78,7 +78,22 @@ public enum AchievementCatalog { public static let all:[AchievementDefinition] =
     .init(key:"quests.ten",name:"Gentle Momentum",condition:"Complete 10 Quests",target:10,xp:150,symbol:"sparkles"),
     .init(key:"level.five",name:"Reader at Heart",condition:"Reach Level 5",target:5,xp:0,symbol:"bookmark.fill")
 ] }
-public struct AchievementProgress: Identifiable, Codable, Equatable, Sendable { public var id:String{definition.key}; public let definition:AchievementDefinition; public let progress:Int; public let unlockedAt:Date?; public var isUnlocked:Bool{unlockedAt != nil}; public init(definition:AchievementDefinition,progress:Int,unlockedAt:Date?=nil){self.definition=definition;self.progress=max(0,progress);self.unlockedAt=unlockedAt} }
+public struct AchievementProgress: Identifiable, Codable, Equatable, Sendable {
+    public var id:String { definition.key }
+    public let definition:AchievementDefinition
+    public let progress:Int
+    public let progressKnown:Bool
+    public let unlockedAt:Date?
+    public var isUnlocked:Bool { unlockedAt != nil }
+    public init(definition:AchievementDefinition,progress:Int,unlockedAt:Date?=nil,progressKnown:Bool=true) {
+        self.definition=definition;self.progress=max(0,progress);self.unlockedAt=unlockedAt;self.progressKnown=progressKnown
+    }
+    private enum CodingKeys:String,CodingKey { case definition,progress,unlockedAt,progressKnown }
+    public init(from decoder:Decoder) throws {
+        let c = try decoder.container(keyedBy:CodingKeys.self)
+        self.init(definition:try c.decode(AchievementDefinition.self,forKey:.definition),progress:try c.decode(Int.self,forKey:.progress),unlockedAt:try c.decodeIfPresent(Date.self,forKey:.unlockedAt),progressKnown:try c.decodeIfPresent(Bool.self,forKey:.progressKnown) ?? true)
+    }
+}
 
 public enum CosmeticCategory:String,Codable,CaseIterable,Sendable { case backgrounds, accents, frames, cards, decorations, themes }
 public enum CosmeticState:String,Codable,Sendable { case locked, unlocked, equipped }

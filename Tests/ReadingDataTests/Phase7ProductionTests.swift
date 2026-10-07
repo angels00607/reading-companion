@@ -121,6 +121,9 @@ final class Phase7ProductionTests: XCTestCase {
         XCTAssertEqual(try reopened.cosmeticStates()["background.midnight"],.equipped)
         XCTAssertEqual(try reopened.cosmeticStates()["accent.berry"],.locked)
         XCTAssertTrue(try reopened.xpAwards().isEmpty)
+        try reopened.setCosmetic("frame.classic",state:.unlocked)
+        XCTAssertEqual(try reopened.cosmeticStates()["frame.classic"],.unlocked)
+        XCTAssertEqual(try reopened.cosmeticStates()["background.midnight"],.equipped,"Preset categories remain individually editable")
     }
     func testNoPercentagePagesSessionsImportOrDNFCompletion() throws {
         let s = try store(Phase7Clock()),(_,r) = try reading(s,mode:.percentage)

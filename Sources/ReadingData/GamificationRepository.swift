@@ -37,7 +37,9 @@ extension LocalStore: GamificationRepository {
         let rows=try Row.fetchAll(db,sql:"SELECT * FROM achievement_progress WHERE owner_id=?",arguments:[ownerID.uuidString]); let map=Dictionary(uniqueKeysWithValues:rows.map{($0["achievement_key"] as String,$0)})
         return AchievementCatalog.all.map { definition in let row=map[definition.key]; return AchievementProgress(definition:definition,progress:row?["progress"] ?? 0,unlockedAt:(row?["unlocked_at"] as String?).flatMap(ISO8601DateFormatter().date)) }
     } }
-    public func saveAchievementProgress(_ values:[AchievementProgress]) throws { try queue.write { db in for a in values { try db.execute(sql:"""
+    public func saveAchievementProgress(_ values:[AchievementProgress]) throws { try queue.write { db in for a in values {
+        guard a.progressKnown, AchievementCatalog.all.contains(a.definition) else { throw GamificationError.invalidTarget }
+        try db.execute(sql:"""
         INSERT INTO achievement_progress(owner_id,achievement_key,progress,unlocked_at) VALUES(?,?,?,?) ON CONFLICT(owner_id,achievement_key) DO UPDATE SET progress=max(achievement_progress.progress,excluded.progress),unlocked_at=coalesce(achievement_progress.unlocked_at,excluded.unlocked_at)
         """,arguments:[ownerID.uuidString,a.definition.key,a.progress,a.unlockedAt.map(ISO8601DateFormatter().string)]); if a.isUnlocked, a.definition.xp > 0 { _ = try insertXPAward(try XPAward(semanticKey:"achievement:\(a.definition.key)",source:.achievement,amount:a.definition.xp),db:db) } } } }
     public func cosmeticStates() throws -> [String:CosmeticState] { try queue.read { db in

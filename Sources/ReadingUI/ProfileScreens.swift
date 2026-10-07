@@ -21,7 +21,7 @@ public struct ProfileVisualQA: View {
                     case "collection": CollectionScreen(level: level, states: states)
                     case "reward": BooksScreen("Reward") {
                         if let reward = model.gamificationReward {
-                            FeatureCelebration(eyebrow:"LEVEL UP",title:"A new reader level",message:reward)
+                            FeatureCelebration(eyebrow:model.gamificationRewardTitle,title:"Your reading milestone",message:reward,dismiss:{ model.gamificationReward = nil })
                         } else { Text("No new level has been reached.") }
                     }
                     default: ProfileHome()
@@ -89,8 +89,7 @@ public struct ProfileHome:View {
     public var body:some View { BooksScreen("Reader Passport") {
         passportHeader
         if let reward = model.gamificationReward {
-            FeatureCelebration(eyebrow:model.gamificationRewardTitle,title:"Your reading milestone",message:reward)
-            Button("Continue reading") { model.gamificationReward = nil }.frame(minHeight:44)
+            FeatureCelebration(eyebrow:model.gamificationRewardTitle,title:"Your reading milestone",message:reward,dismiss:{ model.gamificationReward = nil })
         }
         levelCard
         metrics
@@ -101,7 +100,7 @@ public struct ProfileHome:View {
         NavigationLink("Open Collection") { CollectionScreen(level:level,states:cosmetics) }.buttonStyle(ProfileLinkStyle())
         if let error { StatePresentation(kind:.error,title:"Profile unavailable",message:error) }
     }.task(id:model.version) { load() }.accessibilityIdentifier("phase7.profile") }
-    private var passportHeader:some View { HStack(spacing:16) { ZStack { Circle().fill(cosmetics["background.midnight"] == .equipped ? DesignTokens.plumSurface(scheme) : DesignTokens.blueSurface(scheme)).frame(width:84,height:84); Image(systemName:passport.avatarSymbol).font(.system(size:48)).foregroundStyle(DesignTokens.primary(scheme)); Circle().stroke(cosmetics["frame.classic"] == .equipped ? DesignTokens.secondary(scheme) : DesignTokens.border(scheme),lineWidth:3).frame(width:92,height:92) }.accessibilityLabel("Reader avatar with equipped frame"); VStack(alignment:.leading,spacing:5){ Text(passport.name).font(DesignTokens.functionalFont(size:26,relativeTo:.title,weight:.semiBold)); Text("READING HISTORY SINCE \(String(passport.readingSince))").font(DesignTokens.functionalFont(size:12,relativeTo:.caption,weight:.medium)).foregroundStyle(DesignTokens.secondaryText(scheme)) } }.padding(.vertical,8) }
+    private var passportHeader:some View { HStack(spacing:16) { ZStack { Circle().fill(cosmetics["background.midnight"] == .equipped ? DesignTokens.plumSurface(scheme) : DesignTokens.blueSurface(scheme)).frame(width:84,height:84); Image(systemName:passport.avatarSymbol).font(.system(size:48)).foregroundStyle(DesignTokens.primary(scheme)); Circle().stroke(cosmetics["frame.classic"] == .equipped ? DesignTokens.secondary(scheme) : DesignTokens.border(scheme),lineWidth:3).frame(width:92,height:92) }.accessibilityLabel(cosmetics["frame.classic"] == .equipped ? "Reader avatar with equipped frame" : "Reader avatar"); VStack(alignment:.leading,spacing:5){ Text(passport.name).font(DesignTokens.functionalFont(size:26,relativeTo:.title,weight:.semiBold)); Text("READING HISTORY SINCE \(String(passport.readingSince))").font(DesignTokens.functionalFont(size:12,relativeTo:.caption,weight:.medium)).foregroundStyle(DesignTokens.secondaryText(scheme)) } }.padding(.vertical,8) }
     private var levelCard:some View { VStack(alignment:.leading,spacing:10){ HStack { VStack(alignment:.leading){Text("LEVEL \(level)").font(DesignTokens.functionalFont(size:13,weight:.semiBold));Text("\(xp.formatted()) XP").font(DesignTokens.functionalFont(size:24,relativeTo:.title2,weight:.semiBold))};Spacer();Text("\(GamificationBalance.xpPerLevel-GamificationBalance.progress(totalXP:xp)) XP to Level \(level+1)").font(DesignTokens.functionalFont(size:13)).foregroundStyle(DesignTokens.secondaryText(scheme)).multilineTextAlignment(.trailing) }; ReadingProgressBar(.percentage(Double(GamificationBalance.progress(totalXP:xp))/5.0)) }.padding(16).background(DesignTokens.blueSurface(scheme),in:RoundedRectangle(cornerRadius:14)).accessibilityElement(children:.contain).accessibilityIdentifier("profile.level") }
     private var metrics:some View { ViewThatFits { HStack(spacing:8){metric("Books","\(bookCount)");metric("Pages",pageCount);metric("Achievements","\(achievements.filter(\.isUnlocked).count)")}; VStack(spacing:8){metric("Books","\(bookCount)");metric("Pages",pageCount);metric("Achievements","\(achievements.filter(\.isUnlocked).count)")} } }
     private func metric(_ label:String,_ value:String)->some View { VStack(spacing:3){Text(value).font(DesignTokens.functionalFont(size:20,weight:.semiBold));Text(label).font(DesignTokens.functionalFont(size:12)).foregroundStyle(DesignTokens.secondaryText(scheme))}.frame(maxWidth:.infinity,minHeight:64).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:12)) }
@@ -162,7 +161,7 @@ private struct QuestCard: View {
             .overlay { RoundedRectangle(cornerRadius:14).stroke(DesignTokens.border(scheme)) }
     }
 }
-public struct AchievementsScreen:View { @Environment(\.colorScheme) private var scheme; @EnvironmentObject private var model:BooksModel; @State private var values:[AchievementProgress]; @State private var selected=[String](); @State private var loadError:String?; init(values:[AchievementProgress]) { _values = State(initialValue:values) }; public var body:some View { BooksScreen("Achievements") { Text("All Achievements are visible. Select exactly 3 to feature on your Passport.").foregroundStyle(DesignTokens.secondaryText(scheme)); Text("\(selected.count) of 3 featured").font(DesignTokens.functionalFont(size:13,weight:.semiBold)); ForEach(values){ value in VStack(alignment:.leading,spacing:4){AchievementBadgeView(value:value);Button(selected.contains(value.definition.key) ? "Featured" : "Feature on Passport"){toggle(value.definition.key)}.disabled(!value.isUnlocked || (!selected.contains(value.definition.key) && selected.count==3)).frame(minHeight:44)} }; if let loadError { StatePresentation(kind:.error,title:"Achievement progress unknown",message:loadError) } }.task(id:model.version) { do { if let repo = model.gamificationRepository { _ = try repo.currentQuests(); values = try repo.achievementProgress(); selected = try repo.passport().featuredAchievementKeys; loadError = nil } } catch { values = []; loadError = "Could not establish progress from local data." } }.accessibilityIdentifier("phase7.achievements") }
+public struct AchievementsScreen:View { @Environment(\.colorScheme) private var scheme; @EnvironmentObject private var model:BooksModel; @State private var values:[AchievementProgress]; @State private var selected=[String](); @State private var loadError:String?; init(values:[AchievementProgress]) { _values = State(initialValue:values) }; public var body:some View { BooksScreen("Achievements") { Text("All Achievements are visible. Select exactly 3 to feature on your Passport.").foregroundStyle(DesignTokens.secondaryText(scheme)); Text("\(selected.count) of 3 featured").font(DesignTokens.functionalFont(size:13,weight:.semiBold)); ForEach(values){ value in VStack(alignment:.leading,spacing:4){AchievementBadgeView(value:value);Button(selected.contains(value.definition.key) ? "Featured" : "Feature on Passport"){toggle(value.definition.key)}.disabled(!value.isUnlocked || (!selected.contains(value.definition.key) && selected.count==3)).frame(minHeight:44)} }; if let loadError { StatePresentation(kind:.error,title:"Achievement progress unknown",message:loadError) } }.task(id:model.version) { do { if let repo = model.gamificationRepository { _ = try repo.currentQuests(); values = try repo.achievementProgress(); selected = try repo.passport().featuredAchievementKeys; loadError = nil } } catch { values = AchievementCatalog.all.map { .init(definition:$0,progress:0,progressKnown:false) }; loadError = "Could not establish progress from local data." } }.accessibilityIdentifier("phase7.achievements") }
     private func toggle(_ key:String){if let i=selected.firstIndex(of:key){selected.remove(at:i)}else if selected.count<3{selected.append(key)};guard selected.count==3,let repo=model.gamificationRepository,var passport=try? repo.passport() else{return};passport.featuredAchievementKeys=selected;try? repo.savePassport(passport)}
 }
 private struct AchievementBadgeView: View {
@@ -176,8 +175,8 @@ private struct AchievementBadgeView: View {
             Text(value.definition.name).font(DesignTokens.functionalFont(size:16,weight:.semiBold)).fixedSize(horizontal:false,vertical:true)
             Text(value.isUnlocked ? "Unlocked":value.definition.condition).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true)
             if !value.isUnlocked {
-                Text("\(min(value.progress,value.definition.target)) of \(value.definition.target)").font(DesignTokens.functionalFont(size:12))
-                ReadingProgressBar(.percentage(Double(value.progress)*100/Double(value.definition.target)))
+                Text(value.progressKnown ? "\(min(value.progress,value.definition.target)) of \(value.definition.target)" : "Progress unknown").font(DesignTokens.functionalFont(size:12))
+                if value.progressKnown { ReadingProgressBar(.percentage(Double(value.progress)*100/Double(value.definition.target))) }
             }
         }.frame(maxWidth:.infinity,alignment:.leading)
     }
@@ -209,6 +208,10 @@ public struct CollectionScreen: View {
                     CosmeticRow(item:item,state:state)
                     Button(item.category == .themes ? "Preview Theme" : "Preview \(item.name)") { preview = item }
                         .disabled(state == .locked).frame(minHeight:44).accessibilityIdentifier("cosmetic.preview."+item.key)
+                    if state == .equipped {
+                        Button("Use default \(item.category.rawValue)") { useDefault(item) }.frame(minHeight:44)
+                            .accessibilityIdentifier("cosmetic.default."+item.key)
+                    }
                 }
             }
             if let error { StatePresentation(kind:.error,title:"Collection unavailable",message:error) }
@@ -230,6 +233,7 @@ public struct CollectionScreen: View {
         return result
     }
     private func apply(_ item:CosmeticDefinition) { guard let repo = model.gamificationRepository else { return }; if model.perform({ try repo.setCosmetic(item.key,state:.equipped) }) != nil { preview = nil; load() } }
+    private func useDefault(_ item:CosmeticDefinition) { guard let repo = model.gamificationRepository else { return }; if model.perform({ try repo.setCosmetic(item.key,state:.unlocked) }) != nil { load() } }
     private func load() { do { guard let repo = model.gamificationRepository else { return }; states = try repo.cosmeticStates(); level = GamificationBalance.level(totalXP:try repo.xpAwards().reduce(0) { $0+$1.amount }); error = nil } catch { self.error = "Could not load Collection. Existing equipment is unchanged." } }
 }
 
@@ -276,5 +280,7 @@ private struct CosmeticRow: View {
         }.frame(maxWidth:.infinity,minHeight:58,alignment:.leading).padding(.horizontal,12)
             .background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:12))
             .accessibilityElement(children:.combine)
+            .accessibilityIdentifier("cosmetic.row."+item.key)
+            .accessibilityValue(state.rawValue)
     }
 }

@@ -147,7 +147,7 @@ struct ReadingCompanionApp: App {
         // no Quest progress, Achievement progress, or XP is assigned for presentation.
         _ = try store.currentQuests()
         var books = [UUID]()
-        for n in 0..<(profileQARoute == "profile" ? 10 : 5) {
+        for n in 0..<(["profile","achievements"].contains(profileQARoute ?? "") ? 10 : 5) {
             let book = try store.add(work:.init(provider:"manual",reference:UUID().uuidString,title:"The Reader's Journey \(n+1)",author:"Taylor Reader"),choice:.addAnyway)
             books.append(book)
             let rid = try store.start(bookID:book,editionID:nil,date:nil)

@@ -19,3 +19,13 @@ do $$ declare t text; begin foreach t in array array['gamification_activity','qu
  execute format('revoke all on public.%I from anon,authenticated',t);
  execute format('grant select,insert on public.%I to authenticated',t);
 end loop; end $$;
+create function public.validate_v1_cosmetic() returns trigger language plpgsql set search_path=public as $$
+declare required_level integer; reader_level bigint;
+begin
+ required_level := case new.cosmetic_key when 'background.midnight' then 1 when 'accent.berry' then 2
+ when 'frame.classic' then 1 when 'card.frosted' then 3 when 'decoration.sparkle' then 4 when 'theme.modern-bookish' then 1 else null end;
+ select coalesce(sum(amount),0)/500+1 into reader_level from public.xp_awards where owner_id=new.owner_id;
+ if required_level is null or reader_level < required_level then raise exception 'Unknown or locked cosmetic' using errcode='23514'; end if;
+ return new;
+end $$;
+create trigger v1_cosmetic_eligibility before insert or update on public.user_cosmetics for each row execute function public.validate_v1_cosmetic();

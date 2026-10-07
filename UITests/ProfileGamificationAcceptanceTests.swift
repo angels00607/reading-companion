@@ -26,12 +26,12 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
         attach(app,"Phase7-Cosmetic-preview-before-cancel")
         app.buttons["cosmetic.cancel"].tap()
         XCTAssertTrue(app.scrollViews["phase7.collection"].waitForExistence(timeout:5))
-        XCTAssertFalse(app.staticTexts["Equipped"].firstMatch.exists,"Cancel must keep initial equipment unchanged")
+        XCTAssertEqual(app.descendants(matching:.any)["cosmetic.row.background.midnight"].firstMatch.value as? String,"unlocked","Cancel must keep initial equipment unchanged")
         scrollTo(preview,app); preview.tap(); app.buttons["cosmetic.apply"].tap()
         XCTAssertTrue(app.scrollViews["phase7.collection"].waitForExistence(timeout:5))
         app.terminate(); app.launch()
         XCTAssertTrue(app.scrollViews["phase7.collection"].waitForExistence(timeout:15))
-        XCTAssertTrue(app.staticTexts["Equipped"].firstMatch.exists)
+        XCTAssertEqual(app.descendants(matching:.any)["cosmetic.row.background.midnight"].firstMatch.value as? String,"equipped")
         let theme = app.buttons["cosmetic.preview.theme.modern-bookish"]
         scrollTo(theme,app); theme.tap()
         XCTAssertTrue(app.buttons["cosmetic.cancel"].waitForExistence(timeout:5)); attach(app,"Phase7-Theme-preview-before-cancel")
@@ -50,9 +50,16 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
                 let app=XCUIApplication();app.launchArguments=["-phase7-fixture","-phase7-screen",route,"-phase0-appearance",appearance,"-UIPreferredContentSizeCategoryName",size];app.launch();XCUIDevice.shared.orientation = .portrait
                 let screen = route == "reward" ? app.otherElements["phase1.celebration"] : app.scrollViews["phase7." + route]
                 XCTAssertTrue(screen.waitForExistence(timeout:15),"Expected live \(route) screen")
-                if route == "achievements" { XCTAssertTrue(app.staticTexts["First Chapter"].exists) }
+                if route == "achievements" {
+                    XCTAssertTrue(app.staticTexts["First Chapter"].exists)
+                    XCTAssertTrue(app.staticTexts["3 of 3 featured"].exists,"Exactly three genuinely unlocked selections must persist")
+                }
                 attach(app,"Phase7-\(appearance)-\(size)-\(route)-top")
                 if route == "quests" {
+                    for cadence in ["WEEKLY","MONTHLY"] {
+                        scrollTo(app.staticTexts[cadence].firstMatch,app)
+                        attach(app,"Phase7-\(appearance)-\(size)-quests-"+cadence.lowercased())
+                    }
                     let reroll = app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","quest.reroll.")).firstMatch
                     scrollTo(reroll,app); XCTAssertTrue(reroll.exists && reroll.isEnabled); reroll.tap()
                     XCTAssertTrue(app.staticTexts["Reroll unavailable · returns next period"].firstMatch.exists)
@@ -64,7 +71,15 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
                     attach(app,"Phase7-\(appearance)-\(size)-quest-completed")
                 }
                 if route != "reward" { app.swipeUp(); app.swipeUp(); attach(app,"Phase7-\(appearance)-\(size)-\(route)-lower") }
+                if route == "achievements" {
+                    scrollTo(app.staticTexts["Gentle Momentum"],app)
+                    attach(app,"Phase7-\(appearance)-\(size)-achievement-progress")
+                }
                 if route == "collection" {
+                    scrollTo(app.descendants(matching:.any)["cosmetic.row.background.midnight"].firstMatch,app)
+                    attach(app,"Phase7-\(appearance)-\(size)-unlocked-cosmetic")
+                    scrollTo(app.descendants(matching:.any)["cosmetic.row.accent.berry"].firstMatch,app)
+                    attach(app,"Phase7-\(appearance)-\(size)-locked-cosmetic")
                     let theme = app.buttons["cosmetic.preview.theme.modern-bookish"]
                     scrollTo(theme,app); theme.tap(); XCTAssertTrue(app.buttons["cosmetic.cancel"].waitForExistence(timeout:5))
                     attach(app,"Phase7-\(appearance)-\(size)-theme-preview")
@@ -78,8 +93,13 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
         }
     }
     @MainActor private func scrollTo(_ element: XCUIElement, _ app: XCUIApplication) {
-        for _ in 0..<12 { if element.exists && element.isHittable { return }; app.swipeDown() }
-        for _ in 0..<18 { if element.exists && element.isHittable { return }; app.swipeUp() }
+        for _ in 0..<20 {
+            if element.exists && element.isHittable { return }
+            if element.exists && !element.isEnabled && app.frame.intersects(element.frame) { return }
+            let preview = app.scrollViews["phase7.preview"]
+            let surface = preview.exists ? preview : app.scrollViews.firstMatch
+            if element.exists && element.frame.minY < surface.frame.minY+40 { surface.swipeDown() } else { surface.swipeUp() }
+        }
         XCTAssertTrue(element.exists && element.isHittable,"Required production control must be reachable")
     }
     @MainActor private func attach(_ app:XCUIApplication,_ name:String){let attachment=XCTAttachment(screenshot:app.screenshot());attachment.name=name;attachment.lifetime = .keepAlways;add(attachment)}
