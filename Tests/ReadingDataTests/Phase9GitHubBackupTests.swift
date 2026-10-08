@@ -76,17 +76,16 @@ final class Phase9GitHubBackupTests: XCTestCase {
         try await transport.disconnect(); XCTAssertNil(credentials.read(account: try repo().credentialAccount))
     }
     func testServiceRestoresRepositoryAfterRestartWhilePATRemainsOnlyInCredentialStore() async throws {
-        let suite="phase9-backup-"+UUID().uuidString,defaults=try XCTUnwrap(UserDefaults(suiteName:suite));defer{defaults.removePersistentDomain(forName:suite)}
+        let suite="phase9-backup-"+UUID().uuidString;defer{UserDefaults(suiteName:suite)?.removePersistentDomain(forName:suite)}
         let credentials=BackupMemoryCredentials(),assetDirectory=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer{try? FileManager.default.removeItem(at:assetDirectory)}
         let result=try JSONSerialization.data(withJSONObject:["content":["path":"backups/\(versionID.uuidString.lowercased()).zip"],"commit":["sha":sha]])
         let http=BackupHTTPFixture([try metadata(),try metadata(),.init(status:404,data:Data()),.init(status:201,data:result)])
-        let first=Phase9BackupService(store:try LocalStore(path:":memory:",ownerID:UUID()),assetDirectory:assetDirectory,credentials:credentials,client:http,configuration:defaults)
+        let first=Phase9BackupService(store:try LocalStore(path:":memory:",ownerID:UUID()),assetDirectory:assetDirectory,credentials:credentials,client:http,configuration:try XCTUnwrap(UserDefaults(suiteName:suite)))
         try await first.connectGitHub(owner:"reader",repository:"private-backups",personalAccessToken:token)
-        let persisted=try XCTUnwrap(defaults.data(forKey:"ReadingCompanion.githubBackup."+assetDirectory.lastPathComponent))
+        let persisted=try XCTUnwrap(UserDefaults(suiteName:suite)?.data(forKey:"ReadingCompanion.githubBackup."+assetDirectory.lastPathComponent))
         XCTAssertFalse(String(decoding:persisted,as:UTF8.self).contains(token))
-        let restartedDefaults=try XCTUnwrap(UserDefaults(suiteName:suite))
-        let restarted=Phase9BackupService(store:try LocalStore(path:":memory:",ownerID:UUID()),assetDirectory:assetDirectory,credentials:credentials,client:http,configuration:restartedDefaults)
+        let restarted=Phase9BackupService(store:try LocalStore(path:":memory:",ownerID:UUID()),assetDirectory:assetDirectory,credentials:credentials,client:http,configuration:try XCTUnwrap(UserDefaults(suiteName:suite)))
         let uploadedSHA = try await restarted.uploadManualBackup()
         XCTAssertEqual(uploadedSHA,sha)
         XCTAssertEqual(credentials.read(account:try repo().credentialAccount),Data(token.utf8))
