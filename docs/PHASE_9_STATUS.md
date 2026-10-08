@@ -20,7 +20,9 @@ Secure platform Keychain adapter and GitHub transport now provide private/exact-
 preflight, repository-scoped fine-grained PAT storage, explicit revocation/permission/
 rate-limit failures, immutable manual versions, idempotent byte-identical retries,
 snapshot-pinned history/download and checksum validation before preview. Native setup
-UI and real private-repository/device credential verification are still outstanding.
+UI and real private-repository/physical-device credential verification are still outstanding.
+The signed iOS Simulator host now exercises the production Keychain adapter with
+`WhenUnlockedThisDeviceOnly`, non-synchronizable storage and repository isolation.
 
 Permanent XP semantic-key union retains current metadata and rejects conflicting source/
 amount, invalid decoded awards and overflow. Typed award-evidence validation and actual
@@ -39,13 +41,19 @@ First targeted run [37642617729](https://github.com/angels00607/reading-companio
 at `583a01a08e0ad039615ade40bf4721dfbb1da16c` passed 38 Swift boundary tests (24 archive /
 14 GitHub), independent Python ZIP/CRC/SHA-256/count interoperability and the iOS build.
 Additional JSON, remote history and XP refinements require their next targeted run;
-the earlier result is not claimed as validation of those changes. Local Python script
-syntax validation passed. No Phase 9 simulator acceptance or visual boards yet.
+the earlier result is not claimed as validation of those changes. Targeted run
+[37742427910](https://github.com/angels00607/reading-companion/actions/runs/37742427910)
+at `5f73323a10f32f31ddd8b7fb210ee56b315f4ba4` passed 68 Swift tests, independent
+Python ZIP/CRC/SHA-256/count interoperability, the normal unsigned iOS Simulator build,
+and 2 native production-Keychain lifecycle/isolation tests. It also verified the signed
+simulator host has exactly its application identifier and matching private Keychain
+access group. Local Python script syntax validation passed. No Phase 9 visual boards yet.
 No Phase 9 schema migration or live Supabase deployment yet.
 
 ## Remaining work, in order
 
-1. Integrate native secure GitHub setup and verify the real private-repository/Keychain lifecycle.
+1. Integrate native secure GitHub setup UI and verify a real private-repository and
+   physical-device credential lifecycle (simulator Keychain lifecycle is validated).
 2. Typed complete portable export and preview/atomic restore, including valid XP union,
    overrides, cross-owner/relationship checks, rollback and no historical event replay.
 3. Full durable sync transport/pull, receipts/retry, conflicts/review and tombstones.
