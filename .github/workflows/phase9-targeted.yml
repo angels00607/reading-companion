@@ -16,7 +16,7 @@ jobs:
   backup:
     if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[phase9-targeted]') }}
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - run: swift --version
@@ -61,7 +61,18 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate' }}
         run: |
           SIMULATOR_ID=$(python3 -c "import json; d=json.load(open('/tmp/phase9-simulators.json')); print(next(v['udid'] for group in d['devices'].values() for v in group if 'iPhone' in v['name']))")
-          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase9Regression.xcresult -only-testing:FoundationAcceptanceTests/BooksCoreAcceptanceTests/testOfficialAcceptanceFlow -only-testing:FoundationAcceptanceTests/JournalAcceptanceTests -only-testing:FoundationAcceptanceTests/SeriesAcceptanceTests -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testExplicitConfirmOccupancyAndIndependentNextChallenge -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testMonthIncompleteDataRatingAndManualYearChoice -only-testing:FoundationAcceptanceTests/ProfileGamificationAcceptanceTests/testCleanProductionLaunchA -only-testing:FoundationAcceptanceTests/StoryGraphImportAcceptanceTests/testHistoricalImportAndExplicitReconciliation CODE_SIGNING_ALLOWED=NO test
+          TESTS=(
+            FoundationAcceptanceTests/BooksCoreAcceptanceTests/testOfficialAcceptanceFlow
+            FoundationAcceptanceTests/JournalAcceptanceTests
+            FoundationAcceptanceTests/SeriesAcceptanceTests
+            FoundationAcceptanceTests/ChallengesAcceptanceTests/testExplicitConfirmOccupancyAndIndependentNextChallenge
+            FoundationAcceptanceTests/StatsAcceptanceTests/testMonthIncompleteDataRatingAndManualYearChoice
+            FoundationAcceptanceTests/ProfileGamificationAcceptanceTests/testCleanProductionLaunchA
+            FoundationAcceptanceTests/StoryGraphImportAcceptanceTests/testHistoricalImportAndExplicitReconciliation
+          )
+          for INDEX in "${!TESTS[@]}"; do
+            xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath "work/Phase9Regression-$INDEX.xcresult" -only-testing:"${TESTS[$INDEX]}" CODE_SIGNING_ALLOWED=NO test
+          done
       - uses: actions/upload-artifact@v4
         if: ${{ always() && !contains(github.event.head_commit.message, '[phase9-native]') }}
         with:
@@ -81,7 +92,7 @@ jobs:
           path: |
             work/Phase9VisualQA.xcresult
             work/phase9-visual-boards
-            work/Phase9Regression.xcresult
+            work/Phase9Regression-*.xcresult
   data-integrity:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate' }}
     runs-on: ubuntu-latest
