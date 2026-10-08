@@ -46,7 +46,7 @@ final class Phase9RestoreTests: XCTestCase {
         let archive=try source.makePortableBackup(appVersion:"9.0")
         let target=try store();let id=try target.add(work:.init(provider:"manual",reference:"local",title:"Before",author:"Reader"),choice:.addAnyway)
         let preview=try target.previewPortableRestore(archive)
-        try target.queue.write{$0.execute(sql:"UPDATE books SET title=? WHERE owner_id=? AND id=?",arguments:["After",target.ownerID.uuidString,id.uuidString])}
+        try target.queue.write{try $0.execute(sql:"UPDATE books SET title=? WHERE owner_id=? AND id=?",arguments:["After",target.ownerID.uuidString,id.uuidString])}
         XCTAssertThrowsError(try target.restorePortableBackup(archive,preview:preview,confirmed:true)) {
             XCTAssertEqual($0 as? BackupRestoreError,.stalePreview)
         }
