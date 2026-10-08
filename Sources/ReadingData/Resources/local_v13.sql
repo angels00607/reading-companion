@@ -11,14 +11,14 @@ CREATE TABLE onboarding_state (
 -- Owners with durable Phase 0–9 data already used the app before onboarding existed.
 -- Mark them complete without changing their library, history, or gamification data.
 INSERT OR IGNORE INTO onboarding_state(owner_id,step,reading_history_since,preferred_edition_language,library_choice,completed_at,updated_at)
-SELECT owner_id,'completed',COALESCE(reading_since,2020),'en','startFresh',updated_at,updated_at FROM reader_profiles;
+SELECT owner_id,'completed',reading_since,'en','startFresh',updated_at,updated_at FROM reader_profiles;
 INSERT OR IGNORE INTO onboarding_state(owner_id,step,reading_history_since,preferred_edition_language,library_choice,completed_at,updated_at)
-SELECT DISTINCT owner_id,'completed',2020,'en','startFresh',strftime('%Y-%m-%dT%H:%M:%SZ','now'),strftime('%Y-%m-%dT%H:%M:%SZ','now') FROM books;
+SELECT DISTINCT owner_id,'completed',NULL,'en','startFresh',strftime('%Y-%m-%dT%H:%M:%SZ','now'),strftime('%Y-%m-%dT%H:%M:%SZ','now') FROM books;
 INSERT OR IGNORE INTO onboarding_state(owner_id,step,reading_history_since,preferred_edition_language,library_choice,completed_at,updated_at)
-SELECT DISTINCT owner_id,'completed',2020,'en','storyGraphImport',completed_at,completed_at FROM import_runs;
+SELECT DISTINCT owner_id,'completed',NULL,'en','storyGraphImport',completed_at,completed_at FROM import_runs;
 INSERT OR IGNORE INTO onboarding_state(owner_id,step,reading_history_since,preferred_edition_language,library_choice,completed_at,updated_at)
-SELECT DISTINCT owner_id,'completed',2020,'en','startFresh',strftime('%Y-%m-%dT%H:%M:%SZ','now'),strftime('%Y-%m-%dT%H:%M:%SZ','now') FROM series;
+SELECT DISTINCT owner_id,'completed',NULL,'en','startFresh',strftime('%Y-%m-%dT%H:%M:%SZ','now'),strftime('%Y-%m-%dT%H:%M:%SZ','now') FROM series;
 INSERT OR IGNORE INTO onboarding_state(owner_id,step,reading_history_since,preferred_edition_language,library_choice,completed_at,updated_at)
-SELECT DISTINCT owner_id,'completed',2020,'en','startFresh',strftime('%Y-%m-%dT%H:%M:%SZ','now'),strftime('%Y-%m-%dT%H:%M:%SZ','now') FROM challenge_years;
+SELECT DISTINCT owner_id,'completed',NULL,'en','startFresh',strftime('%Y-%m-%dT%H:%M:%SZ','now'),strftime('%Y-%m-%dT%H:%M:%SZ','now') FROM challenge_years;
 INSERT OR IGNORE INTO onboarding_state(owner_id,step,reading_history_since,preferred_edition_language,library_choice,completed_at,updated_at)
-SELECT DISTINCT owner_id,'completed',2020,'en','startFresh',strftime('%Y-%m-%dT%H:%M:%SZ','now'),strftime('%Y-%m-%dT%H:%M:%SZ','now') FROM xp_awards;
+SELECT DISTINCT owner_id,'completed',NULL,'en','startFresh',strftime('%Y-%m-%dT%H:%M:%SZ','now'),strftime('%Y-%m-%dT%H:%M:%SZ','now') FROM xp_awards;
