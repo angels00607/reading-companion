@@ -65,6 +65,10 @@ final class BooksCoreAcceptanceTests: XCTestCase {
             field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
         }
         field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: old == label ? 0 : old.count) + text)
+        if let partial=field.value as? String,partial != text,text.hasPrefix(partial) {
+            field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+            field.typeText(String(text.dropFirst(partial.count)))
+        }
         XCTAssertEqual(field.value as? String, text, "The live field must contain the requested test input")
         if app.buttons["Done"].exists { app.buttons["Done"].tap() }
     }

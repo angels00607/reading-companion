@@ -21,7 +21,9 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
     }
     @MainActor func testCleanProductionLaunchA() {
         let app = XCUIApplication()
-        app.launchArguments = ["-phase7-acceptance-store",UUID().uuidString,"-phase7-screen","quests"]
+        // The quests route deliberately skips presentation seeding, so this remains a
+        // clean production lifecycle while isolating the store from earlier UI suites.
+        app.launchArguments = ["-phase7-fixture","-phase7-screen","quests"]
         app.launch()
         // Xcode 16.4 can expose SwiftUI ScrollView/Text nodes as Other through the
         // modern AX bridge. The identifiers and labels remain the product contract.

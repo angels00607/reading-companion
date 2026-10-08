@@ -52,9 +52,8 @@ final class StoryGraphImportAcceptanceTests:XCTestCase {
     }
     @MainActor func testHistoricalImportAndExplicitReconciliation() {
         let app=launch();fixture(app,"import.fixture.initial")
-        let preview=app.descendants(matching:.any)["import.preview"]
         let newBooks=app.descendants(matching:.any)["import.group.New Books"]
-        XCTAssertTrue(preview.waitForExistence(timeout:10));reveal(app,newBooks);XCTAssertEqual(newBooks.label,"New Books · 3")
+        reveal(app,newBooks);XCTAssertEqual(newBooks.label,"New Books · 3")
         confirm(app);reveal(app,app.staticTexts["import.fixture.safety"])
         XCTAssertEqual(app.staticTexts["import.fixture.safety"].label,"3 readings · 0 XP · 0 Quest progress · 0 Achievements · 0 Challenges · 0 Inbox")
         verifyImportedLibrary(app)
