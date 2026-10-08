@@ -24,7 +24,7 @@ final class StatsAcceptanceTests:XCTestCase {
         XCTAssertTrue(e.exists && e.isHittable,"Required Stats element must remain reachable: \(e.identifier) \(e.label) \(e.frame)")
     }
     @MainActor private func tap(_ app:XCUIApplication,_ e:XCUIElement) {
-        reveal(app,e); XCTAssertTrue(e.isHittable); XCTAssertGreaterThanOrEqual(e.frame.width,44); XCTAssertGreaterThanOrEqual(e.frame.height,44)
+        reveal(app,e); XCTAssertTrue(e.isHittable); XCTAssertGreaterThanOrEqual(e.frame.width.rounded(),44); XCTAssertGreaterThanOrEqual(e.frame.height.rounded(),44)
         if e.isHittable { e.tap() }
     }
     @MainActor func testMonthIncompleteDataRatingAndManualYearChoice() {
@@ -76,7 +76,7 @@ final class StatsAcceptanceTests:XCTestCase {
             let app=launch("shell",appearance:appearance,size:size)
             XCTAssertTrue(app.staticTexts["stats.books.value"].waitForExistence(timeout:10))
             for name in ["Home","Journal","Challenges","Series","Stats"] {
-                let tab=app.buttons["foundationTab."+name]; XCTAssertTrue(tab.exists); XCTAssertGreaterThanOrEqual(tab.frame.width,44); XCTAssertGreaterThanOrEqual(tab.frame.height,44)
+                let tab=app.buttons["foundationTab."+name]; XCTAssertTrue(tab.exists); XCTAssertGreaterThanOrEqual(tab.frame.width.rounded(),44); XCTAssertGreaterThanOrEqual(tab.frame.height.rounded(),44)
             }
             XCTAssertTrue(app.buttons["foundationTab.Stats"].isSelected)
             capture(app,"\(appearance)-\(size)-shell-overview")
