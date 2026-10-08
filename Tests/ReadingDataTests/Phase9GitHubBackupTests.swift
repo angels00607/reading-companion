@@ -86,7 +86,8 @@ final class Phase9GitHubBackupTests: XCTestCase {
         let persisted=try XCTUnwrap(defaults.data(forKey:"ReadingCompanion.githubBackup."+assetDirectory.lastPathComponent))
         XCTAssertFalse(String(decoding:persisted,as:UTF8.self).contains(token))
         let restarted=Phase9BackupService(store:try LocalStore(path:":memory:",ownerID:UUID()),assetDirectory:assetDirectory,credentials:credentials,client:http,configuration:defaults)
-        XCTAssertEqual(try await restarted.uploadManualBackup(),sha)
+        let uploadedSHA = try await restarted.uploadManualBackup()
+        XCTAssertEqual(uploadedSHA,sha)
         XCTAssertEqual(credentials.read(account:try repo().credentialAccount),Data(token.utf8))
     }
     func testExpiredOrRevokedCredentialRequiresReconnectAndIsRemoved() async throws {
