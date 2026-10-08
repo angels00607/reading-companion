@@ -79,6 +79,7 @@ final class Phase9GitHubBackupTests: XCTestCase {
         let suite="phase9-backup-"+UUID().uuidString;defer{UserDefaults(suiteName:suite)?.removePersistentDomain(forName:suite)}
         let credentials=BackupMemoryCredentials(),assetDirectory=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer{try? FileManager.default.removeItem(at:assetDirectory)}
+        try FileManager.default.createDirectory(at:assetDirectory,withIntermediateDirectories:true)
         let result=try JSONSerialization.data(withJSONObject:["content":["path":"backups/\(versionID.uuidString.lowercased()).zip"],"commit":["sha":sha]])
         let http=BackupHTTPFixture([try metadata(),try metadata(),.init(status:404,data:Data()),.init(status:201,data:result)])
         let first=Phase9BackupService(store:try LocalStore(path:":memory:",ownerID:UUID()),assetDirectory:assetDirectory,credentials:credentials,client:http,configuration:try XCTUnwrap(UserDefaults(suiteName:suite)))
