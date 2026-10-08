@@ -55,6 +55,10 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
             let url = Bundle.module.url(forResource: "local_v10", withExtension: "sql")!
             try db.execute(sql: String(contentsOf: url, encoding: .utf8))
         }
+        migrator.registerMigration("local_v11") { db in
+            let url = Bundle.module.url(forResource: "local_v11", withExtension: "sql")!
+            try db.execute(sql: String(contentsOf: url, encoding: .utf8))
+        }
         try migrator.migrate(queue)
     }
     public func addBook(_ book: Book, wantsToRead: Bool, mutation: MutationEnvelope) throws {
@@ -108,17 +112,28 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
             if let row = try Row.fetchOne(db, sql: "SELECT entity_id,kind FROM outbox WHERE owner_id=? AND id=?",
                                           arguments: [ownerID.uuidString,id.uuidString]) {
                 let kind: String = row["kind"]
-                guard kind == "book.create", revision >= 1 else { throw DomainError.invalidTransition }
+                guard revision >= 1 else { throw DomainError.invalidTransition }
                 let entityID: String = row["entity_id"]
-                try db.execute(sql: "UPDATE books SET revision=? WHERE owner_id=? AND id=?",
-                               arguments: [revision,ownerID.uuidString,entityID])
+                if kind.hasPrefix("book.") {
+                    try db.execute(sql: "UPDATE books SET revision=MAX(revision,?) WHERE owner_id=? AND id=?",
+                                   arguments: [revision,ownerID.uuidString,entityID])
+                }
+                try db.execute(sql:"INSERT OR IGNORE INTO sync_receipts(owner_id,mutation_id,entity_id,revision,acknowledged_at) VALUES(?,?,?,?,?)",arguments:[ownerID.uuidString,id.uuidString,entityID,revision,ISO8601DateFormatter().string(from:Date())])
             }
             try db.execute(sql: "DELETE FROM outbox WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
         }
     }
     public func requireReview(id: UUID) async throws {
         try await queue.write { [self] db in
+            if let row = try Row.fetchOne(db,sql:"SELECT entity_id,expected_revision FROM outbox WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,id.uuidString]) {
+                try db.execute(sql:"INSERT OR IGNORE INTO sync_conflicts(owner_id,mutation_id,entity_id,local_revision,server_revision,reason,created_at) VALUES(?,?,?,?,NULL,'revision',?)",arguments:[ownerID.uuidString,id.uuidString,row["entity_id"] as String,row["expected_revision"] as Int,ISO8601DateFormatter().string(from:Date())])
+            }
             try db.execute(sql: "UPDATE outbox SET state='review' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
+        }
+    }
+    public func recordAttemptFailure(id: UUID) async throws {
+        try await queue.write { [self] db in
+            try db.execute(sql:"UPDATE outbox SET attempt_count=attempt_count+1,last_attempt_at=?,last_error='transport_unavailable' WHERE owner_id=? AND id=?",arguments:[ISO8601DateFormatter().string(from:Date()),ownerID.uuidString,id.uuidString])
         }
     }
     public func bookCount() throws -> Int {

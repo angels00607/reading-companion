@@ -28,7 +28,9 @@ public protocol OutboxRepository: Sendable {
     func pending(ownerID: UUID) async throws -> [MutationEnvelope]
     func acknowledge(id: UUID, revision: Int) async throws
     func requireReview(id: UUID) async throws
+    func recordAttemptFailure(id: UUID) async throws
 }
+public extension OutboxRepository { func recordAttemptFailure(id: UUID) async throws {} }
 public actor SyncCoordinator {
     private let outbox: any OutboxRepository
     private let transport: any SyncTransport
@@ -41,7 +43,10 @@ public actor SyncCoordinator {
         running = true
         defer { running = false }
         for mutation in try await outbox.pending(ownerID: ownerID) {
-            switch try await transport.send(mutation) {
+            let result: SyncResult
+            do { result = try await transport.send(mutation) }
+            catch { try await outbox.recordAttemptFailure(id:mutation.id); throw error }
+            switch result {
             case .acknowledged(let revision): try await outbox.acknowledge(id: mutation.id, revision: revision)
             case .conflict, .staleGeneration:
                 try await outbox.requireReview(id: mutation.id)

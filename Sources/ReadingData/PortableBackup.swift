@@ -191,7 +191,9 @@ public struct PortableBackupCodec: Sendable {
             "journalEntries", "journalComponents", "journalCorrections", "quotes", "series", "seriesEntries",
             "challengeYears", "challengePrompts", "challengeAssignments", "challengeEvidence", "readerProfiles",
             "quests", "questLifecycle", "gamificationActivity", "xpAwards", "achievements", "cosmetics",
-            "bestBookSelections", "attention", "proposals", "provenance", "importRuns", "importCandidates", "importOccurrences"]
+            "bestBookSelections", "attention", "proposals", "provenance", "importRuns", "importCandidates", "importOccurrences",
+            "favorites", "journalVolumes", "seriesRejections", "challengeRejections", "challengeAnalysis", "readingActivityDates",
+            "xpAwardMetadata", "providerLinks"]
         guard Set(entities.keys).isSubset(of: allowed) else { throw PortableBackupError.invalidPayload }
         var counts: [String: Int] = [:]
         var nodes = 0
