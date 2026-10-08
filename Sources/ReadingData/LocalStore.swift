@@ -59,6 +59,10 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
             let url = Bundle.module.url(forResource: "local_v11", withExtension: "sql")!
             try db.execute(sql: String(contentsOf: url, encoding: .utf8))
         }
+        migrator.registerMigration("local_v12") { db in
+            let url = Bundle.module.url(forResource:"local_v12",withExtension:"sql")!
+            try db.execute(sql:String(contentsOf:url,encoding:.utf8))
+        }
         try migrator.migrate(queue)
     }
     public func addBook(_ book: Book, wantsToRead: Bool, mutation: MutationEnvelope) throws {
@@ -124,12 +128,23 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
         }
     }
     public func requireReview(id: UUID) async throws {
+        try await requireReview(id:id,serverRevision:nil,staleGeneration:false)
+    }
+    public func requireReview(id:UUID,serverRevision:Int?,staleGeneration:Bool) async throws {
         try await queue.write { [self] db in
             if let row = try Row.fetchOne(db,sql:"SELECT entity_id,expected_revision FROM outbox WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,id.uuidString]) {
-                try db.execute(sql:"INSERT OR IGNORE INTO sync_conflicts(owner_id,mutation_id,entity_id,local_revision,server_revision,reason,created_at) VALUES(?,?,?,?,NULL,'revision',?)",arguments:[ownerID.uuidString,id.uuidString,row["entity_id"] as String,row["expected_revision"] as Int,ISO8601DateFormatter().string(from:Date())])
+                try db.execute(sql:"INSERT OR IGNORE INTO sync_conflicts(owner_id,mutation_id,entity_id,local_revision,server_revision,reason,created_at) VALUES(?,?,?,?,?,?,?)",arguments:[ownerID.uuidString,id.uuidString,row["entity_id"] as String,row["expected_revision"] as Int,serverRevision,staleGeneration ? "stale_generation":"revision",ISO8601DateFormatter().string(from:Date())])
             }
             try db.execute(sql: "UPDATE outbox SET state='review' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
         }
+    }
+    func enqueueTombstone(entityType:String,entityID:UUID,kind:String,db:Database) throws {
+        var generation=try String.fetchOne(db,sql:"SELECT generation FROM sync_state WHERE owner_id=?",arguments:[ownerID.uuidString])
+        if generation==nil { generation=UUID().uuidString;try db.execute(sql:"INSERT INTO sync_state(owner_id,generation) VALUES(?,?)",arguments:[ownerID.uuidString,generation]) }
+        let mutationID=UUID(),deletedAt=ISO8601DateFormatter().string(from:Date())
+        try db.execute(sql:"INSERT INTO sync_tombstones(owner_id,entity_type,entity_id,deleted_at,revision,mutation_id) VALUES(?,?,?,?,0,?) ON CONFLICT(owner_id,entity_type,entity_id) DO NOTHING",arguments:[ownerID.uuidString,entityType,entityID.uuidString,deletedAt,mutationID.uuidString])
+        struct Payload:Codable { let entityType:String;let entityID:UUID;let deletedAt:String }
+        try enqueue(MutationEnvelope(id:mutationID,ownerID:ownerID,entityID:entityID,expectedRevision:0,generation:UUID(uuidString:generation!)!,kind:kind,payload:try JSONEncoder().encode(Payload(entityType:entityType,entityID:entityID,deletedAt:deletedAt))),db:db)
     }
     public func recordAttemptFailure(id: UUID) async throws {
         try await queue.write { [self] db in
@@ -139,6 +154,39 @@ public final class LocalStore: @unchecked Sendable, OutboxRepository {
     public func bookCount() throws -> Int {
         try queue.read { db in
             try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM books WHERE owner_id=?", arguments: [ownerID.uuidString]) ?? 0
+        }
+    }
+}
+
+extension LocalStore:SyncReplicaRepository {
+    public func pullCursor(ownerID:UUID) async throws->Int64 {
+        guard ownerID==self.ownerID else{throw DomainError.invalidTransition}
+        return try await queue.read { try Int64.fetchOne($0,sql:"SELECT pull_cursor FROM sync_state WHERE owner_id=?",arguments:[ownerID.uuidString]) ?? 0 }
+    }
+    public func applyRemote(_ changes:[RemoteChange],ownerID:UUID) async throws {
+        guard ownerID==self.ownerID else{throw DomainError.invalidTransition}
+        try await queue.write { [self] db in
+            var cursor=try Int64.fetchOne(db,sql:"SELECT pull_cursor FROM sync_state WHERE owner_id=?",arguments:[ownerID.uuidString]) ?? 0
+            for change in changes.sorted(by:{$0.sequence<$1.sequence}) {
+                guard change.sequence>cursor else{continue}
+                let duplicate=(try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM sync_incoming WHERE owner_id=? AND mutation_id=?",arguments:[ownerID.uuidString,change.mutationID.uuidString]) ?? 0)>0
+                if !duplicate {
+                    let locallyPending=(try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM outbox WHERE owner_id=? AND entity_id=?",arguments:[ownerID.uuidString,change.entityID.uuidString]) ?? 0)>0
+                    if locallyPending {
+                        try db.execute(sql:"INSERT OR IGNORE INTO sync_conflicts(owner_id,mutation_id,entity_id,local_revision,server_revision,reason,created_at) VALUES(?,?,?,0,?,'revision',?)",arguments:[ownerID.uuidString,change.mutationID.uuidString,change.entityID.uuidString,change.revision,self.stamp()])
+                    } else if change.kind=="book.create" {
+                        let value=try JSONDecoder().decode(BookCreatePayload.self,from:change.payload)
+                        try db.execute(sql:"INSERT OR IGNORE INTO books(id,owner_id,title,author,revision) VALUES(?,?,?,?,?)",arguments:[change.entityID.uuidString,ownerID.uuidString,value.title,value.author,change.revision])
+                        try db.execute(sql:"INSERT OR IGNORE INTO library_memberships(owner_id,book_id,wants_to_read,added_at) VALUES(?,?,?,?)",arguments:[ownerID.uuidString,change.entityID.uuidString,value.wantsToRead,self.stamp()])
+                    } else if change.kind=="journal.quote.delete" {
+                        try db.execute(sql:"DELETE FROM quotes WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,change.entityID.uuidString])
+                        try db.execute(sql:"INSERT OR IGNORE INTO sync_tombstones(owner_id,entity_type,entity_id,deleted_at,revision,mutation_id) VALUES(?,'quote',?,?,?,?)",arguments:[ownerID.uuidString,change.entityID.uuidString,change.deletedAt ?? self.stamp(),change.revision,change.mutationID.uuidString])
+                    }
+                    try db.execute(sql:"INSERT INTO sync_incoming(owner_id,sequence,mutation_id,entity_id,revision,generation,kind,payload,deleted_at,applied_at) VALUES(?,?,?,?,?,?,?,?,?,?)",arguments:[ownerID.uuidString,change.sequence,change.mutationID.uuidString,change.entityID.uuidString,change.revision,change.generation.uuidString,change.kind,change.payload,change.deletedAt,self.stamp()])
+                }
+                cursor=max(cursor,change.sequence)
+            }
+            try db.execute(sql:"INSERT INTO sync_state(owner_id,generation,pull_cursor) VALUES(?,?,?) ON CONFLICT(owner_id) DO UPDATE SET pull_cursor=MAX(pull_cursor,excluded.pull_cursor)",arguments:[ownerID.uuidString,(changes.last?.generation ?? UUID()).uuidString,cursor])
         }
     }
 }

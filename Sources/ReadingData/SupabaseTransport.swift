@@ -3,7 +3,7 @@ import ReadingDomain
 
 /// Receipt-backed Phase 9 command transport. Server-side RLS and the RPC retain
 /// ownership, generation, revision and idempotency enforcement.
-public struct SupabaseTransport: SyncTransport {
+public struct SupabaseTransport: SyncTransport,SyncPullTransport {
     private let configuration: AppConfiguration
     private let session: any AccountSession
     public init(configuration: AppConfiguration, session: any AccountSession) {
@@ -39,6 +39,25 @@ public struct SupabaseTransport: SyncTransport {
             return .conflict(serverRevision: revision)
         case "stale_generation": return .staleGeneration
         default: throw TransportError.invalidResponse
+        }
+    }
+    public func changes(after:Int64,limit:Int) async throws->[RemoteChange] {
+        guard limit>0,limit<=500 else{throw TransportError.invalidResponse}
+        var components=URLComponents(url:configuration.supabaseURL.appendingPathComponent("rest/v1/change_log"),resolvingAgainstBaseURL:false)!
+        components.queryItems=[.init(name:"select",value:"sequence,mutation_id,entity_id,revision,generation,kind,payload,deleted_at"),.init(name:"sequence",value:"gt.\(after)"),.init(name:"order",value:"sequence.asc"),.init(name:"limit",value:String(limit))]
+        guard let url=components.url else{throw TransportError.invalidResponse}
+        var request=URLRequest(url:url);request.httpMethod="GET"
+        request.setValue(configuration.publishableKey,forHTTPHeaderField:"apikey")
+        request.setValue("Bearer "+(try await session.accessToken()),forHTTPHeaderField:"Authorization")
+        request.setValue("application/json",forHTTPHeaderField:"Accept")
+        let (data,response)=try await URLSession.shared.data(for:request)
+        guard let http=response as? HTTPURLResponse,(200...299).contains(http.statusCode),let rows=try JSONSerialization.jsonObject(with:data) as? [[String:Any]] else{throw TransportError.requestFailed}
+        return try rows.map { row in
+            guard let sequence=(row["sequence"] as? NSNumber)?.int64Value,
+                  let mutation=UUID(uuidString:row["mutation_id"] as? String ?? ""),let entity=UUID(uuidString:row["entity_id"] as? String ?? ""),
+                  let revision=(row["revision"] as? NSNumber)?.intValue,let generation=UUID(uuidString:row["generation"] as? String ?? ""),
+                  let kind=row["kind"] as? String,let payload=row["payload"],JSONSerialization.isValidJSONObject(payload) else{throw TransportError.invalidResponse}
+            return RemoteChange(sequence:sequence,mutationID:mutation,entityID:entity,revision:revision,generation:generation,kind:kind,payload:try JSONSerialization.data(withJSONObject:payload,options:[.sortedKeys]),deletedAt:row["deleted_at"] as? String)
         }
     }
     private static let supportedPrefixes = ["book.","catalog.","library.","edition.","reading.","journal.",

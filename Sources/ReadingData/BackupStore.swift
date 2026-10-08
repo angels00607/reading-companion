@@ -108,6 +108,7 @@ public extension LocalStore {
         let decoded = try PortableBackupCodec().decode(archive)
         let payload = try Self.decodeTypedPayload(decoded.json); try Self.validate(payload)
         try queue.write { db in
+            try Self.validatePermanentXP(payload,ownerID:ownerID,db:db)
             for spec in Self.backupSpecs {
                 for record in payload.entities[spec.collection] ?? [] {
                     let columns = spec.columns.filter { record.fields[$0] != nil }
@@ -151,6 +152,23 @@ public extension LocalStore {
         for spec in backupSpecs { for record in payload.entities[spec.collection] ?? [] {
             guard Set(record.fields.keys) == Set(spec.columns) else { throw PortableBackupError.invalidPayload }
         } }
+    }
+    private static func validatePermanentXP(_ payload:TypedBackupPayload,ownerID:UUID,db:Database) throws {
+        func text(_ record:BackupRecord,_ key:String)->String? { if case .text(let v)?=record.fields[key]{return v};return nil }
+        func integer(_ record:BackupRecord,_ key:String)->Int64? { if case .integer(let v)?=record.fields[key]{return v};return nil }
+        let metadata=Dictionary(uniqueKeysWithValues:try (payload.entities["xpAwardMetadata"] ?? []).map { record in
+            guard let key=text(record,"semantic_key"),let source=text(record,"source"),XPSource(rawValue:source) != nil else { throw BackupRestoreError.invalidValue }
+            return (key,source)
+        })
+        var total:Int64=0
+        for record in payload.entities["xpAwards"] ?? [] {
+            guard let key=text(record,"semantic_key"),!key.isEmpty,let amount=integer(record,"amount"),amount>=0,
+                  metadata[key] != nil else { throw BackupRestoreError.invalidValue }
+            let (next,overflow)=total.addingReportingOverflow(amount);guard !overflow else{throw BackupRestoreError.invalidValue};total=next
+            if let row=try Row.fetchOne(db,sql:"SELECT a.amount,m.source FROM xp_awards a JOIN xp_award_metadata m USING(owner_id,semantic_key) WHERE a.owner_id=? AND a.semantic_key=?",arguments:[ownerID.uuidString,key]) {
+                guard (row["amount"] as Int64)==amount,(row["source"] as String)==metadata[key] else { throw BackupRestoreError.invalidValue }
+            }
+        }
     }
 }
 
