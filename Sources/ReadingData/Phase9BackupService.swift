@@ -124,14 +124,21 @@ private final class AssetRestoreTransaction:@unchecked Sendable {
         } catch { rollback();throw error }
     }
     func rollback() {
-        if installed { try? fileManager.removeItem(at:destination);installed=false }
+        if installed {
+            // Never overwrite the current directory if its removal failed.
+            do { try fileManager.removeItem(at:destination);installed=false }
+            catch { return }
+        }
         if displacedExisting {
-            try? fileManager.moveItem(at:displaced,to:destination);displacedExisting=false
+            // Preserve the displaced originals if moving them back fails.
+            do { try fileManager.moveItem(at:displaced,to:destination);displacedExisting=false }
+            catch { return }
         }
     }
     func finish() {
         if fileManager.fileExists(atPath:staging.path){try? fileManager.removeItem(at:staging)}
-        if fileManager.fileExists(atPath:displaced.path){try? fileManager.removeItem(at:displaced)}
+        // An unsuccessful rollback must never delete the only remaining originals.
+        if !displacedExisting && fileManager.fileExists(atPath:displaced.path){try? fileManager.removeItem(at:displaced)}
     }
     private static func validName(_ name:String)->Bool {
         let parts=name.split(separator:".",omittingEmptySubsequences:false)
