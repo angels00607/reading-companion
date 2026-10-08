@@ -10,10 +10,20 @@ private final class BackupMemoryCredentials: CredentialStore, @unchecked Sendabl
 }
 private actor BackupHTTPFixture: GitHubBackupHTTPClient {
     private var responses: [GitHubBackupHTTPResponse]
+    private let dynamicUploadCommitSHA: String?
     private(set) var requests: [URLRequest] = []
-    init(_ responses: [GitHubBackupHTTPResponse]) { self.responses = responses }
+    init(_ responses: [GitHubBackupHTTPResponse], dynamicUploadCommitSHA: String? = nil) {
+        self.responses = responses
+        self.dynamicUploadCommitSHA = dynamicUploadCommitSHA
+    }
     func send(_ request: URLRequest) throws -> GitHubBackupHTTPResponse {
         requests.append(request)
+        if request.httpMethod == "PUT", let sha = dynamicUploadCommitSHA,
+           let path = request.url?.path.components(separatedBy: "/contents/").last,
+           path.hasPrefix("backups/") {
+            let data = try JSONSerialization.data(withJSONObject: ["content": ["path": path], "commit": ["sha": sha]])
+            return .init(status: 201, data: data)
+        }
         guard !responses.isEmpty else { throw GitHubBackupError.networkUnavailable }
         return responses.removeFirst()
     }
@@ -80,8 +90,7 @@ final class Phase9GitHubBackupTests: XCTestCase {
         let credentials=BackupMemoryCredentials(),assetDirectory=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer{try? FileManager.default.removeItem(at:assetDirectory)}
         try FileManager.default.createDirectory(at:assetDirectory,withIntermediateDirectories:true)
-        let result=try JSONSerialization.data(withJSONObject:["content":["path":"backups/\(versionID.uuidString.lowercased()).zip"],"commit":["sha":sha]])
-        let http=BackupHTTPFixture([try metadata(),try metadata(),.init(status:404,data:Data()),.init(status:201,data:result)])
+        let http=BackupHTTPFixture([try metadata(),try metadata(),.init(status:404,data:Data())],dynamicUploadCommitSHA:sha)
         let first=Phase9BackupService(store:try LocalStore(path:":memory:",ownerID:UUID()),assetDirectory:assetDirectory,credentials:credentials,client:http,configuration:try XCTUnwrap(UserDefaults(suiteName:suite)))
         try await first.connectGitHub(owner:"reader",repository:"private-backups",personalAccessToken:token)
         let persisted=try XCTUnwrap(UserDefaults(suiteName:suite)?.data(forKey:"ReadingCompanion.githubBackup."+assetDirectory.lastPathComponent))
