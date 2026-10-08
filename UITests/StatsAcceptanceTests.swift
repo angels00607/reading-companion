@@ -24,15 +24,19 @@ final class StatsAcceptanceTests:XCTestCase {
         XCTAssertTrue(e.exists && e.isHittable,"Required Stats element must remain reachable: \(e.identifier) \(e.label) \(e.frame)")
     }
     @MainActor private func tap(_ app:XCUIApplication,_ e:XCUIElement) {
-        reveal(app,e); XCTAssertTrue(e.isHittable); XCTAssertGreaterThanOrEqual(e.frame.width,44); XCTAssertGreaterThanOrEqual(e.frame.height,44)
+        reveal(app,e); XCTAssertTrue(e.isHittable); XCTAssertGreaterThanOrEqual(e.frame.width.rounded(),44); XCTAssertGreaterThanOrEqual(e.frame.height.rounded(),44)
         if e.isHittable { e.tap() }
     }
     @MainActor func testMonthIncompleteDataRatingAndManualYearChoice() {
         let app=launch("month")
-        XCTAssertEqual(app.staticTexts["stats.books.value"].label,"3")
-        XCTAssertEqual(app.staticTexts["stats.pages.value"].label,"220 recorded")
-        XCTAssertEqual(app.staticTexts["stats.days.value"].label,"2 recorded")
-        XCTAssertEqual(app.staticTexts["stats.rating.value"].label,"4.0 / 5")
+        let books=app.descendants(matching:.any)["stats.books.value"]
+        let pages=app.descendants(matching:.any)["stats.pages.value"]
+        let days=app.descendants(matching:.any)["stats.days.value"]
+        let rating=app.descendants(matching:.any)["stats.rating.value"]
+        reveal(app,books);XCTAssertEqual(books.label,"3")
+        reveal(app,pages);XCTAssertEqual(pages.label,"220 recorded")
+        reveal(app,days);XCTAssertEqual(days.label,"2 recorded")
+        reveal(app,rating);XCTAssertEqual(rating.label,"4.0 / 5")
         reveal(app,app.staticTexts["stats.best.empty"]); XCTAssertEqual(app.staticTexts["stats.best.empty"].label,"Not selected")
         tap(app,app.buttons["stats.best.choose"])
         let choice=app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","stats.candidate.")).firstMatch
@@ -72,7 +76,7 @@ final class StatsAcceptanceTests:XCTestCase {
             let app=launch("shell",appearance:appearance,size:size)
             XCTAssertTrue(app.staticTexts["stats.books.value"].waitForExistence(timeout:10))
             for name in ["Home","Journal","Challenges","Series","Stats"] {
-                let tab=app.buttons["foundationTab."+name]; XCTAssertTrue(tab.exists); XCTAssertGreaterThanOrEqual(tab.frame.width,44); XCTAssertGreaterThanOrEqual(tab.frame.height,44)
+                let tab=app.buttons["foundationTab."+name]; XCTAssertTrue(tab.exists); XCTAssertGreaterThanOrEqual(tab.frame.width.rounded(),44); XCTAssertGreaterThanOrEqual(tab.frame.height.rounded(),44)
             }
             XCTAssertTrue(app.buttons["foundationTab.Stats"].isSelected)
             capture(app,"\(appearance)-\(size)-shell-overview")

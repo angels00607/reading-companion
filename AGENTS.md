@@ -213,3 +213,18 @@ return a technical proposal for approval.
   Active, Completed, explicit Abandoned and override precedence retain their locked meanings.
 - No listening-time/playback behavior, feature screens or Phase 1 implementation.
 
+## Phase 9 approved backup decisions
+
+- V1 GitHub backup uses a fine-grained personal access token, minimum required
+  permissions and one dedicated private backup repository. GitHub App authentication
+  is not part of V1. Tokens belong only in iOS Keychain/secure platform credentials;
+  never source, repository content, logs, portable exports or backups. Expiration and
+  revocation must be handled explicitly.
+- Portable backups use a versioned ZIP containing authoritative versioned JSON and
+  required user-owned assets. The manifest includes backup format/schema/app versions,
+  UTC creation time, a privacy-safe source description, entity counts and SHA-256 file
+  checksums. The interchange schema is independent of SQLite. Restore validates the
+  manifest and all checksums before any application.
+- These two decisions were explicitly approved by the user on 2026-10-07 and supersede
+  older references to them as Phase 9 TBD. Other TBDs and Foundation findings remain.
+

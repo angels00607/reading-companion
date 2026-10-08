@@ -30,11 +30,18 @@ final class StoryGraphImportAcceptanceTests:XCTestCase {
     @MainActor private func fixture(_ app:XCUIApplication,_ id:String) {
         let menu=app.buttons["import.fixture.menu"]
         XCTAssertTrue(menu.exists);XCTAssertTrue(app.frame.contains(menu.frame))
-        XCTAssertGreaterThanOrEqual(menu.frame.width,44);XCTAssertGreaterThanOrEqual(menu.frame.height,44)
+        // CoreGraphics may report a nominal 44-point SwiftUI frame as
+        // 43.999999999999986; round to the rendered point without lowering 44.
+        XCTAssertGreaterThanOrEqual(menu.frame.width.rounded(),44);XCTAssertGreaterThanOrEqual(menu.frame.height.rounded(),44)
         // XCTest's nested SwiftUI Menu proxy requests an unsupported AX scroll action
         // despite its visible navigation-bar frame. Tap the same live frame directly.
-        menu.coordinate(withNormalizedOffset:.init(dx:0.5,dy:0.5)).tap()
-        let action=app.buttons[id];XCTAssertTrue(action.waitForExistence(timeout:5));action.tap()
+        let action=app.buttons[id]
+        for _ in 0..<3 where !action.exists {
+            menu.coordinate(withNormalizedOffset:.init(dx:0.5,dy:0.5)).tap()
+            if action.waitForExistence(timeout:2) { break }
+        }
+        XCTAssertTrue(action.exists,"Fixture menu action did not open: \(id)")
+        if action.exists { action.tap() }
     }
     @MainActor private func verifyImportedLibrary(_ app:XCUIApplication,capturePrefix:String?=nil) {
         tap(app,app.buttons["import.library"])
@@ -50,7 +57,8 @@ final class StoryGraphImportAcceptanceTests:XCTestCase {
     }
     @MainActor func testHistoricalImportAndExplicitReconciliation() {
         let app=launch();fixture(app,"import.fixture.initial")
-        XCTAssertTrue(app.staticTexts["import.preview"].waitForExistence(timeout:10));reveal(app,app.staticTexts["import.group.New Books"]);XCTAssertEqual(app.staticTexts["import.group.New Books"].label,"New Books · 3")
+        let newBooks=app.descendants(matching:.any)["import.group.New Books"]
+        reveal(app,newBooks);XCTAssertEqual(newBooks.label,"New Books · 3")
         confirm(app);reveal(app,app.staticTexts["import.fixture.safety"])
         XCTAssertEqual(app.staticTexts["import.fixture.safety"].label,"3 readings · 0 XP · 0 Quest progress · 0 Achievements · 0 Challenges · 0 Inbox")
         verifyImportedLibrary(app)

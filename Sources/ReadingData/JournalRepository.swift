@@ -97,7 +97,11 @@ extension LocalStore: JournalRepository {
             if quote.includeInJournal, let readingID = quote.readingID { try db.execute(sql: "UPDATE journal_components SET state='ready' WHERE owner_id=? AND reading_id=? AND component='quote' AND state<>'copied'", arguments: [ownerID.uuidString,readingID.uuidString]) }
         }
     }
-    public func deleteQuote(id: UUID) throws { try queue.write { try $0.execute(sql: "DELETE FROM quotes WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString]) } }
+    public func deleteQuote(id: UUID) throws { try queue.write { db in
+        guard try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM quotes WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,id.uuidString]) == 1 else { throw JournalError.invalidQuote }
+        try enqueueTombstone(entityType:"quote",entityID:id,kind:"journal.quote.delete",db:db)
+        try db.execute(sql: "DELETE FROM quotes WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
+    } }
     public func markQuoteCopied(id: UUID) throws { try queue.write { db in
         guard let row = try Row.fetchOne(db, sql: "SELECT reading_id,include_in_journal FROM quotes WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString]), row["include_in_journal"] as Bool else { throw JournalError.notReady }
         let volume = try ensureVolume(db); let readingID: String? = row["reading_id"]

@@ -16,6 +16,7 @@ struct ReadingCompanionApp: App {
                     else if let route = visualQARoute { BooksVisualQA(route: route).environmentObject(model) }
                     else if let route = challengeQARoute { ChallengesVisualQA(route: route).environmentObject(model) }
                     else if let route = statsQARoute { StatsVisualQA(route: route).environmentObject(model) }
+                    else if phase9QARoute != nil { NavigationStack { BackupSettingsScreen(visualQA:true) }.environmentObject(model) }
                     else if let route = profileQARoute { ProfileVisualQA(route:route).environmentObject(model) }
                     else { FoundationShell(homeContent: AnyView(VStack(alignment:.leading,spacing:20){BooksHome();HomePrimaryQuest()}), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear)), statsContent:AnyView(StatsHome()), profileContent:AnyView(ProfileHome())).environmentObject(model) }
                 }
@@ -54,6 +55,13 @@ struct ReadingCompanionApp: App {
         #if DEBUG
         let args=ProcessInfo.processInfo.arguments
         if let index=args.firstIndex(of:"-phase7-screen"),index+1<args.count{return args[index+1]}
+        #endif
+        return nil
+    }
+    private var phase9QARoute:String? {
+        #if DEBUG
+        let args=ProcessInfo.processInfo.arguments
+        if let index=args.firstIndex(of:"-phase9-screen"),index+1<args.count{return args[index+1]}
         #endif
         return nil
     }
@@ -116,7 +124,7 @@ struct ReadingCompanionApp: App {
                 owner = value
             } else { owner = UUID(); try owner.uuidString.write(to: identity, atomically: true, encoding: .utf8) }
             #if DEBUG
-            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture") || ProcessInfo.processInfo.arguments.contains("-phase7-fixture")
+            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture") || ProcessInfo.processInfo.arguments.contains("-phase7-fixture") || ProcessInfo.processInfo.arguments.contains("-phase9-fixture")
             #else
             let qa = false
             #endif
@@ -136,7 +144,9 @@ struct ReadingCompanionApp: App {
             if ProcessInfo.processInfo.arguments.contains("-phase7-fixture"), !["quests","collection"].contains(profileQARoute ?? "") { try seedGamificationQA(store) }
             #endif
             _ = try store.currentQuests()
-            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
+            let assets=root.appendingPathComponent(owner.uuidString + "-covers")
+            let backupService=try Phase9BackupService(store:store,assetDirectory:assets,credentials:KeychainCredentialStore())
+            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, statsRepository:store, gamificationRepository:store, importsRepository:store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService)
             #if DEBUG
             if profileQARoute == "reward", qa {
                 // Genuine live finish actions cross the next 500-XP boundary.

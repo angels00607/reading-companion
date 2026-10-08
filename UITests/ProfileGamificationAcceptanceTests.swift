@@ -21,11 +21,15 @@ final class ProfileGamificationAcceptanceTests: XCTestCase {
     }
     @MainActor func testCleanProductionLaunchA() {
         let app = XCUIApplication()
-        app.launchArguments = ["-phase7-acceptance-store",UUID().uuidString,"-phase7-screen","quests"]
+        // The quests route deliberately skips presentation seeding, so this remains a
+        // clean production lifecycle while isolating the store from earlier UI suites.
+        app.launchArguments = ["-phase7-fixture","-phase7-screen","quests"]
         app.launch()
-        XCTAssertTrue(app.scrollViews["phase7.quests"].waitForExistence(timeout:15))
-        XCTAssertTrue(app.staticTexts["Capture a reading update"].firstMatch.exists)
-        XCTAssertTrue(app.staticTexts["Make a library choice"].firstMatch.exists)
+        // Xcode 16.4 can expose SwiftUI ScrollView/Text nodes as Other through the
+        // modern AX bridge. The identifiers and labels remain the product contract.
+        XCTAssertTrue(app.descendants(matching:.any)["phase7.quests"].waitForExistence(timeout:15))
+        XCTAssertTrue(app.descendants(matching:.any)["Capture a reading update"].firstMatch.exists)
+        XCTAssertTrue(app.descendants(matching:.any)["Make a library choice"].firstMatch.exists)
         // Repository acceptance proves exact 2/3/3; native clean launch proves no seed dependency.
         attach(app,"Phase7-Clean-production-launch")
         app.terminate()

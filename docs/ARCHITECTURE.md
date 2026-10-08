@@ -4,6 +4,11 @@
 Do not treat unresolved implementation choices as approved merely
 because they appear here.
 
+Phase 9's fine-grained PAT and versioned ZIP/JSON backup decisions were explicitly
+approved on 2026-10-07. [The Phase 9 backup contract](PHASE_9_BACKUP_CONTRACT.md)
+supersedes older TBD references to those two choices below. Other unresolved choices
+and the non-negotiable product rules remain unchanged.
+
 ## 1. Architecture goals
 
 The architecture must optimize for: - iPhone-first user experience; -
@@ -305,4 +310,3 @@ Do not code the application before these decisions are reviewed.
   confirmation of completion alone is insufficient: ambiguous cases return Unknown.
   Active, Completed, explicit Abandoned and override precedence retain their locked meanings.
 - No listening-time/playback behavior, feature screens or Phase 1 implementation.
-

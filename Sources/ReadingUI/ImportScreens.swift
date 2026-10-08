@@ -14,7 +14,7 @@ public struct ImportHome: View {
     @State private var confirm = false
     @State private var lastImport: ImportHistory?
     @State private var acceptanceSummary=""
-    private var repository: (any ImportsRepository)? { model.repository as? any ImportsRepository }
+    private var repository: (any ImportsRepository)? { model.importsRepository }
     public init() {}
     public var body: some View {
         BooksScreen("StoryGraph Import") {
@@ -151,8 +151,8 @@ struct ImportNeedsReview:View {
     } }
     @State private var editID:UUID?
     private func fieldLabel(_ field:String) -> String { switch field { case "start_date":"Start date";case "finish_date":"Finish date";case "rating":"Rating";case "title":"Title";case "author":"Author";default:field } }
-    private func decide(_ review:ImportReview,_ accept:Bool) { do { try (model.repository as? any ImportsRepository)?.decideImport(id:review.id,accept:accept,currentFingerprint:review.currentFingerprint);model.version+=1;reload() } catch { self.error=error.localizedDescription;reload() } }
-    private func reload() { do { let repo=model.repository as? any ImportsRepository;candidates=try repo?.pendingImportCandidates() ?? [];reviews=try repo?.importReviews() ?? [] } catch { self.error="Could not load pending review." } }
+    private func decide(_ review:ImportReview,_ accept:Bool) { do { try model.importsRepository?.decideImport(id:review.id,accept:accept,currentFingerprint:review.currentFingerprint);model.version+=1;reload() } catch { self.error=error.localizedDescription;reload() } }
+    private func reload() { do { let repo=model.importsRepository;candidates=try repo?.pendingImportCandidates() ?? [];reviews=try repo?.importReviews() ?? [] } catch { self.error="Could not load pending review." } }
 }
 
 private struct ImportManualEdit:View {
@@ -207,13 +207,13 @@ private struct ImportIdentityReview:View {
         if let error { StatePresentation(kind:.error,title:"Review not applied",message:error) }
     }.confirmationDialog("Confirm imported identity and distinct history?",isPresented:$confirm,titleVisibility:.visible) {
         Button("Apply selected identity") { do {
-            let repo=model.repository as? any ImportsRepository
+            let repo=model.importsRepository
             if linking,let selected { try repo?.linkImportCandidate(id:candidate.id,bookID:selected,readingIDs:candidate.row.finishes.indices.compactMap { readingMap[$0] },confirmed:true) }
             else { try repo?.resolveImportCandidate(id:candidate.id,bookID:selected,createSeparateBook:separate,confirmed:true) }
             model.version+=1;dismiss()
         } catch { self.error=error.localizedDescription } }
     }.confirmationDialog("Keep this row unapplied?",isPresented:$skip,titleVisibility:.visible) {
-        Button("Keep unapplied") { do { try (model.repository as? any ImportsRepository)?.skipImportCandidate(id:candidate.id,confirmed:true);model.version+=1;dismiss() } catch { self.error=error.localizedDescription } }
+        Button("Keep unapplied") { do { try model.importsRepository?.skipImportCandidate(id:candidate.id,confirmed:true);model.version+=1;dismiss() } catch { self.error=error.localizedDescription } }
     } }
 }
 
@@ -235,7 +235,7 @@ struct ImportHistoryScreen:View {
             }.accessibilityElement(children:.contain).accessibilityIdentifier("import.history.row")
         }
         if let error { Text(error) }
-    }.task { do { history=try (model.repository as? any ImportsRepository)?.importHistory() ?? [] } catch { self.error="Could not load committed history." } } }
+    }.task { do { history=try model.importsRepository?.importHistory() ?? [] } catch { self.error="Could not load committed history." } } }
 }
 
 #if DEBUG

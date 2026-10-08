@@ -99,6 +99,7 @@ public struct ProfileHome:View {
         NavigationLink("View all Achievements") { AchievementsScreen(values:achievements) }.buttonStyle(ProfileLinkStyle())
         NavigationLink("Open Collection") { CollectionScreen(level:level,states:cosmetics) }.buttonStyle(ProfileLinkStyle())
         NavigationLink("Data · StoryGraph Import") { ImportHome() }.buttonStyle(ProfileLinkStyle()).accessibilityIdentifier("import.open")
+        NavigationLink("Sync & Backup") { BackupSettingsScreen() }.buttonStyle(ProfileLinkStyle()).accessibilityIdentifier("backup.open")
         if let error { StatePresentation(kind:.error,title:"Profile unavailable",message:error) }
     }.task(id:model.version) { load() }.accessibilityIdentifier("phase7.profile") }
     private var passportHeader: some View {

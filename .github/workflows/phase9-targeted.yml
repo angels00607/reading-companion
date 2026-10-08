@@ -1,0 +1,118 @@
+name: Phase 9 targeted development validation
+on:
+  push:
+    branches: [codex/phase-9-sync-backup]
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Targeted development, visual QA, or final candidate
+        required: true
+        default: targeted
+        type: choice
+        options: [targeted, qa, candidate]
+permissions:
+  contents: read
+jobs:
+  backup:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[phase9-targeted]') }}
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      - name: Phase 9 archive and security boundary tests
+        if: ${{ !contains(github.event.head_commit.message, '[phase9-native]') && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') }}
+        env:
+          PHASE9_INTEROPERABILITY_FILE: /tmp/phase9-interoperable.zip
+        run: swift test --filter '(Phase9|InvariantTests|SyncTests|LocalStoreTests)'
+      - name: Complete Swift regression suite
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate' }}
+        env:
+          PHASE9_INTEROPERABILITY_FILE: /tmp/phase9-interoperable.zip
+        run: swift test
+      - name: Independent Python ZIP and SHA-256 interoperability
+        if: ${{ !contains(github.event.head_commit.message, '[phase9-native]') }}
+        run: python3 scripts/test_portable_backup_interop.py /tmp/phase9-interoperable.zip
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - name: iOS dependency and application build
+        if: ${{ !contains(github.event.head_commit.message, '[phase9-native]') }}
+        run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Native Phase 9 Keychain integration only
+        if: ${{ !contains(github.event.head_commit.message, '[phase9-swift]') }}
+        run: |
+          xcrun simctl list devices available -j > /tmp/phase9-simulators.json
+          SIMULATOR_ID=$(python3 -c "import json; d=json.load(open('/tmp/phase9-simulators.json')); print(next(v['udid'] for group in d['devices'].values() for v in group if 'iPhone' in v['name']))")
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath work/Phase9DerivedData -parallel-testing-enabled NO -resultBundlePath work/Phase9Keychain.xcresult -only-testing:FoundationFontTests/Phase9KeychainTests CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY=- test
+          APP_CONTAINER=$(xcrun simctl get_app_container "$SIMULATOR_ID" com.readingcompanion.app app)
+          codesign --verify --strict "$APP_CONTAINER"
+          cp work/Phase9DerivedData/Build/Intermediates.noindex/ReadingCompanion.build/Debug-iphonesimulator/ReadingCompanion.build/ReadingCompanion.app-Simulated.xcent work/Phase9Keychain.entitlements.plist
+          python3 -c "import plistlib; p=plistlib.load(open('work/Phase9Keychain.entitlements.plist','rb')); a=p['application-identifier']; assert a.endswith('.com.readingcompanion.app'); assert p['keychain-access-groups']==[a]; assert set(p)=={'application-identifier','keychain-access-groups'}; print('PASS: signed simulator host grants only its own Keychain group')"
+      - name: Phase 9 visual boards and functional UI acceptance
+        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.stage == 'qa' || inputs.stage == 'candidate') }}
+        run: |
+          xcrun simctl list devices available -j > /tmp/phase9-simulators.json
+          SIMULATOR_ID=$(python3 -c "import json; d=json.load(open('/tmp/phase9-simulators.json')); print(next(v['udid'] for group in d['devices'].values() for v in group if 'iPhone' in v['name']))")
+          # The preceding Keychain suite installs a signed host. Restart before
+          # launching the unsigned UI-test runner so FrontBoard refreshes its app map.
+          xcrun simctl shutdown "$SIMULATOR_ID"
+          xcrun simctl boot "$SIMULATOR_ID"
+          xcrun simctl bootstatus "$SIMULATOR_ID" -b
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase9VisualQA.xcresult -only-testing:FoundationAcceptanceTests/Phase9BackupAcceptanceTests CODE_SIGNING_ALLOWED=NO test
+          xcrun xcresulttool export attachments --path work/Phase9VisualQA.xcresult --output-path work/phase9-visual-boards
+      - name: Accepted Phase 0–8 UI regression sample
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate' }}
+        run: |
+          SIMULATOR_ID=$(python3 -c "import json; d=json.load(open('/tmp/phase9-simulators.json')); print(next(v['udid'] for group in d['devices'].values() for v in group if 'iPhone' in v['name']))")
+          TESTS=(
+            FoundationAcceptanceTests/BooksCoreAcceptanceTests/testOfficialAcceptanceFlow
+            FoundationAcceptanceTests/JournalAcceptanceTests
+            FoundationAcceptanceTests/SeriesAcceptanceTests
+            FoundationAcceptanceTests/ChallengesAcceptanceTests/testExplicitConfirmOccupancyAndIndependentNextChallenge
+            FoundationAcceptanceTests/StatsAcceptanceTests/testMonthIncompleteDataRatingAndManualYearChoice
+            FoundationAcceptanceTests/ProfileGamificationAcceptanceTests/testCleanProductionLaunchA
+            FoundationAcceptanceTests/StoryGraphImportAcceptanceTests/testHistoricalImportAndExplicitReconciliation
+          )
+          for INDEX in "${!TESTS[@]}"; do
+            xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath "work/Phase9Regression-$INDEX.xcresult" -only-testing:"${TESTS[$INDEX]}" CODE_SIGNING_ALLOWED=NO test
+          done
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && !contains(github.event.head_commit.message, '[phase9-native]') }}
+        with:
+          name: phase9-portable-interoperability
+          path: /tmp/phase9-interoperable.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase9-keychain-results
+          path: |
+            work/Phase9Keychain.xcresult
+            work/Phase9Keychain.entitlements.plist
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && (inputs.stage == 'qa' || inputs.stage == 'candidate') }}
+        with:
+          name: phase-9-visual-review-boards
+          path: |
+            work/Phase9VisualQA.xcresult
+            work/phase9-visual-boards
+            work/Phase9Regression-*.xcresult
+  data-integrity:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 scripts/test_local_schema.py
+          python3 scripts/test_books_schema.py
+          python3 scripts/test_challenges_schema.py
+          python3 scripts/test_stats_schema.py
+          python3 scripts/test_gamification_schema.py
+          python3 scripts/test_imports_schema.py
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.119.0
+      - run: supabase start
+      - run: supabase db reset
+      - run: supabase test db
