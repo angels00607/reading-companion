@@ -41,6 +41,22 @@ final class Phase9RestoreTests: XCTestCase {
         XCTAssertEqual(try target.bookCount(),1)
     }
 
+    func testRestoreRejectsPreviewAfterEditingExistingRecordWithoutChangingCount() throws {
+        let source = try store()
+        _ = try source.add(work:.init(provider:"manual",reference:"incoming",title:"Incoming",author:"Reader"),choice:.addAnyway)
+        let archive = try source.makePortableBackup(appVersion:"9.0")
+        let target = try store()
+        let book = try target.add(work:.init(provider:"manual",reference:"local",title:"Before",author:"Reader"),choice:.addAnyway)
+        let preview = try target.previewPortableRestore(archive)
+        try target.queue.write { db in
+            try db.execute(sql:"UPDATE books SET title=? WHERE id=?",arguments:["After",book.uuidString])
+        }
+        XCTAssertEqual(try target.bookCount(),1)
+        XCTAssertThrowsError(try target.restorePortableBackup(archive,preview:preview,confirmed:true)) {
+            XCTAssertEqual($0 as? BackupRestoreError,.stalePreview)
+        }
+    }
+
     func testRelationshipFailureRollsBackEntireRestore() throws {
         let source=try store();_ = try source.add(work:.init(provider:"manual",reference:"rollback",title:"Rollback",author:"Reader"),choice:.addAnyway)
         let original=try source.makePortableBackup(appVersion:"9.0")
