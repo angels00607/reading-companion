@@ -51,7 +51,34 @@ public actor Phase9BackupService: BackupService {
     public func confirmRestore(file:URL,previewToken:String) async throws {
         guard let cached=previews.removeValue(forKey:previewToken) else { throw BackupRestoreError.stalePreview }
         let (preview,data)=cached
-        try store.restorePortableBackup(data,preview:preview,confirmed:true)
+        // Stage and validate archive assets before touching SQLite. Existing local
+        // assets always win; newly staged files are removed if the DB restore fails.
+        let decoded=try PortableBackupCodec().decode(data)
+        let fm=FileManager.default
+        var created=[URL]()
+        do {
+            if !decoded.assets.isEmpty {
+                try fm.createDirectory(at:assetDirectory,withIntermediateDirectories:true)
+            }
+            for (path,bytes) in decoded.assets.sorted(by:{$0.key<$1.key}) {
+                let name=String(path.dropFirst("assets/".count))
+                guard path.hasPrefix("assets/"), !name.contains("/"), !name.contains("\\\\"), !name.isEmpty else {
+                    throw PortableBackupError.unsafeEntry
+                }
+                let target=assetDirectory.appendingPathComponent(name,isDirectory:false)
+                if fm.fileExists(atPath:target.path) { continue }
+                // Exclusive creation prevents replacing files that appeared after the check.
+                guard fm.createFile(atPath:target.path,contents:nil) else {
+                    throw BackupRestoreError.postRestoreIntegrity
+                }
+                created.append(target)
+                try bytes.write(to:target,options:.atomic)
+            }
+            try store.restorePortableBackup(data,preview:preview,confirmed:true)
+        } catch {
+            for url in created { try? fm.removeItem(at:url) }
+            throw error
+        }
     }
     private func assets() throws -> [String:Data] {
         guard FileManager.default.fileExists(atPath:assetDirectory.path) else{return[:]}
