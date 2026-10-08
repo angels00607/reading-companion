@@ -41,20 +41,65 @@ final class Phase9RestoreTests: XCTestCase {
         XCTAssertEqual(try target.bookCount(),1)
     }
 
-    func testRestoreRejectsPreviewAfterEditingExistingRecordWithoutChangingCount() throws {
-        let source = try store()
-        _ = try source.add(work:.init(provider:"manual",reference:"incoming",title:"Incoming",author:"Reader"),choice:.addAnyway)
-        let archive = try source.makePortableBackup(appVersion:"9.0")
-        let target = try store()
-        let book = try target.add(work:.init(provider:"manual",reference:"local",title:"Before",author:"Reader"),choice:.addAnyway)
-        let preview = try target.previewPortableRestore(archive)
-        try target.queue.write { db in
-            try db.execute(sql:"UPDATE books SET title=? WHERE id=?",arguments:["After",book.uuidString])
-        }
-        XCTAssertEqual(try target.bookCount(),1)
+    func testRestoreRejectsStalePreviewWhenValuesChangeButCountsDoNot() throws {
+        let source=try store();_ = try source.add(work:.init(provider:"manual",reference:"source",title:"Source",author:"Reader"),choice:.addAnyway)
+        let archive=try source.makePortableBackup(appVersion:"9.0")
+        let target=try store();let id=try target.add(work:.init(provider:"manual",reference:"local",title:"Before",author:"Reader"),choice:.addAnyway)
+        let preview=try target.previewPortableRestore(archive)
+        try target.queue.write{$0.execute(sql:"UPDATE books SET title=? WHERE owner_id=? AND id=?",arguments:["After",target.ownerID.uuidString,id.uuidString])}
         XCTAssertThrowsError(try target.restorePortableBackup(archive,preview:preview,confirmed:true)) {
             XCTAssertEqual($0 as? BackupRestoreError,.stalePreview)
         }
+        XCTAssertEqual(try target.record(id:id).book.title,"After")
+    }
+
+    func testAssetRestoreStagesPreservesExistingFilesAndRollsBackDatabaseOnFailure() async throws {
+        let root=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString,isDirectory:true)
+        defer{try? FileManager.default.removeItem(at:root)}
+        let assets=root.appendingPathComponent("assets",isDirectory:true);try FileManager.default.createDirectory(at:assets,withIntermediateDirectories:true)
+        let existingName=UUID().uuidString.lowercased()+".png",incomingName=UUID().uuidString.lowercased()+".jpg"
+        try Data("existing".utf8).write(to:assets.appendingPathComponent(existingName))
+        let source=try store();_ = try source.add(work:.init(provider:"manual",reference:"asset",title:"Asset",author:"Reader"),choice:.addAnyway)
+        let archive=try source.makePortableBackup(appVersion:"9.0",assets:["assets/"+incomingName:Data("incoming".utf8)])
+        let file=root.appendingPathComponent("backup.zip");try archive.write(to:file)
+        let target=try store(),service=Phase9BackupService(store:target,assetDirectory:assets,credentials:BackupMemoryCredentialStore(),beforeAssetCommit:{throw BackupRestoreError.postRestoreIntegrity})
+        let preview=try await service.previewRestore(file:file)
+        await XCTAssertThrowsErrorAsync(try await service.confirmRestore(file:file,previewToken:preview.token))
+        XCTAssertEqual(try target.bookCount(),0)
+        XCTAssertEqual(try Data(contentsOf:assets.appendingPathComponent(existingName)),Data("existing".utf8))
+        XCTAssertFalse(FileManager.default.fileExists(atPath:assets.appendingPathComponent(incomingName).path))
+    }
+
+    func testAssetRestoreRefusesDifferentBytesAtExistingPathWithoutDatabaseWrites() async throws {
+        let root=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString,isDirectory:true)
+        defer{try? FileManager.default.removeItem(at:root)}
+        let assets=root.appendingPathComponent("assets",isDirectory:true);try FileManager.default.createDirectory(at:assets,withIntermediateDirectories:true)
+        let name=UUID().uuidString.lowercased()+".png";try Data("local".utf8).write(to:assets.appendingPathComponent(name))
+        let source=try store();_ = try source.add(work:.init(provider:"manual",reference:"collision",title:"Collision",author:"Reader"),choice:.addAnyway)
+        let archive=try source.makePortableBackup(appVersion:"9.0",assets:["assets/"+name:Data("remote".utf8)])
+        let file=root.appendingPathComponent("backup.zip");try archive.write(to:file)
+        let target=try store(),service=Phase9BackupService(store:target,assetDirectory:assets,credentials:BackupMemoryCredentialStore())
+        let preview=try await service.previewRestore(file:file)
+        await XCTAssertThrowsErrorAsync(try await service.confirmRestore(file:file,previewToken:preview.token))
+        XCTAssertEqual(try target.bookCount(),0)
+        XCTAssertEqual(try Data(contentsOf:assets.appendingPathComponent(name)),Data("local".utf8))
+    }
+
+    func testAssetRestoreInstallsNewFileWithoutOverwritingExistingFile() async throws {
+        let root=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString,isDirectory:true)
+        defer{try? FileManager.default.removeItem(at:root)}
+        let assets=root.appendingPathComponent("assets",isDirectory:true);try FileManager.default.createDirectory(at:assets,withIntermediateDirectories:true)
+        let existing=UUID().uuidString.lowercased()+".png",incoming=UUID().uuidString.lowercased()+".jpg"
+        try Data("keep".utf8).write(to:assets.appendingPathComponent(existing))
+        let source=try store();_ = try source.add(work:.init(provider:"manual",reference:"success",title:"Success",author:"Reader"),choice:.addAnyway)
+        let archive=try source.makePortableBackup(appVersion:"9.0",assets:["assets/"+incoming:Data("install".utf8)])
+        let file=root.appendingPathComponent("backup.zip");try archive.write(to:file)
+        let target=try store(),service=Phase9BackupService(store:target,assetDirectory:assets,credentials:BackupMemoryCredentialStore())
+        let preview=try await service.previewRestore(file:file)
+        try await service.confirmRestore(file:file,previewToken:preview.token)
+        XCTAssertEqual(try target.bookCount(),1)
+        XCTAssertEqual(try Data(contentsOf:assets.appendingPathComponent(existing)),Data("keep".utf8))
+        XCTAssertEqual(try Data(contentsOf:assets.appendingPathComponent(incoming)),Data("install".utf8))
     }
 
     func testRelationshipFailureRollsBackEntireRestore() throws {
@@ -72,4 +117,12 @@ final class Phase9RestoreTests: XCTestCase {
         XCTAssertThrowsError(try target.restorePortableBackup(tampered,preview:preview,confirmed:true))
         XCTAssertEqual(try target.bookCount(),0)
     }
+}
+
+private final class BackupMemoryCredentialStore:CredentialStore,@unchecked Sendable {
+    func read(account:String)throws->Data?{nil};func write(_ data:Data,account:String)throws{};func remove(account:String)throws{}
+}
+
+private func XCTAssertThrowsErrorAsync<T>(_ expression:@autoclosure () async throws->T,_ file:StaticString=#filePath,_ line:UInt=#line) async {
+    do{_ = try await expression();XCTFail("Expected error",file:file,line:line)}catch{}
 }

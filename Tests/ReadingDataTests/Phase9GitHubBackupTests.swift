@@ -75,6 +75,20 @@ final class Phase9GitHubBackupTests: XCTestCase {
         XCTAssertNil(requests.first?.httpBody)
         try await transport.disconnect(); XCTAssertNil(credentials.read(account: try repo().credentialAccount))
     }
+    func testServiceRestoresRepositoryAfterRestartWhilePATRemainsOnlyInCredentialStore() async throws {
+        let suite="phase9-backup-"+UUID().uuidString,defaults=try XCTUnwrap(UserDefaults(suiteName:suite));defer{defaults.removePersistentDomain(forName:suite)}
+        let credentials=BackupMemoryCredentials(),assetDirectory=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer{try? FileManager.default.removeItem(at:assetDirectory)}
+        let result=try JSONSerialization.data(withJSONObject:["content":["path":"backups/\(versionID.uuidString.lowercased()).zip"],"commit":["sha":sha]])
+        let http=BackupHTTPFixture([try metadata(),try metadata(),.init(status:404,data:Data()),.init(status:201,data:result)])
+        let first=Phase9BackupService(store:try LocalStore(path:":memory:",ownerID:UUID()),assetDirectory:assetDirectory,credentials:credentials,client:http,configuration:defaults)
+        try await first.connectGitHub(owner:"reader",repository:"private-backups",personalAccessToken:token)
+        let persisted=try XCTUnwrap(defaults.data(forKey:"ReadingCompanion.githubBackup."+assetDirectory.lastPathComponent))
+        XCTAssertFalse(String(decoding:persisted,as:UTF8.self).contains(token))
+        let restarted=Phase9BackupService(store:try LocalStore(path:":memory:",ownerID:UUID()),assetDirectory:assetDirectory,credentials:credentials,client:http,configuration:defaults)
+        XCTAssertEqual(try await restarted.uploadManualBackup(),sha)
+        XCTAssertEqual(credentials.read(account:try repo().credentialAccount),Data(token.utf8))
+    }
     func testExpiredOrRevokedCredentialRequiresReconnectAndIsRemoved() async throws {
         let credentials = try storedCredentials(), http = BackupHTTPFixture([.init(status: 401, data: Data("untrusted raw error".utf8))])
         let transport = GitHubBackupTransport(repository: try repo(), credentials: credentials, client: http)

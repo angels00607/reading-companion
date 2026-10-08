@@ -2,35 +2,42 @@ import Foundation
 import ReadingDomain
 
 public actor Phase9BackupService: BackupService {
+    private struct SavedRepository:Codable { let owner:String;let name:String }
     private let store:LocalStore
     private let assetDirectory:URL
     private let credentials:any CredentialStore
+    private let client:any GitHubBackupHTTPClient
+    private let configuration:UserDefaults
+    private let beforeAssetCommit:(@Sendable () throws -> Void)?
     private var transport:GitHubBackupTransport?
     private var repository:GitHubBackupRepository?
     private var previews:[String:(BackupPreview,Data)] = [:]
     private let configurationKey:String
-    public init(store:LocalStore,assetDirectory:URL,credentials:any CredentialStore) {
+    public init(store:LocalStore,assetDirectory:URL,credentials:any CredentialStore,
+                client:any GitHubBackupHTTPClient = GitHubBackupURLSessionClient(),
+                configuration:UserDefaults = .standard,
+                beforeAssetCommit:(@Sendable () throws -> Void)? = nil) {
         self.store=store;self.assetDirectory=assetDirectory;self.credentials=credentials
+        self.client=client;self.configuration=configuration;self.beforeAssetCommit=beforeAssetCommit
         self.configurationKey="ReadingCompanion.githubBackup.\(assetDirectory.lastPathComponent)"
-        if let name=UserDefaults.standard.string(forKey:configurationKey) {
-            let parts=name.split(separator:"/",omittingEmptySubsequences:false)
-            if parts.count==2, let destination=try? GitHubBackupRepository(owner:String(parts[0]),name:String(parts[1])) {
-                self.repository=destination
-                self.transport=GitHubBackupTransport(repository:destination,credentials:credentials)
-            }
+        if let data=configuration.data(forKey:configurationKey),
+           let saved=try? JSONDecoder().decode(SavedRepository.self,from:data),
+           let destination=try? GitHubBackupRepository(owner:saved.owner,name:saved.name) {
+            self.repository=destination
+            self.transport=GitHubBackupTransport(repository:destination,credentials:credentials,client:client)
         }
     }
     public func connectGitHub(owner:String,repository:String,personalAccessToken:String) async throws {
         let destination=try GitHubBackupRepository(owner:owner.trimmingCharacters(in:.whitespacesAndNewlines),name:repository.trimmingCharacters(in:.whitespacesAndNewlines))
-        let value=GitHubBackupTransport(repository:destination,credentials:credentials)
+        let value=GitHubBackupTransport(repository:destination,credentials:credentials,client:client)
         try await value.connect(personalAccessToken:personalAccessToken)
+        let saved=try JSONEncoder().encode(SavedRepository(owner:destination.owner,name:destination.name))
+        configuration.set(saved,forKey:configurationKey)
         self.repository=destination;self.transport=value
-        UserDefaults.standard.set(destination.fullName,forKey:configurationKey)
     }
     public func disconnectGitHub() async throws {
         guard let transport else { throw GitHubBackupError.authenticationRequired }
-        try await transport.disconnect();self.transport=nil;self.repository=nil
-        UserDefaults.standard.removeObject(forKey:configurationKey)
+        try await transport.disconnect();configuration.removeObject(forKey:configurationKey);self.transport=nil;self.repository=nil
     }
     public func exportLocal() async throws -> URL {
         let archive=try store.makePortableBackup(appVersion:"9.0",assets:try assets())
@@ -51,34 +58,10 @@ public actor Phase9BackupService: BackupService {
     public func confirmRestore(file:URL,previewToken:String) async throws {
         guard let cached=previews.removeValue(forKey:previewToken) else { throw BackupRestoreError.stalePreview }
         let (preview,data)=cached
-        // Stage and validate archive assets before touching SQLite. Existing local
-        // assets always win; newly staged files are removed if the DB restore fails.
         let decoded=try PortableBackupCodec().decode(data)
-        let fm=FileManager.default
-        var created=[URL]()
-        do {
-            if !decoded.assets.isEmpty {
-                try fm.createDirectory(at:assetDirectory,withIntermediateDirectories:true)
-            }
-            for (path,bytes) in decoded.assets.sorted(by:{$0.key<$1.key}) {
-                let name=String(path.dropFirst("assets/".count))
-                guard path.hasPrefix("assets/"), !name.contains("/"), !name.contains("\\\\"), !name.isEmpty else {
-                    throw PortableBackupError.unsafeEntry
-                }
-                let target=assetDirectory.appendingPathComponent(name,isDirectory:false)
-                if fm.fileExists(atPath:target.path) { continue }
-                // Exclusive creation prevents replacing files that appeared after the check.
-                guard fm.createFile(atPath:target.path,contents:nil) else {
-                    throw BackupRestoreError.postRestoreIntegrity
-                }
-                created.append(target)
-                try bytes.write(to:target,options:.atomic)
-            }
-            try store.restorePortableBackup(data,preview:preview,confirmed:true)
-        } catch {
-            for url in created { try? fm.removeItem(at:url) }
-            throw error
-        }
+        let assets=try AssetRestoreTransaction(directory:assetDirectory,incoming:decoded.assets,beforeCommit:beforeAssetCommit)
+        defer{assets.finish()}
+        try store.restorePortableBackup(data,preview:preview,confirmed:true,applyExternal:{try assets.apply()},rollbackExternal:{assets.rollback()})
     }
     private func assets() throws -> [String:Data] {
         guard FileManager.default.fileExists(atPath:assetDirectory.path) else{return[:]}
@@ -90,5 +73,68 @@ public actor Phase9BackupService: BackupService {
             result["assets/\(id.uuidString.lowercased()).\(parts[1].lowercased())"]=try Data(contentsOf:url,options:.mappedIfSafe)
         }
         return result
+    }
+}
+
+private final class AssetRestoreTransaction:@unchecked Sendable {
+    private let fileManager=FileManager.default
+    private let destination:URL
+    private let staging:URL
+    private let displaced:URL
+    private let beforeCommit:(@Sendable () throws -> Void)?
+    private var displacedExisting=false
+    private var installed=false
+
+    init(directory:URL,incoming:[String:Data],beforeCommit:(@Sendable () throws -> Void)?) throws {
+        destination=directory
+        let parent=directory.deletingLastPathComponent(),id=UUID().uuidString.lowercased()
+        staging=parent.appendingPathComponent(".phase9-assets-staging-"+id,isDirectory:true)
+        displaced=parent.appendingPathComponent(".phase9-assets-rollback-"+id,isDirectory:true)
+        self.beforeCommit=beforeCommit
+        try fileManager.createDirectory(at:parent,withIntermediateDirectories:true)
+        try fileManager.createDirectory(at:staging,withIntermediateDirectories:false)
+        do {
+            if fileManager.fileExists(atPath:destination.path) {
+                let values=try destination.resourceValues(forKeys:[.isDirectoryKey,.isSymbolicLinkKey])
+                guard values.isDirectory==true,values.isSymbolicLink != true else{throw BackupRestoreError.invalidValue}
+                for url in try fileManager.contentsOfDirectory(at:destination,includingPropertiesForKeys:[.isRegularFileKey,.isSymbolicLinkKey],options:[.skipsHiddenFiles]) {
+                    guard Self.validName(url.lastPathComponent),
+                          (try url.resourceValues(forKeys:[.isRegularFileKey,.isSymbolicLinkKey])).isRegularFile==true,
+                          (try url.resourceValues(forKeys:[.isSymbolicLinkKey])).isSymbolicLink != true else{throw BackupRestoreError.invalidValue}
+                    try fileManager.copyItem(at:url,to:staging.appendingPathComponent(url.lastPathComponent))
+                }
+            }
+            for (path,data) in incoming {
+                let name=URL(fileURLWithPath:path).lastPathComponent
+                guard path=="assets/"+name,Self.validName(name) else{throw PortableBackupError.unsafeEntry}
+                let target=staging.appendingPathComponent(name)
+                if fileManager.fileExists(atPath:target.path) {
+                    guard try Data(contentsOf:target,options:.mappedIfSafe)==data else{throw BackupRestoreError.invalidValue}
+                } else { try data.write(to:target,options:.atomic) }
+            }
+        } catch { try? fileManager.removeItem(at:staging);throw error }
+    }
+    func apply() throws {
+        do {
+            if fileManager.fileExists(atPath:destination.path) {
+                try fileManager.moveItem(at:destination,to:displaced);displacedExisting=true
+            }
+            try beforeCommit?()
+            try fileManager.moveItem(at:staging,to:destination);installed=true
+        } catch { rollback();throw error }
+    }
+    func rollback() {
+        if installed { try? fileManager.removeItem(at:destination);installed=false }
+        if displacedExisting {
+            try? fileManager.moveItem(at:displaced,to:destination);displacedExisting=false
+        }
+    }
+    func finish() {
+        if fileManager.fileExists(atPath:staging.path){try? fileManager.removeItem(at:staging)}
+        if fileManager.fileExists(atPath:displaced.path){try? fileManager.removeItem(at:displaced)}
+    }
+    private static func validName(_ name:String)->Bool {
+        let parts=name.split(separator:".",omittingEmptySubsequences:false)
+        return parts.count==2 && UUID(uuidString:String(parts[0])) != nil && ["png","jpg","jpeg","heic","pdf"].contains(parts[1].lowercased())
     }
 }

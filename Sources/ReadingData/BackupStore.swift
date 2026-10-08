@@ -103,40 +103,67 @@ public extension LocalStore {
             permanentXPAwardsAdded:incomingKeys.subtracting(existingKeys).count)
     }
 
-    func restorePortableBackup(_ archive: Data, preview: BackupPreview, confirmed: Bool) throws {
+    func restorePortableBackup(_ archive: Data, preview: BackupPreview, confirmed: Bool,
+                               applyExternal: (() throws -> Void)? = nil,
+                               rollbackExternal: (() -> Void)? = nil) throws {
         guard confirmed else { throw BackupRestoreError.confirmationRequired }
         guard try backupStateToken() == preview.token else { throw BackupRestoreError.stalePreview }
         let decoded = try PortableBackupCodec().decode(archive)
         let payload = try Self.decodeTypedPayload(decoded.json); try Self.validate(payload)
-        try queue.write { db in
-            try Self.validatePermanentXP(payload,ownerID:ownerID,db:db)
-            for spec in Self.backupSpecs {
-                for record in payload.entities[spec.collection] ?? [] {
-                    let columns = spec.columns.filter { record.fields[$0] != nil }
-                    guard Set(record.fields.keys) == Set(columns) else { throw BackupRestoreError.invalidValue }
-                    let names = ["owner_id"] + columns
-                    let values = [ownerID.uuidString.databaseValue] + columns.map { record.fields[$0]!.databaseValue }
-                    // Existing local facts win. XP is a permanent semantic-key union;
-                    // immutable import/history rows remain untouched on a repeated restore.
-                    try db.execute(sql:"INSERT OR IGNORE INTO \(spec.table)(\(names.joined(separator:","))) VALUES(\(Array(repeating:"?",count:names.count).joined(separator:",")))",arguments:StatementArguments(values))
+        do {
+            try queue.write { db in
+                try Self.validatePermanentXP(payload,ownerID:ownerID,db:db)
+                for spec in Self.backupSpecs {
+                    for record in payload.entities[spec.collection] ?? [] {
+                        let columns = spec.columns.filter { record.fields[$0] != nil }
+                        guard Set(record.fields.keys) == Set(columns) else { throw BackupRestoreError.invalidValue }
+                        let names = ["owner_id"] + columns
+                        let values = [ownerID.uuidString.databaseValue] + columns.map { record.fields[$0]!.databaseValue }
+                        // Existing local facts win. XP is a permanent semantic-key union;
+                        // immutable import/history rows remain untouched on a repeated restore.
+                        try db.execute(sql:"INSERT OR IGNORE INTO \(spec.table)(\(names.joined(separator:","))) VALUES(\(Array(repeating:"?",count:names.count).joined(separator:",")))",arguments:StatementArguments(values))
+                    }
                 }
+                let violations = try Row.fetchAll(db,sql:"PRAGMA foreign_key_check")
+                guard violations.isEmpty else { throw BackupRestoreError.invalidRelationship }
+                try db.execute(sql:"DELETE FROM outbox WHERE owner_id=?",arguments:[ownerID.uuidString])
+                try db.execute(sql:"INSERT INTO sync_state(owner_id,generation,pull_cursor) VALUES(?,?,0) ON CONFLICT(owner_id) DO UPDATE SET generation=excluded.generation,pull_cursor=0",arguments:[ownerID.uuidString,UUID().uuidString])
+                try applyExternal?()
             }
-            let violations = try Row.fetchAll(db,sql:"PRAGMA foreign_key_check")
-            guard violations.isEmpty else { throw BackupRestoreError.invalidRelationship }
-            // A restore is a new synchronization generation. Historical outbox work
-            // is never replayed and restore itself emits no live events or XP.
-            try db.execute(sql:"DELETE FROM outbox WHERE owner_id=?",arguments:[ownerID.uuidString])
-            try db.execute(sql:"INSERT INTO sync_state(owner_id,generation,pull_cursor) VALUES(?,?,0) ON CONFLICT(owner_id) DO UPDATE SET generation=excluded.generation,pull_cursor=0",arguments:[ownerID.uuidString,UUID().uuidString])
+        } catch {
+            rollbackExternal?()
+            throw error
         }
         _ = try previewPortableRestore(archive)
     }
 
     private func backupStateToken() throws -> String {
-        // A content digest, not row counts: edits to existing records invalidate previews.
-        // Logical export excludes credentials, outbox, receipts and sync cursors.
-        let archive = try makePortableBackup(appVersion:"preview-state")
-        let snapshot = try PortableBackupCodec().decode(archive).json
-        return SHA256.hash(data:snapshot).map { String(format:"%02x",$0) }.joined()
+        try queue.read { db in
+            var hasher=SHA256()
+            func feed(_ data:Data) {
+                var count=UInt64(data.count).bigEndian
+                hasher.update(data:withUnsafeBytes(of:&count){Data($0)})
+                hasher.update(data:data)
+            }
+            func feed(_ value:String){feed(Data(value.utf8))}
+            for spec in Self.backupSpecs {
+                let rows = try Row.fetchAll(db,sql:"SELECT \(spec.columns.joined(separator:",")) FROM \(spec.table) WHERE owner_id=? ORDER BY \(spec.order)",arguments:[ownerID.uuidString])
+                feed(spec.table)
+                for row in rows { for column in spec.columns {
+                    let value:DatabaseValue=row[column]
+                    feed(column)
+                    switch value.storage {
+                    case .null:feed(Data([0]))
+                    case .int64(let number):var bits=number.bigEndian;feed(Data([1])+withUnsafeBytes(of:&bits){Data($0)})
+                    case .double(let number):var bits=number.bitPattern.bigEndian;feed(Data([2])+withUnsafeBytes(of:&bits){Data($0)})
+                    case .string(let text):feed(Data([3])+Data(text.utf8))
+                    case .blob(let data):feed(Data([4])+data)
+                    }
+                } }
+            }
+            let digest=hasher.finalize()
+            return digest.map{String(format:"%02x",$0)}.joined()
+        }
     }
 
     private static func decodeTypedPayload(_ data: Data) throws -> TypedBackupPayload {
