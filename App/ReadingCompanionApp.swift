@@ -136,7 +136,9 @@ struct ReadingCompanionApp: App {
             if ProcessInfo.processInfo.arguments.contains("-phase7-fixture"), !["quests","collection"].contains(profileQARoute ?? "") { try seedGamificationQA(store) }
             #endif
             _ = try store.currentQuests()
-            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: root.appendingPathComponent(owner.uuidString + "-covers"))
+            let assets=root.appendingPathComponent(owner.uuidString + "-covers")
+            let backupService=try Phase9BackupService(store:store,assetDirectory:assets,credentials:KeychainCredentialStore())
+            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService)
             #if DEBUG
             if profileQARoute == "reward", qa {
                 // Genuine live finish actions cross the next 500-XP boundary.

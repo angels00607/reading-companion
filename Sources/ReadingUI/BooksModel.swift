@@ -11,6 +11,7 @@ public final class BooksModel: ObservableObject {
     public let seriesRepository: (any SeriesRepository)?
     public let statsRepository: (any StatsRepository)?
     public let gamificationRepository: (any GamificationRepository)?
+    public let backupService: (any BackupService)?
     public let assetDirectory: URL
     @Published public var version = 0
     @Published public var error: String?
@@ -18,8 +19,8 @@ public final class BooksModel: ObservableObject {
     @Published public var feedbackReadingID: UUID?
     @Published public var gamificationReward: String?
     @Published public var gamificationRewardTitle = "LEVEL UP"
-    public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL) {
-        self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository; self.statsRepository = repository as? any StatsRepository; self.gamificationRepository = repository as? any GamificationRepository; self.provider = provider; self.assetDirectory = assetDirectory
+    public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL, backupService:(any BackupService)? = nil) {
+        self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository; self.statsRepository = repository as? any StatsRepository; self.gamificationRepository = repository as? any GamificationRepository; self.provider = provider; self.assetDirectory = assetDirectory;self.backupService=backupService
     }
     @discardableResult public func perform<T>(_ body: () throws -> T) -> T? {
         do {
