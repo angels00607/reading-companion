@@ -134,7 +134,6 @@ public extension LocalStore {
             rollbackExternal?()
             throw error
         }
-        _ = try previewPortableRestore(archive)
     }
 
     private func backupStateToken() throws -> String {
