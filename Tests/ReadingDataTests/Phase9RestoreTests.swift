@@ -40,4 +40,20 @@ final class Phase9RestoreTests: XCTestCase {
         }
         XCTAssertEqual(try target.bookCount(),1)
     }
+
+    func testRelationshipFailureRollsBackEntireRestore() throws {
+        let source=try store();_ = try source.add(work:.init(provider:"manual",reference:"rollback",title:"Rollback",author:"Reader"),choice:.addAnyway)
+        let original=try source.makePortableBackup(appVersion:"9.0")
+        let decoded=try PortableBackupCodec().decode(original)
+        var object=try XCTUnwrap(try JSONSerialization.jsonObject(with:decoded.json) as? [String:Any])
+        var entities=try XCTUnwrap(object["entities"] as? [String:Any])
+        var memberships=try XCTUnwrap(entities["libraryMemberships"] as? [[String:Any]])
+        var fields=try XCTUnwrap(memberships[0]["fields"] as? [String:Any])
+        fields["book_id"]=["type":"text","text":UUID().uuidString];memberships[0]["fields"]=fields
+        entities["libraryMemberships"]=memberships;object["entities"]=entities
+        let tampered=try PortableBackupCodec().encode(json:try JSONSerialization.data(withJSONObject:object,options:[.sortedKeys]),appVersion:"9.0",createdAt:Date())
+        let target=try store(),preview=try target.previewPortableRestore(tampered)
+        XCTAssertThrowsError(try target.restorePortableBackup(tampered,preview:preview,confirmed:true))
+        XCTAssertEqual(try target.bookCount(),0)
+    }
 }

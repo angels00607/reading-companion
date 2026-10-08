@@ -156,10 +156,11 @@ public extension LocalStore {
     private static func validatePermanentXP(_ payload:TypedBackupPayload,ownerID:UUID,db:Database) throws {
         func text(_ record:BackupRecord,_ key:String)->String? { if case .text(let v)?=record.fields[key]{return v};return nil }
         func integer(_ record:BackupRecord,_ key:String)->Int64? { if case .integer(let v)?=record.fields[key]{return v};return nil }
-        let metadata=Dictionary(uniqueKeysWithValues:try (payload.entities["xpAwardMetadata"] ?? []).map { record in
+        var metadata=[String:String]()
+        for record in payload.entities["xpAwardMetadata"] ?? [] {
             guard let key=text(record,"semantic_key"),let source=text(record,"source"),XPSource(rawValue:source) != nil else { throw BackupRestoreError.invalidValue }
-            return (key,source)
-        })
+            guard metadata.updateValue(source,forKey:key)==nil else{throw BackupRestoreError.invalidValue}
+        }
         var total:Int64=0
         for record in payload.entities["xpAwards"] ?? [] {
             guard let key=text(record,"semantic_key"),!key.isEmpty,let amount=integer(record,"amount"),amount>=0,
