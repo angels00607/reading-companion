@@ -35,8 +35,13 @@ final class StoryGraphImportAcceptanceTests:XCTestCase {
         XCTAssertGreaterThanOrEqual(menu.frame.width.rounded(),44);XCTAssertGreaterThanOrEqual(menu.frame.height.rounded(),44)
         // XCTest's nested SwiftUI Menu proxy requests an unsupported AX scroll action
         // despite its visible navigation-bar frame. Tap the same live frame directly.
-        menu.coordinate(withNormalizedOffset:.init(dx:0.5,dy:0.5)).tap()
-        let action=app.buttons[id];XCTAssertTrue(action.waitForExistence(timeout:5));action.tap()
+        let action=app.buttons[id]
+        for _ in 0..<3 where !action.exists {
+            menu.coordinate(withNormalizedOffset:.init(dx:0.5,dy:0.5)).tap()
+            if action.waitForExistence(timeout:2) { break }
+        }
+        XCTAssertTrue(action.exists,"Fixture menu action did not open: \(id)")
+        if action.exists { action.tap() }
     }
     @MainActor private func verifyImportedLibrary(_ app:XCUIApplication,capturePrefix:String?=nil) {
         tap(app,app.buttons["import.library"])
