@@ -54,6 +54,10 @@ jobs:
         run: |
           xcrun simctl list devices available -j > /tmp/phase9-simulators.json
           SIMULATOR_ID=$(python3 -c "import json; d=json.load(open('/tmp/phase9-simulators.json')); print(next(v['udid'] for group in d['devices'].values() for v in group if 'iPhone' in v['name']))")
+          # The preceding Keychain suite installs a signed host. Restart before
+          # launching the unsigned UI-test runner so FrontBoard refreshes its app map.
+          xcrun simctl shutdown "$SIMULATOR_ID"
+          xcrun simctl boot "$SIMULATOR_ID"
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase9VisualQA.xcresult -only-testing:FoundationAcceptanceTests/Phase9BackupAcceptanceTests CODE_SIGNING_ALLOWED=NO test
           xcrun xcresulttool export attachments --path work/Phase9VisualQA.xcresult --output-path work/phase9-visual-boards
