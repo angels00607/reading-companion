@@ -146,7 +146,7 @@ struct ReadingCompanionApp: App {
             _ = try store.currentQuests()
             let assets=root.appendingPathComponent(owner.uuidString + "-covers")
             let backupService=try Phase9BackupService(store:store,assetDirectory:assets,credentials:KeychainCredentialStore())
-            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService)
+            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, statsRepository:store, gamificationRepository:store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService)
             #if DEBUG
             if profileQARoute == "reward", qa {
                 // Genuine live finish actions cross the next 500-XP boundary.

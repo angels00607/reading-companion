@@ -19,8 +19,11 @@ public final class BooksModel: ObservableObject {
     @Published public var feedbackReadingID: UUID?
     @Published public var gamificationReward: String?
     @Published public var gamificationRewardTitle = "LEVEL UP"
-    public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL, backupService:(any BackupService)? = nil) {
-        self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository; self.statsRepository = repository as? any StatsRepository; self.gamificationRepository = repository as? any GamificationRepository; self.provider = provider; self.assetDirectory = assetDirectory;self.backupService=backupService
+    public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, statsRepository:(any StatsRepository)? = nil, gamificationRepository:(any GamificationRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL, backupService:(any BackupService)? = nil) {
+        self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository
+        self.statsRepository = statsRepository ?? (repository as? any StatsRepository)
+        self.gamificationRepository = gamificationRepository ?? (repository as? any GamificationRepository)
+        self.provider = provider; self.assetDirectory = assetDirectory;self.backupService=backupService
     }
     @discardableResult public func perform<T>(_ body: () throws -> T) -> T? {
         do {
