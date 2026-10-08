@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 import GRDB
 import ReadingDomain
 
@@ -131,14 +132,11 @@ public extension LocalStore {
     }
 
     private func backupStateToken() throws -> String {
-        try queue.read { db in
-            var pieces = [String]()
-            for spec in Self.backupSpecs {
-                let count = try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM \(spec.table) WHERE owner_id=?",arguments:[ownerID.uuidString]) ?? 0
-                pieces.append("\(spec.table):\(count)")
-            }
-            return pieces.joined(separator:"|")
-        }
+        // A content digest, not row counts: edits to existing records invalidate previews.
+        // Logical export excludes credentials, outbox, receipts and sync cursors.
+        let archive = try makePortableBackup(appVersion:"preview-state")
+        let snapshot = try PortableBackupCodec().decode(archive).json
+        return SHA256.hash(data:snapshot).map { String(format:"%02x",$0) }.joined()
     }
 
     private static func decodeTypedPayload(_ data: Data) throws -> TypedBackupPayload {
