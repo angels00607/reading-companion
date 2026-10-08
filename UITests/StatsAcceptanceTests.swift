@@ -29,10 +29,10 @@ final class StatsAcceptanceTests:XCTestCase {
     }
     @MainActor func testMonthIncompleteDataRatingAndManualYearChoice() {
         let app=launch("month")
-        XCTAssertEqual(app.staticTexts["stats.books.value"].label,"3")
-        XCTAssertEqual(app.staticTexts["stats.pages.value"].label,"220 recorded")
-        XCTAssertEqual(app.staticTexts["stats.days.value"].label,"2 recorded")
-        XCTAssertEqual(app.staticTexts["stats.rating.value"].label,"4.0 / 5")
+        XCTAssertEqual(app.descendants(matching:.any)["stats.books.value"].label,"3")
+        XCTAssertEqual(app.descendants(matching:.any)["stats.pages.value"].label,"220 recorded")
+        XCTAssertEqual(app.descendants(matching:.any)["stats.days.value"].label,"2 recorded")
+        XCTAssertEqual(app.descendants(matching:.any)["stats.rating.value"].label,"4.0 / 5")
         reveal(app,app.staticTexts["stats.best.empty"]); XCTAssertEqual(app.staticTexts["stats.best.empty"].label,"Not selected")
         tap(app,app.buttons["stats.best.choose"])
         let choice=app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","stats.candidate.")).firstMatch
