@@ -193,6 +193,18 @@ extension LocalStore:SyncReplicaRepository {
                         } else {
                             try db.execute(sql:"UPDATE readings SET progress_mode=?,current_page=?,total_pages=?,progress_percentage=?,revision=revision+1 WHERE owner_id=? AND id=?",arguments:[observation.value.mode.rawValue,observation.value.currentPage,observation.value.totalPages,observation.value.percentage,ownerID.uuidString,change.entityID.uuidString])
                         }
+                    } else if ["catalog.snapshot","library.intent","book.edit","book.proposal_decision"].contains(change.kind) {
+                        let value=try JSONDecoder().decode(CatalogRecord.self,from:change.payload)
+                        guard value.book.ownerID==ownerID,value.id==change.entityID else{throw DomainError.invalidTransition}
+                        try self.applyRemoteCatalog(value,db:db)
+                    } else if ["reading.start","reading.completed_record","reading.resolve","reading.finish","reading.dnf","reading.resume","reading.edit"].contains(change.kind) {
+                        let value=try JSONDecoder().decode(ReadingInstance.self,from:change.payload)
+                        guard value.id==change.entityID else{throw DomainError.invalidTransition}
+                        try self.applyRemoteReading(value,db:db)
+                    } else if change.kind=="edition.edit" {
+                        let value=try JSONDecoder().decode(Edition.self,from:change.payload)
+                        guard value.bookID==change.entityID else{throw DomainError.invalidTransition}
+                        try db.execute(sql:"INSERT INTO editions(id,owner_id,book_id,language,page_count,isbn13,edition_title,isbn10,cover_ref,publisher,revision) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(owner_id,id) DO UPDATE SET language=excluded.language,page_count=excluded.page_count,isbn13=excluded.isbn13,edition_title=excluded.edition_title,isbn10=excluded.isbn10,cover_ref=excluded.cover_ref,publisher=excluded.publisher,revision=MAX(editions.revision,excluded.revision)",arguments:[value.id.uuidString,ownerID.uuidString,value.bookID.uuidString,value.language,value.pageCount,value.isbn13,value.title,value.isbn10,value.coverReference,value.publisher,change.revision])
                     } else {
                         // Never silently drop an understood and authenticated remote
                         // command that this binary cannot safely materialize.
@@ -203,6 +215,25 @@ extension LocalStore:SyncReplicaRepository {
                 cursor=max(cursor,change.sequence)
             }
             try db.execute(sql:"INSERT INTO sync_state(owner_id,generation,pull_cursor) VALUES(?,?,?) ON CONFLICT(owner_id) DO UPDATE SET pull_cursor=MAX(pull_cursor,excluded.pull_cursor)",arguments:[ownerID.uuidString,(changes.last?.generation ?? UUID()).uuidString,cursor])
+        }
+    }
+    private func applyRemoteCatalog(_ value:CatalogRecord,db:Database) throws {
+        let current=try Int.fetchOne(db,sql:"SELECT revision FROM books WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,value.id.uuidString])
+        guard current==nil || current!<=value.revision else{throw DomainError.staleRevision}
+        try db.execute(sql:"INSERT INTO books(id,owner_id,title,author,revision,cover_ref,synopsis,series_name,genre_suggestion) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(owner_id,id) DO UPDATE SET title=excluded.title,author=excluded.author,revision=excluded.revision,cover_ref=excluded.cover_ref,synopsis=excluded.synopsis,series_name=excluded.series_name,genre_suggestion=excluded.genre_suggestion",arguments:[value.id.uuidString,ownerID.uuidString,value.book.title,value.book.author,value.revision,value.coverReference,value.synopsis,value.seriesName,value.genreSuggestion])
+        try db.execute(sql:"INSERT INTO library_memberships(owner_id,book_id,wants_to_read,added_at) VALUES(?,?,?,?) ON CONFLICT(owner_id,book_id) DO UPDATE SET wants_to_read=excluded.wants_to_read,removed_at=NULL",arguments:[ownerID.uuidString,value.id.uuidString,value.wantsToRead,stamp()])
+        for edition in value.editions { try db.execute(sql:"INSERT INTO editions(id,owner_id,book_id,language,page_count,isbn13,edition_title,isbn10,cover_ref,publisher,revision) VALUES(?,?,?,?,?,?,?,?,?,?,0) ON CONFLICT(owner_id,id) DO UPDATE SET language=excluded.language,page_count=excluded.page_count,isbn13=excluded.isbn13,edition_title=excluded.edition_title,isbn10=excluded.isbn10,cover_ref=excluded.cover_ref,publisher=excluded.publisher",arguments:[edition.id.uuidString,ownerID.uuidString,edition.bookID.uuidString,edition.language,edition.pageCount,edition.isbn13,edition.title,edition.isbn10,edition.coverReference,edition.publisher]) }
+        for reading in value.readings { try applyRemoteReading(reading,db:db) }
+    }
+    private func applyRemoteReading(_ value:ReadingInstance,db:Database) throws {
+        guard (try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM books WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,value.bookID.uuidString]) ?? 0)==1 else{throw DomainError.invalidTransition}
+        let current=try Int.fetchOne(db,sql:"SELECT revision FROM readings WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,value.id.uuidString])
+        guard current==nil || current!<=value.revision else{throw DomainError.staleRevision}
+        var ratingState="unknown";var rating:Int?
+        switch value.rating{case .unknown:break;case .noRating:ratingState="unrated";case .stars(let stars):ratingState="rated";rating=stars}
+        try db.execute(sql:"INSERT INTO readings(id,owner_id,book_id,edition_id,status,progress_mode,current_page,total_pages,progress_percentage,start_date,finish_date,rating_state,rating_whole,journal_format,historical,revision,primary_genre) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(owner_id,id) DO UPDATE SET edition_id=excluded.edition_id,status=excluded.status,progress_mode=excluded.progress_mode,current_page=excluded.current_page,total_pages=excluded.total_pages,progress_percentage=excluded.progress_percentage,start_date=excluded.start_date,finish_date=excluded.finish_date,rating_state=excluded.rating_state,rating_whole=excluded.rating_whole,journal_format=excluded.journal_format,historical=excluded.historical,revision=excluded.revision,primary_genre=excluded.primary_genre",arguments:[value.id.uuidString,ownerID.uuidString,value.bookID.uuidString,value.editionID?.uuidString,value.status.rawValue,value.progress.mode.rawValue,value.progress.currentPage,value.progress.totalPages,value.progress.percentage,value.startDate?.isoString,value.finishDate?.isoString,ratingState,rating,value.journalFormat?.rawValue,value.historical,value.revision,value.primaryGenre])
+        for observation in value.progressObservations {
+            try db.execute(sql:"INSERT OR IGNORE INTO progress_observations(owner_id,id,reading_id,mutation_id,mode,previous_page,new_page,total_pages,previous_percentage,new_percentage,recorded_at,base_revision,requires_review,ordinal) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,(SELECT COALESCE(MAX(ordinal),0)+1 FROM progress_observations))",arguments:[ownerID.uuidString,observation.id.uuidString,value.id.uuidString,observation.id.uuidString,observation.value.mode.rawValue,observation.previous?.currentPage,observation.value.currentPage,observation.value.totalPages,observation.previous?.percentage,observation.value.percentage,stamp(observation.recordedAt),observation.expectedRevision,observation.requiresReview])
         }
     }
 }
