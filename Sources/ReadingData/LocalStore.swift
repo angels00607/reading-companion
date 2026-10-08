@@ -181,6 +181,22 @@ extension LocalStore:SyncReplicaRepository {
                     } else if change.kind=="journal.quote.delete" {
                         try db.execute(sql:"DELETE FROM quotes WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,change.entityID.uuidString])
                         try db.execute(sql:"INSERT OR IGNORE INTO sync_tombstones(owner_id,entity_type,entity_id,deleted_at,revision,mutation_id) VALUES(?,'quote',?,?,?,?)",arguments:[ownerID.uuidString,change.entityID.uuidString,change.deletedAt ?? self.stamp(),change.revision,change.mutationID.uuidString])
+                    } else if change.kind=="reading.progress" {
+                        let observation=try JSONDecoder().decode(ProgressObservation.self,from:change.payload)
+                        guard observation.id==change.mutationID,observation.readingID==change.entityID,
+                              let row=try Row.fetchOne(db,sql:"SELECT revision,progress_mode,current_page,total_pages,progress_percentage FROM readings WHERE owner_id=? AND id=?",arguments:[ownerID.uuidString,change.entityID.uuidString]) else{throw DomainError.invalidTransition}
+                        let localRevision:Int=row["revision"],localMode:String=row["progress_mode"]
+                        let review=observation.requiresReview || observation.expectedRevision != localRevision || observation.value.mode.rawValue != localMode
+                        try db.execute(sql:"INSERT OR IGNORE INTO progress_observations(owner_id,id,reading_id,mutation_id,mode,previous_page,new_page,total_pages,previous_percentage,new_percentage,recorded_at,base_revision,requires_review,ordinal) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,(SELECT COALESCE(MAX(ordinal),0)+1 FROM progress_observations))",arguments:[ownerID.uuidString,observation.id.uuidString,observation.readingID.uuidString,observation.id.uuidString,observation.value.mode.rawValue,review ? nil : row["current_page"],observation.value.currentPage,observation.value.totalPages,review ? nil : row["progress_percentage"],observation.value.percentage,self.stamp(observation.recordedAt),observation.expectedRevision,review])
+                        if review {
+                            try db.execute(sql:"INSERT OR IGNORE INTO sync_conflicts(owner_id,mutation_id,entity_id,local_revision,server_revision,reason,created_at) VALUES(?,?,?,?,?,'revision',?)",arguments:[ownerID.uuidString,change.mutationID.uuidString,change.entityID.uuidString,localRevision,change.revision,self.stamp()])
+                        } else {
+                            try db.execute(sql:"UPDATE readings SET progress_mode=?,current_page=?,total_pages=?,progress_percentage=?,revision=revision+1 WHERE owner_id=? AND id=?",arguments:[observation.value.mode.rawValue,observation.value.currentPage,observation.value.totalPages,observation.value.percentage,ownerID.uuidString,change.entityID.uuidString])
+                        }
+                    } else {
+                        // Never silently drop an understood and authenticated remote
+                        // command that this binary cannot safely materialize.
+                        try db.execute(sql:"INSERT OR IGNORE INTO sync_conflicts(owner_id,mutation_id,entity_id,local_revision,server_revision,reason,created_at) VALUES(?,?,?,0,?,'revision',?)",arguments:[ownerID.uuidString,change.mutationID.uuidString,change.entityID.uuidString,change.revision,self.stamp()])
                     }
                     try db.execute(sql:"INSERT INTO sync_incoming(owner_id,sequence,mutation_id,entity_id,revision,generation,kind,payload,deleted_at,applied_at) VALUES(?,?,?,?,?,?,?,?,?,?)",arguments:[ownerID.uuidString,change.sequence,change.mutationID.uuidString,change.entityID.uuidString,change.revision,change.generation.uuidString,change.kind,change.payload,change.deletedAt,self.stamp()])
                 }

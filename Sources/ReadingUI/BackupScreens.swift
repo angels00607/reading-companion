@@ -14,7 +14,14 @@ public struct BackupSettingsScreen:View {
     @State private var preview:RestorePreviewSummary?
     @State private var importing=false
     @State private var busy=false
-    public init(){}
+    public init(visualQA:Bool=false){
+        if visualQA {
+            _owner=State(initialValue:"reader-example");_repository=State(initialValue:"reading-companion-private-backup")
+            _token=State(initialValue:"github_pat_••••••••••••••••")
+            _message=State(initialValue:"Private repository verified · manual backup ready")
+            _preview=State(initialValue:.init(token:"qa",createdAt:"2026-10-08T08:30:00.000Z",incomingRecords:284,existingRecords:121,permanentXPAwardsAdded:3))
+        }
+    }
     public var body:some View { BooksScreen("Sync & Backup") {
         Text("Your library stays local-first. GitHub backups are manual, private snapshots; they are not continuous sync.")
             .foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true)

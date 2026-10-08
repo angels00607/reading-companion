@@ -74,7 +74,7 @@ final class Phase9SyncDurabilityTests: XCTestCase {
     func testQuoteDeletionCreatesDurableTombstoneAndOutboxCommand() throws {
         let store=try LocalStore(path:":memory:",ownerID:UUID())
         let book=try store.add(work:.init(provider:"manual",reference:"quote-delete",title:"Quote",author:"Reader"),choice:.addAnyway)
-        let quote=JournalQuote(bookID:book,readingID:nil,text:"Keep deletion evidence",includeInJournal:false)
+        let quote=JournalQuote(bookID:book,readingID:nil,text:"Keep deletion evidence",source:nil,includeInJournal:false)
         try store.saveQuote(quote);try store.deleteQuote(id:quote.id)
         let values=try store.queue.read { db in (
             try Int.fetchOne(db,sql:"SELECT COUNT(*) FROM quotes WHERE id=?",arguments:[quote.id.uuidString]) ?? -1,
@@ -88,7 +88,7 @@ final class Phase9SyncDurabilityTests: XCTestCase {
         let create=RemoteChange(sequence:1,mutationID:UUID(),entityID:book,revision:1,generation:generation,kind:"book.create",payload:try JSONEncoder().encode(BookCreatePayload(title:"Cloud Book",author:"Reader",wantsToRead:true)))
         try await store.applyRemote([create,create],ownerID:store.ownerID)
         XCTAssertEqual(try store.bookCount(),1);let firstCursor=try await store.pullCursor(ownerID:store.ownerID);XCTAssertEqual(firstCursor,1)
-        try store.queue.write { db in try db.execute(sql:"INSERT INTO quotes(owner_id,id,book_id,quote_text,include_in_journal) VALUES(?,?,?,'Remote deletion',0)",arguments:[store.ownerID.uuidString,quote.uuidString,book.uuidString]) }
+        try await store.queue.write { db in try db.execute(sql:"INSERT INTO quotes(owner_id,id,book_id,quote_text,include_in_journal) VALUES(?,?,?,'Remote deletion',0)",arguments:[store.ownerID.uuidString,quote.uuidString,book.uuidString]) }
         let payload=try JSONSerialization.data(withJSONObject:["entityType":"quote","entityID":quote.uuidString,"deletedAt":"2026-10-08T00:00:00Z"])
         let deletion=RemoteChange(sequence:2,mutationID:UUID(),entityID:quote,revision:1,generation:generation,kind:"journal.quote.delete",payload:payload,deletedAt:"2026-10-08T00:00:00Z")
         try await store.applyRemote([deletion],ownerID:store.ownerID)
