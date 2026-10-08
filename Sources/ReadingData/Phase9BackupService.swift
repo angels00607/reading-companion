@@ -8,18 +8,29 @@ public actor Phase9BackupService: BackupService {
     private var transport:GitHubBackupTransport?
     private var repository:GitHubBackupRepository?
     private var previews:[String:(BackupPreview,Data)] = [:]
+    private let configurationKey:String
     public init(store:LocalStore,assetDirectory:URL,credentials:any CredentialStore) {
         self.store=store;self.assetDirectory=assetDirectory;self.credentials=credentials
+        self.configurationKey="ReadingCompanion.githubBackup.\(assetDirectory.lastPathComponent)"
+        if let name=UserDefaults.standard.string(forKey:configurationKey) {
+            let parts=name.split(separator:"/",omittingEmptySubsequences:false)
+            if parts.count==2, let destination=try? GitHubBackupRepository(owner:String(parts[0]),name:String(parts[1])) {
+                self.repository=destination
+                self.transport=GitHubBackupTransport(repository:destination,credentials:credentials)
+            }
+        }
     }
     public func connectGitHub(owner:String,repository:String,personalAccessToken:String) async throws {
         let destination=try GitHubBackupRepository(owner:owner.trimmingCharacters(in:.whitespacesAndNewlines),name:repository.trimmingCharacters(in:.whitespacesAndNewlines))
         let value=GitHubBackupTransport(repository:destination,credentials:credentials)
         try await value.connect(personalAccessToken:personalAccessToken)
         self.repository=destination;self.transport=value
+        UserDefaults.standard.set(destination.fullName,forKey:configurationKey)
     }
     public func disconnectGitHub() async throws {
         guard let transport else { throw GitHubBackupError.authenticationRequired }
         try await transport.disconnect();self.transport=nil;self.repository=nil
+        UserDefaults.standard.removeObject(forKey:configurationKey)
     }
     public func exportLocal() async throws -> URL {
         let archive=try store.makePortableBackup(appVersion:"9.0",assets:try assets())
