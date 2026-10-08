@@ -80,6 +80,19 @@ final class Phase10AOnboardingTests: XCTestCase {
         XCTAssertTrue(try value.xpAwards().isEmpty)
     }
 
+    func testMigrationPreservesUnknownReadingHistoryForExistingOwner() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let owner = UUID()
+        let value = try store(path: url.path, owner: owner)
+        _ = try value.add(work: .init(provider: "manual", reference: "legacy", title: "Existing", author: "Reader"))
+        // A legacy owner with a library but no confirmed start year must not receive 2020.
+        // Reopening the migrated store must keep the user's unknown year unknown.
+        let reopened = try store(path: url.path, owner: owner)
+        let state = try reopened.onboardingState()
+        XCTAssertNil(state.readingHistorySince)
+    }
+
     func testInvalidOrIncompleteValuesAreRejected() throws {
         let value = try store()
         XCTAssertThrowsError(try value.saveOnboardingState(.init(step: .readingHistorySince, readingHistorySince: 999)))
