@@ -44,7 +44,11 @@ public struct StatsHome: View {
             } else { SkeletonRow() }
             BooksErrorMessage()
         }.font(DesignTokens.functionalFont(size:16)).foregroundStyle(DesignTokens.text(scheme))
-            .onAppear(perform:reload).onChange(of:period) { _,_ in reload() }.onChange(of:model.version) { _,_ in reload() }
+            // A structured view task reliably performs the initial load after the
+            // environment object is installed. `onAppear` can be consumed by the
+            // surrounding navigation/scroll host before this child becomes active.
+            .task(id:period) { reload() }
+            .onChange(of:model.version) { _,_ in reload() }
             .sheet(isPresented:$choosePeriod) { StatsPeriodPicker(year:$year,month:$month,volumeStart:$volumeStart,scope:scope,journal:journal) }
     }
     private var periodTitle: String {
