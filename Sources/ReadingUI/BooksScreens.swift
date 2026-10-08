@@ -105,7 +105,7 @@ struct EditionSelectionScreen: View {
     var body: some View {
         BooksScreen("Choose Edition") {
             Text(work.title ?? "Title unknown").font(DesignTokens.functionalFont(size: 22, relativeTo: .title2, weight: .semiBold))
-            Text("English editions appear first. Languages are shown only from actual catalogue records.")
+            Text("\(model.preferredEditionLanguage.label) editions appear first. Languages are shown only from actual catalogue records.")
             if loading { SkeletonRow() }
             if unavailable { StatePresentation(kind: .offline, title: "Editions unavailable", message: "Add without edition details or use Manual Add.") }
             ForEach(editions) { edition in
@@ -116,7 +116,14 @@ struct EditionSelectionScreen: View {
             if !loading { NavigationLink { AddBookScreen(work: work, edition: nil) } label: { Text("Add without an edition").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) } }
             Text("Up to 200 available edition records are loaded. An absent language or edition is not evidence that it does not exist.").font(DesignTokens.functionalFont(size: 13))
         }.task {
-            do { editions = try await model.provider.editions(for: work) } catch { unavailable = true }
+            do {
+                let values = try await model.provider.editions(for: work)
+                editions = values.enumerated().sorted { lhs, rhs in
+                    let left = lhs.element.language == model.preferredEditionLanguage.rawValue
+                    let right = rhs.element.language == model.preferredEditionLanguage.rawValue
+                    return left == right ? lhs.offset < rhs.offset : left && !right
+                }.map(\.element)
+            } catch { unavailable = true }
             loading = false
         }
     }
