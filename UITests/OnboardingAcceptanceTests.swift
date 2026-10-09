@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class OnboardingAcceptanceTests: XCTestCase {
     func testFreshOnboardingCompletesAndDoesNotReappear() {
         let token = UUID().uuidString
