@@ -25,7 +25,7 @@ struct ReadingCompanionApp: App {
                     else if let onboardingState, !onboardingState.isComplete {
                         OnboardingFlow(state:onboardingState) { self.onboardingState = $0 }.environmentObject(model)
                     }
-                    else { FoundationShell(homeContent: AnyView(VStack(alignment:.leading,spacing:20){BooksHome();HomePrimaryQuest()}), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear)), statsContent:AnyView(StatsHome()), profileContent:AnyView(ProfileHome())).environmentObject(model) }
+                    else { FoundationShell(homeContent: AnyView(VStack(alignment:.leading,spacing:20){BooksHome();HomePrimaryQuest()}), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear)), statsContent:AnyView(StatsHome()), profileContent:AnyView(ProfileHome()),celebrationContent:AnyView(CelebrationOverlay())).environmentObject(model) }
                 }
                 else if let storageError { StatePresentation(kind: .error, title: "Library unavailable", message: storageError) }
                 else { SkeletonRow() }

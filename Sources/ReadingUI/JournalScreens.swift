@@ -8,6 +8,7 @@ public struct JournalHome: View {
     @State private var inbox: [JournalInboxItem] = []
     @State private var usage: JournalUsage?
     @State private var session = false
+    @State private var loading=true
     public init() {}
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -23,7 +24,8 @@ public struct JournalHome: View {
                 }.font(DesignTokens.functionalFont(size: 13)).padding(16)
                     .background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
             }
-            if inbox.isEmpty {
+            if loading { SkeletonRow();SkeletonRow() }
+            else if inbox.isEmpty {
                 StatePresentation(kind: .empty, title: "Journal Inbox is clear", message: "Finish a book to prepare its journal components.")
             } else {
                 ForEach(inbox) { item in
@@ -41,7 +43,7 @@ public struct JournalHome: View {
             .journalSessionPresentation(isPresented: $session) { JournalSession() }
     }
     private func label(_ state: JournalComponentStatus) -> String { state == .ready ? "Ready" : state == .copied ? "Copied" : "Pending" }
-    private func reload() { guard let repo = model.journalRepository else { return }; inbox = (try? repo.journalInbox()) ?? []; usage = try? repo.journalUsage() }
+    private func reload() { guard let repo = model.journalRepository else { loading=false;return }; inbox = (try? repo.journalInbox()) ?? []; usage = try? repo.journalUsage();loading=false }
 }
 
 private struct JournalInboxCard: View {
@@ -89,12 +91,12 @@ private struct BookReviewEditor: View {
             Text(item.book.title).font(DesignTokens.functionalFont(size: 24, relativeTo: .title2, weight: .semiBold)); Text(item.book.author).foregroundStyle(.secondary)
             JournalSection("Review details") { BooksField(label: "Summary", value: $summary); Text("Summary assistant is unavailable. You can write or edit your summary manually.").font(.footnote).foregroundStyle(.secondary); BooksField(label: "Pages", value: $pages) }
             JournalSection("Your reading") {
-                Picker("Rating", selection: $rating) { Text("Choose rating").tag(0); Text("No rating").tag(-1); ForEach(1...5, id: \.self) { Text("\($0) stars").tag($0) } }.frame(minHeight: 44)
+                Picker("Rating", selection: $rating) { Text("Choose rating").tag(0); Text("No rating").tag(-1); ForEach(1...5, id: \.self) { Text("\($0) stars").tag($0) } }.frame(minHeight: 44).sensoryFeedback(.selection,trigger:rating)
                 Picker("Format", selection: $format) { Text("Choose format").tag(""); Text("Paperback").tag("paperback"); Text("Hardcover").tag("hardcover"); Text("Ebook").tag("ebook"); Text("Audiobook").tag("audiobook") }.frame(minHeight: 44)
             }
             AppButton("Save Book Review") { saveReview() }.accessibilityIdentifier("journal.saveReview")
             JournalSection("Favorite") { Text("Choose whether this book belongs in your physical Favorites section.").font(.footnote).foregroundStyle(.secondary); AppSegmentedControl(options: [(JournalDecision.selected,"Favorite"),(JournalDecision.none,"Not favorite")], selection: $favorite) }
-            JournalSection("Quote") { BooksField(label: "Quote text", value: $quote); BooksField(label: "Source or page (optional)", value: $source); Toggle("Copy this quote to my physical journal", isOn: $physical).frame(minHeight: 44); ViewThatFits { HStack { quoteButtons }; VStack(spacing: 8) { quoteButtons } } }
+            JournalSection("Quote") { BooksField(label: "Quote text", value: $quote); BooksField(label: "Source or page (optional)", value: $source); Toggle("Copy this quote to my physical journal", isOn: $physical).frame(minHeight: 44).sensoryFeedback(.impact(weight:.light),trigger:physical); ViewThatFits { HStack { quoteButtons }; VStack(spacing: 8) { quoteButtons } } }
             BooksErrorMessage()
         }.onAppear { summary = item.entry.summary ?? ""; pages = item.entry.pageCount.map(String.init) ?? ""; switch item.reading.rating { case .stars(let stars): rating = stars; case .noRating: rating = -1; case .unknown: rating = 0 }; format = item.reading.journalFormat?.rawValue ?? ""; favorite = (try? model.journalRepository?.favoriteDecision(bookID: item.book.id)) ?? .pending }
     }
@@ -116,12 +118,12 @@ private extension BookReviewEditor {
 private struct JournalSession: View {
     @EnvironmentObject var model: BooksModel; @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) private var scheme
-    @State private var items: [JournalInboxItem] = []; @State private var index = 0
+    @State private var items: [JournalInboxItem] = []; @State private var index = 0;@State private var copying=false;@State private var successPulse=0
     var body: some View { NavigationStack { BooksScreen("Journal Session") {
         if items.isEmpty { StatePresentation(kind: .empty, title: "Nothing ready", message: "Complete a Book Review first.") }
-        else { let item = items[index]; Text("Copying \(index + 1) of \(items.count)").font(DesignTokens.functionalFont(size: 14, weight: .medium)); ReadingProgressBar(.pages(current: index + 1, total: items.count), showsLabel: false); VStack(alignment: .leading, spacing: 14) { Text("COPY TO YOUR JOURNAL").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .semiBold)).foregroundStyle(.secondary); Text(item.book.title).font(DesignTokens.functionalFont(size: 24, relativeTo: .title2, weight: .semiBold)); Text(item.book.author).foregroundStyle(.secondary); Divider(); if let pages = item.entry.pageCount { copyField("Pages", "\(pages)") }; copyField("Rating", rating(item.reading.rating)); if let format = item.reading.journalFormat { copyField("Format", format.rawValue.capitalized) }; if let start = item.reading.startDate { copyField("Start", start.isoString) }; if let finish = item.reading.finishDate { copyField("Finish", finish.isoString) }; copyField("Summary", item.entry.summary ?? "") }.padding(18).background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius)); AppButton("Copied to my journal") { mark(item) }.accessibilityIdentifier("journal.copied") }
-    }.toolbar { Button("Close") { dismiss() } } }.onAppear { items = (try? model.journalRepository?.readyForSession()) ?? [] } }
-    private func mark(_ item: JournalInboxItem) { guard let repo = model.journalRepository else { return }; if model.perform({ try repo.markBookReviewCopied(readingID: item.reading.id) }) != nil { if index + 1 < items.count { index += 1 } else { dismiss() } } }
+        else { let item = items[index]; Text("Copying \(index + 1) of \(items.count)").font(DesignTokens.functionalFont(size: 14, weight: .medium)); ReadingProgressBar(.pages(current: index + 1, total: items.count), showsLabel: false); VStack(alignment: .leading, spacing: 14) { Text("COPY TO YOUR JOURNAL").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .semiBold)).foregroundStyle(.secondary); Text(item.book.title).font(DesignTokens.functionalFont(size: 24, relativeTo: .title2, weight: .semiBold)); Text(item.book.author).foregroundStyle(.secondary); Divider(); if let pages = item.entry.pageCount { copyField("Pages", "\(pages)") }; copyField("Rating", rating(item.reading.rating)); if let format = item.reading.journalFormat { copyField("Format", format.rawValue.capitalized) }; if let start = item.reading.startDate { copyField("Start", start.isoString) }; if let finish = item.reading.finishDate { copyField("Finish", finish.isoString) }; copyField("Summary", item.entry.summary ?? "") }.padding(18).background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius)); AppButton(copying ? "Saving…":"Copied to my journal") { mark(item) }.disabled(copying).accessibilityIdentifier("journal.copied") }
+    }.toolbar { Button("Close") { dismiss() } } }.onAppear { items = (try? model.journalRepository?.readyForSession()) ?? [] }.sensoryFeedback(.success,trigger:successPulse) }
+    private func mark(_ item: JournalInboxItem) { guard let repo = model.journalRepository,!copying else { return };copying=true;if model.perform({ try repo.markBookReviewCopied(readingID: item.reading.id) }) != nil { successPulse += 1;if index + 1 < items.count { index += 1;copying=false } else { dismiss() } } else {copying=false} }
     private func rating(_ value: Rating) -> String { switch value { case .unknown: "Unknown"; case .noRating: "No rating"; case .stars(let count): "\(count) stars" } }
     @ViewBuilder private func copyField(_ label: String, _ value: String) -> some View { VStack(alignment: .leading, spacing: 3) { Text(label.uppercased()).font(DesignTokens.functionalFont(size: 11, relativeTo: .caption, weight: .semiBold)).foregroundStyle(.secondary); Text(value).fixedSize(horizontal: false, vertical: true) } }
 }

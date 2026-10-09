@@ -8,6 +8,7 @@ public struct NeedsAttentionScreen: View {
     @State private var items = [AttentionItem]()
     @State private var loading = true
     @State private var error: String?
+    @State private var warningPulse=0
     public init() {}
     public var body: some View {
         BooksScreen("Needs Attention") {
@@ -29,7 +30,7 @@ public struct NeedsAttentionScreen: View {
                     }.buttonStyle(.plain).accessibilityIdentifier("attention.item."+item.id.uuidString) }
                 }
             } }
-        }.task(id:model.version) { load() }.accessibilityIdentifier("attention.screen")
+        }.task(id:model.version) { load() }.accessibilityIdentifier("attention.screen").sensoryFeedback(.warning,trigger:warningPulse)
     }
     private var grouped:[(AttentionCategory,[AttentionItem])] {
         AttentionCategory.allCases.compactMap { category in let rows=items.filter{$0.category == category}; return rows.isEmpty ? nil : (category,rows) }
@@ -45,7 +46,7 @@ public struct NeedsAttentionScreen: View {
     }
     private func load() {
         loading=true
-        do { items=try model.attentionRepository?.unresolvedAttention(filter:filter) ?? [];error=nil }
+        do { items=try model.attentionRepository?.unresolvedAttention(filter:filter) ?? [];error=nil;if !items.isEmpty && warningPulse == 0 {warningPulse=1} }
         catch { items=[];self.error="Saved data is unchanged. Try again." }
         loading=false
     }

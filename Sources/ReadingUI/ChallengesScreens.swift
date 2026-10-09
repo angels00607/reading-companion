@@ -68,7 +68,7 @@ struct ChallengeDetailScreen: View {
                 if kind == .world { Text("Cities only. A setting cannot be inferred from the author’s nationality or publisher.") }
                 if kind == .roulette { StatePresentation(kind: .empty, title: "Prompts not configured", message: "This challenge is waiting for its prompt list. You can return when it becomes available.") }
                 if let proposal = state.proposals.first, prompts.contains(where: { $0.id == proposal.promptID }) {
-                    ChallengeProposalPanel(proposal: proposal, state: state, reload: reload)
+                    ChallengeProposalPanel(proposal: proposal, state: state, reload: reload).id(proposal.id)
                 }
                 if !kind.semantic {
                     Text("Confirmed placements").font(DesignTokens.functionalFont(size: 20, relativeTo: .title2, weight: .semiBold))
@@ -165,6 +165,7 @@ private struct ChallengeProposalPanel: View {
     @Environment(\.colorScheme) private var scheme
     let proposal: ChallengeProposal; let state: ChallengeYearState; let reload: () -> Void
     @State private var assistantUnavailable = false
+    @State private var submitting=false;@State private var successPulse=0
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Suggested match", systemImage: "questionmark.circle").font(DesignTokens.functionalFont(size: 14, weight: .semiBold)).foregroundStyle(DesignTokens.secondary(scheme))
@@ -177,8 +178,8 @@ private struct ChallengeProposalPanel: View {
             Text("Match confidence, not a probability.").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme))
             Text(proposal.evidence.explanation).fixedSize(horizontal: false, vertical: true)
             Text("Source: \(proposal.evidence.source) · \(proposal.evidence.reference)").font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).fixedSize(horizontal: false, vertical: true)
-            AppButton("Confirm", symbol: "checkmark") { if model.perform({ try model.challengesRepository?.confirmChallengeProposal(id: proposal.id, year: state.configuration.year) }) != nil { reload() } }.accessibilityIdentifier("challenges.confirm")
-            AppButton("Reject", kind: .secondary) { if model.perform({ try model.challengesRepository?.rejectChallengeProposal(id: proposal.id, year: state.configuration.year) }) != nil { reload() } }.accessibilityIdentifier("challenges.reject")
+            AppButton(submitting ? "Saving…":"Confirm", symbol: "checkmark") { guard !submitting else{return};submitting=true;if model.perform({ try model.challengesRepository?.confirmChallengeProposal(id: proposal.id, year: state.configuration.year) }) != nil {successPulse += 1;reload()} else{submitting=false} }.disabled(submitting).accessibilityIdentifier("challenges.confirm")
+            AppButton("Reject", kind: .secondary) { guard !submitting else{return};submitting=true;if model.perform({ try model.challengesRepository?.rejectChallengeProposal(id: proposal.id, year: state.configuration.year) }) != nil { reload() } else{submitting=false} }.disabled(submitting).accessibilityIdentifier("challenges.reject")
             AppButton("Ask Assistant", kind: .tertiary) {
                 Task {
                     do { _ = try await UnavailableChallengeAssistant().explain(proposal: proposal, approvedContext: proposal.evidence.explanation) }
@@ -186,7 +187,7 @@ private struct ChallengeProposalPanel: View {
                 }
             }.accessibilityIdentifier("challenges.assistant")
             if assistantUnavailable { Text("Assistant unavailable. No analysis was requested and nothing was confirmed. You can use the evidence above or assign manually.").fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("challenges.assistant.unavailable") }
-        }.padding(16).background(DesignTokens.plumSurface(scheme), in: RoundedRectangle(cornerRadius: 14))
+        }.padding(16).background(DesignTokens.plumSurface(scheme), in: RoundedRectangle(cornerRadius: 14)).sensoryFeedback(.success,trigger:successPulse)
     }
 }
 
@@ -195,6 +196,8 @@ private struct ChallengeManualAssignment: View {
     @Environment(\.dismiss) private var dismiss
     let prompt: ChallengePrompt; let state: ChallengeYearState; let replacement: Bool; let reload: () -> Void
     @State private var selected: UUID?
+    @State private var submitting=false
+    @State private var successPulse=0
     var body: some View {
         BooksScreen(replacement ? "Replace week assignment" : "Manual assignment") {
             Text(prompt.text ?? "Not configured").font(DesignTokens.functionalFont(size: 20, relativeTo: .title2, weight: .semiBold))
@@ -209,16 +212,18 @@ private struct ChallengeManualAssignment: View {
                     }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(.vertical, 8).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityIdentifier("challenges.select." + record.id.uuidString).accessibilityAddTraits(selected == record.id ? .isSelected : [])
             }
-            AppButton(replacement ? "Confirm replacement" : "Confirm manual assignment", symbol: "checkmark") {
-                guard let selected else { return }
+            AppButton(submitting ? "Saving…" : replacement ? "Confirm replacement" : "Confirm manual assignment", symbol: "checkmark") {
+                guard let selected, !submitting else { return }
+                submitting=true
                 let result: Void? = model.perform {
                     if replacement { try model.challengesRepository?.replaceChallengeWeek(promptID: prompt.id, readingID: selected, year: state.configuration.year, confirmed: true) }
                     else { try model.challengesRepository?.assignChallenge(promptID: prompt.id, readingID: selected, year: state.configuration.year) }
                 }
-                if result != nil { reload(); dismiss() }
-            }.disabled(selected == nil).accessibilityIdentifier("challenges.manual.confirm")
+                if result != nil { successPulse += 1;reload(); dismiss() }
+                else { submitting=false }
+            }.disabled(selected == nil || submitting).accessibilityIdentifier("challenges.manual.confirm")
             BooksErrorMessage()
-        }
+        }.sensoryFeedback(.selection,trigger:selected).sensoryFeedback(.success,trigger:successPulse)
     }
 }
 
@@ -242,6 +247,8 @@ private struct ChallengeJournalPreparation: View {
     @EnvironmentObject private var model: BooksModel
     let readingID: UUID; let year: Int
     @State private var state: ChallengeYearState?
+    @State private var submitting=false
+    @State private var successPulse=0
     var body: some View {
         BooksScreen("Challenges for my journal") {
             if let state {
@@ -249,10 +256,15 @@ private struct ChallengeJournalPreparation: View {
                 ForEach(state.assignments.filter { $0.readingID == readingID }) { assignment in
                     if let prompt = state.configuration.prompts.first(where: { $0.id == assignment.promptID }) { Text("\(prompt.challenge.name) · \(prompt.text ?? "Not configured")").fixedSize(horizontal: false, vertical: true) }
                 }
-                AppButton("Copied to my journal") { _ = model.perform { try model.challengesRepository?.markChallengesCopied(readingID: readingID) } }.accessibilityIdentifier("challenges.copied")
+                AppButton(submitting ? "Saving…" : "Copied to my journal") {
+                    guard !submitting else { return }
+                    submitting=true
+                    if model.perform({ try model.challengesRepository?.markChallengesCopied(readingID: readingID) }) != nil { successPulse += 1 }
+                    else { submitting=false }
+                }.disabled(submitting).accessibilityIdentifier("challenges.copied")
             }
             BooksErrorMessage()
-        }.onAppear { state = try? model.challengesRepository?.challengeYear(year: year) }
+        }.onAppear { state = try? model.challengesRepository?.challengeYear(year: year) }.sensoryFeedback(.success,trigger:successPulse)
     }
 }
 
