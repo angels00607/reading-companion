@@ -26,7 +26,7 @@ struct BookPageScreen: View {
                 if let reading = record.active {
                     ReadingProgressBar(displayProgress(reading.progress))
                     AppButton("Update Progress") { action = .progress }.accessibilityIdentifier("books.update")
-                    AppButton("Finish Book", kind: .secondary) { confirmFinish = true }.accessibilityIdentifier("books.finish")
+                    AppButton("Finish Book", kind: .secondary) { finishing = false; confirmFinish = true }.accessibilityIdentifier("books.finish")
                     AppButton("Mark DNF", kind: .tertiary) { _ = model.perform { try model.repository.markDNF(readingID: reading.id, revision: reading.revision) }; reload() }
                     ForEach(reading.progressObservations.filter(\.requiresReview), id: \.id) { observation in
                         DataChangeReview(field: "Progress conflict", current: displayProgress(reading.progress).label, proposed: displayProgress(observation.value).label, source: "Saved progress update", accept: {
@@ -63,8 +63,8 @@ struct BookPageScreen: View {
                 }
             }
             BooksErrorMessage()
-        }.onAppear { reload(); if showFinishOnAppear { confirmFinish = true } }.onChange(of: model.version) { reload() }
-            .sheet(item: $action, onDismiss: { reload(); if finishAfterProgress { finishAfterProgress = false; confirmFinish = true } }) { sheet in
+        }.onAppear { reload(); if showFinishOnAppear { finishing = false; confirmFinish = true } }.onChange(of: model.version) { reload() }
+            .sheet(item: $action, onDismiss: { reload(); if finishAfterProgress { finishAfterProgress = false; finishing = false; confirmFinish = true } }) { sheet in
                 NavigationStack {
                     if let record {
                         switch sheet {
@@ -76,7 +76,7 @@ struct BookPageScreen: View {
                     }
                 }
             }
-            .sheet(isPresented: $confirmFinish) {
+            .sheet(isPresented: $confirmFinish, onDismiss: { finishing = false }) {
                 NavigationStack {
                     BooksScreen("Finish Book") {
                         AppBottomSheet(title: "Confirm completion") {
