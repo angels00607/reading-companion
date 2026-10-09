@@ -45,3 +45,9 @@
 - Haptic feel requires human validation on physical hardware; Simulator and package
   builds cannot certify hardware feedback.
 - Comprehensive VoiceOver, device-size and responsive QA remains Phase 12 scope.
+
+## PR review corrections
+
+- Multiple simultaneous semantic awards now produce individual queued celebrations (Book Completed, each new Achievement, and crossed Levels), rather than dropping lower-priority rewards. Semantic IDs continue preventing duplicate presentation within one app session.
+- The Finish Book submission guard resets when the confirmation sheet is reopened or dismissed, including the progress-to-finish handoff.
+- Added focused regression coverage for simultaneously earned celebrations. GitHub Actions must validate these follow-up commits before merge.
