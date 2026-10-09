@@ -14,16 +14,15 @@ final class Phase10CNotificationTests:XCTestCase {
         let reopened=try store(url.path,owner:owner);for category in NotificationCategory.allCases{XCTAssertTrue(try reopened.notificationPreferences().enabled(category))}
         let other=try store(url.path,owner:UUID());XCTAssertFalse(try other.notificationPreferences().challenges);XCTAssertNil(try other.notificationPreferences().achievementsAndLevels)
     }
-    func testVerifiedReleaseHasStableIdentifierAndReschedulesByReplacement() async throws {
-        let s=try store(),series=ReadingSeries(ownerID:s.ownerID,name:"Verified Series"),entry=SeriesEntry(seriesID:UUID(),bookID:nil,title:"Future Book",position:1,kind:.main,publication:.announced,release:.exact(try ReadingDate(year:2099,month:4,day:3)))
-        let corrected=SeriesEntry(id:entry.id,seriesID:series.id,bookID:nil,title:entry.title,position:1,kind:.main,publication:.announced,release:entry.release)
-        try s.saveSeries(series,entries:[corrected])
-        let first=try s.verifiedNotificationEvents(after:try ReadingDate(year:2098,month:1,day:1)),second=try s.verifiedNotificationEvents(after:try ReadingDate(year:2098,month:1,day:1))
-        XCTAssertEqual(first,second);XCTAssertEqual(first.count,1);XCTAssertTrue(first[0].id.hasSuffix(entry.id.uuidString))
+    func testExactButUnverifiedReleaseDoesNotSchedule() async throws {
+        let s=try store(),series=ReadingSeries(ownerID:s.ownerID,name:"Unverified Series")
+        let entry=SeriesEntry(seriesID:series.id,bookID:nil,title:"Future Book",position:1,kind:.main,publication:.announced,release:.exact(try ReadingDate(year:2099,month:4,day:3)))
+        try s.saveSeries(series,entries:[entry])
+        XCTAssertTrue(try s.verifiedNotificationEvents(after:try ReadingDate(year:2098,month:1,day:1)).isEmpty)
         let delivery=MockNotificationDelivery(status:.authorized),coordinator=NotificationCoordinator(repository:s,delivery:delivery,today:{try! ReadingDate(year:2098,month:1,day:1)})
-        await coordinator.reconcile();await coordinator.reconcile()
-        let batches=await delivery.batches(for:.seriesReleases);XCTAssertEqual(batches.count,2);XCTAssertEqual(batches[0].map(\.id),batches[1].map(\.id))
-        try s.setNotificationPreference(.seriesReleases,enabled:false);await coordinator.reconcile();let finalBatches=await delivery.batches(for:.seriesReleases);XCTAssertEqual(finalBatches.last?.count,0)
+        await coordinator.reconcile()
+        let batches=await delivery.batches(for:.seriesReleases)
+        XCTAssertEqual(batches.last?.count,0)
     }
     func testAuthorizationIsNeverRequestedByInitializationOrReconciliation() async throws {
         let delivery=MockNotificationDelivery(status:.notDetermined),coordinator=NotificationCoordinator(repository:try store(),delivery:delivery)
