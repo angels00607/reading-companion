@@ -68,7 +68,7 @@ struct ChallengeDetailScreen: View {
                 if kind == .world { Text("Cities only. A setting cannot be inferred from the author’s nationality or publisher.") }
                 if kind == .roulette { StatePresentation(kind: .empty, title: "Prompts not configured", message: "This challenge is waiting for its prompt list. You can return when it becomes available.") }
                 if let proposal = state.proposals.first, prompts.contains(where: { $0.id == proposal.promptID }) {
-                    ChallengeProposalPanel(proposal: proposal, state: state, reload: reload)
+                    ChallengeProposalPanel(proposal: proposal, state: state, reload: reload).id(proposal.id)
                 }
                 if !kind.semantic {
                     Text("Confirmed placements").font(DesignTokens.functionalFont(size: 20, relativeTo: .title2, weight: .semiBold))
