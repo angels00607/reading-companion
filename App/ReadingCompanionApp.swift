@@ -177,11 +177,11 @@ struct ReadingCompanionApp: App {
     #if DEBUG
     private func seedAttentionQA(_ store:LocalStore) throws {
         let fixtures:[AttentionDraft] = [
-            .init(category:.journal,priority:.required,entityID:UUID(),reason:"qa-journal",title:"Update your paper Journal",detail:"A copied review changed after it was written.",source:"Reading Companion"),
-            .init(category:.series,entityID:UUID(),reason:"qa-series",title:"Review a Series update",detail:"Compare the current series name with the proposed value.",source:"Catalogue"),
-            .init(category:.challenges,entityID:UUID(),reason:"qa-challenge",title:"Review a Challenge match",detail:"Confirm or reject the suggested match using its evidence.",source:"Challenge Engine"),
-            .init(category:.books,priority:.optional,entityID:UUID(),reason:"qa-book",title:"Review book information",detail:"A source proposed different book information.",source:"Catalogue"),
-            .init(category:.import,entityID:UUID(),reason:"qa-import",title:"Review imported data",detail:"Compare the StoryGraph value with your saved library.",source:"StoryGraph CSV")
+            .init(category:.journal,priority:.required,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000101")!,reason:"qa-journal",title:"Update your paper Journal",detail:"A copied review changed after it was written.",source:"Reading Companion"),
+            .init(category:.series,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000102")!,reason:"qa-series",title:"Review a Series update",detail:"Compare the current series name with the proposed value.",source:"Catalogue"),
+            .init(category:.challenges,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000103")!,reason:"qa-challenge",title:"Review a Challenge match",detail:"Confirm or reject the suggested match using its evidence.",source:"Challenge Engine"),
+            .init(category:.books,priority:.optional,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000104")!,reason:"qa-book",title:"Review book information",detail:"A source proposed different book information.",source:"Catalogue"),
+            .init(category:.import,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000105")!,reason:"qa-import",title:"Review imported data",detail:"Compare the StoryGraph value with your saved library.",source:"StoryGraph CSV")
         ]
         for fixture in fixtures { try store.createAttention(fixture) }
     }
