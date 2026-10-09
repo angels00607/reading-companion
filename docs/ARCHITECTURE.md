@@ -318,3 +318,12 @@ existing proposal, correction or review state. The central SwiftUI screen routes
 to those established feature flows; it does not apply domain changes itself. This
 keeps user decisions, provenance, historical exclusions and gamification side effects
 owned by their original repositories.
+
+# Phase 10C notification boundary
+
+`NotificationPreferencesRepository` owns durable category choices; system permission
+is read through `NotificationDeliveryService`. `NotificationCoordinator` reconciles
+verified local events into app-owned stable requests without ever prompting. Only the
+explicit Settings action calls the authorization request API. Native delivery uses
+UserNotifications; unavailable platforms use a no-op adapter. Attention persistence,
+counts and decisions remain entirely independent.

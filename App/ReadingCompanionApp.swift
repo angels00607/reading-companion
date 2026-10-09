@@ -19,6 +19,7 @@ struct ReadingCompanionApp: App {
                     else if let route = statsQARoute { StatsVisualQA(route: route).environmentObject(model) }
                     else if phase9QARoute != nil { NavigationStack { BackupSettingsScreen(visualQA:true) }.environmentObject(model) }
                     else if isAttentionQA { NavigationStack { NeedsAttentionScreen() }.environmentObject(model) }
+                    else if isNotificationQA { NavigationStack { NotificationSettingsScreen() }.environmentObject(model) }
                     else if let route = profileQARoute { ProfileVisualQA(route:route).environmentObject(model) }
                     else if let onboardingState, !onboardingState.isComplete {
                         OnboardingFlow(state:onboardingState) { self.onboardingState = $0 }.environmentObject(model)
@@ -46,6 +47,13 @@ struct ReadingCompanionApp: App {
     private var isAttentionQA:Bool {
         #if DEBUG
         return ProcessInfo.processInfo.arguments.contains("-phase10b-fixture")
+        #else
+        return false
+        #endif
+    }
+    private var isNotificationQA:Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-phase10c-fixture")
         #else
         return false
         #endif
@@ -136,7 +144,7 @@ struct ReadingCompanionApp: App {
                 owner = value
             } else { owner = UUID(); try owner.uuidString.write(to: identity, atomically: true, encoding: .utf8) }
             #if DEBUG
-            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture") || ProcessInfo.processInfo.arguments.contains("-phase7-fixture") || ProcessInfo.processInfo.arguments.contains("-phase9-fixture") || isAttentionQA
+            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture") || ProcessInfo.processInfo.arguments.contains("-phase7-fixture") || ProcessInfo.processInfo.arguments.contains("-phase9-fixture") || isAttentionQA || isNotificationQA
             #else
             let qa = false
             #endif
@@ -161,7 +169,9 @@ struct ReadingCompanionApp: App {
             let onboarding = try store.onboardingState()
             if onboarding.isComplete || qa || isImportQA { _ = try store.currentQuests() }
             onboardingState = qa || isImportQA ? OnboardingState(step:.completed,readingHistorySince:2020,preferredEditionLanguage:.english,libraryChoice:.startFresh,completedAt:Date()) : onboarding
-            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, statsRepository:store, gamificationRepository:store, importsRepository:store, onboardingRepository:store, attentionRepository:store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService,preferredEditionLanguage:onboarding.preferredEditionLanguage ?? .english)
+            let notificationCoordinator=NotificationCoordinator(repository:store,delivery:UserNotificationDelivery())
+            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, statsRepository:store, gamificationRepository:store, importsRepository:store, onboardingRepository:store, attentionRepository:store,notificationPreferencesRepository:store,notificationCoordinator:notificationCoordinator, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService,preferredEditionLanguage:onboarding.preferredEditionLanguage ?? .english)
+            Task { await notificationCoordinator.reconcile() }
             #if DEBUG
             if profileQARoute == "reward", qa {
                 // Genuine live finish actions cross the next 500-XP boundary.
