@@ -1,5 +1,6 @@
 import XCTest
 @testable import ReadingUI
+import ReadingDomain
 
 final class SharedComponentTests: XCTestCase {
     func testProgressPreservesPageAndPercentageMeaning() {
@@ -18,5 +19,31 @@ final class SharedComponentTests: XCTestCase {
 
     func testFiveTabShellRemainsLocked() {
         XCTAssertEqual(MainTab.allCases.map(\.rawValue), ["Home", "Journal", "Challenges", "Series", "Stats"])
+    }
+
+    func testCelebrationQueuePresentsEachRewardOnlyOnce() {
+        let event = PresentationCelebration(id: "finish-book:one", kind: .bookCompleted, eyebrow: "BOOK COMPLETED", title: "Finished", message: "Saved", symbol: "book.closed.fill")
+        var queue = CelebrationQueue()
+
+        XCTAssertTrue(queue.enqueue(event))
+        XCTAssertFalse(queue.enqueue(event))
+        XCTAssertEqual(queue.active, event)
+        queue.dismiss()
+        XCTAssertNil(queue.active)
+        XCTAssertFalse(queue.enqueue(event))
+    }
+
+    func testCelebrationFactoryUsesSemanticAwardDelta() throws {
+        let finish = try XPAward(semanticKey: "finish-book:one", source: .finishBook, amount: 100)
+
+        XCTAssertEqual(CelebrationFactory.next(before: [], after: [finish])?.kind, .bookCompleted)
+        XCTAssertNil(CelebrationFactory.next(before: [finish], after: [finish]))
+    }
+
+    func testReduceMotionUsesFadeWithinApprovedTiming() {
+        XCTAssertEqual(PresentationMotionPolicy.celebrationStyle(reduceMotion: true), .fade)
+        XCTAssertEqual(PresentationMotionPolicy.celebrationStyle(reduceMotion: false), .fadeAndScale)
+        XCTAssertEqual(PresentationMotionPolicy.celebrationDuration(reduceMotion: true), 0.18)
+        XCTAssertEqual(PresentationMotionPolicy.celebrationDuration(reduceMotion: false), 0.24)
     }
 }

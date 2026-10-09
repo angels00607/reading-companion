@@ -24,6 +24,7 @@ public final class BooksModel: ObservableObject {
     @Published public var feedbackReadingID: UUID?
     @Published public var gamificationReward: String?
     @Published public var gamificationRewardTitle = "LEVEL UP"
+    @Published public private(set) var celebrationQueue=CelebrationQueue()
     @Published public var preferredEditionLanguage: PreferredEditionLanguage
     public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, statsRepository:(any StatsRepository)? = nil, gamificationRepository:(any GamificationRepository)? = nil, importsRepository:(any ImportsRepository)? = nil, onboardingRepository:(any OnboardingRepository)? = nil, attentionRepository:(any AttentionRepository)? = nil, notificationPreferencesRepository:(any NotificationPreferencesRepository)?=nil,notificationCoordinator:NotificationCoordinator?=nil, provider: any BooksCatalogProvider, assetDirectory: URL, backupService:(any BackupService)? = nil, preferredEditionLanguage:PreferredEditionLanguage = .english) {
         self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository
@@ -41,16 +42,9 @@ public final class BooksModel: ObservableObject {
             let prior = try? gamificationRepository?.xpAwards()
             let value = try body()
             if let before = prior, let after = try? gamificationRepository?.xpAwards() {
-                let oldLevel = GamificationBalance.level(totalXP:before.reduce(0) { $0+$1.amount }), newLevel = GamificationBalance.level(totalXP:after.reduce(0) { $0+$1.amount })
                 let previous = Set(before.map(\.semanticKey)), added = after.filter { !previous.contains($0.semanticKey) }
-                if newLevel > oldLevel {
-                    gamificationRewardTitle = "LEVEL UP"
-                    gamificationReward = "Level \(newLevel). Your configured cosmetics are available. Every reading feature remains available."
-                } else if let achievement = added.first(where: { $0.source == .achievement }) {
-                    gamificationRewardTitle = "ACHIEVEMENT UNLOCKED"
-                    let key = String(achievement.semanticKey.dropFirst("achievement:".count))
-                    gamificationReward = "\(AchievementCatalog.all.first { $0.key == key }?.name ?? "Achievement"). +\(achievement.amount) XP awarded once."
-                } else if let quest = added.first(where: { [.dailyQuest,.weeklyQuest,.monthlyQuest].contains($0.source) }) {
+                if let celebration=CelebrationFactory.next(before:before,after:after){celebrationQueue.enqueue(celebration)}
+                if let quest = added.first(where: { [.dailyQuest,.weeklyQuest,.monthlyQuest].contains($0.source) }) {
                     gamificationRewardTitle = "QUEST COMPLETED"
                     gamificationReward = "+\(quest.amount) XP awarded once. Your reading progress has been saved."
                 }
@@ -68,6 +62,8 @@ public final class BooksModel: ObservableObject {
         catch { self.error = "Could not save this change. Existing local data has not changed. \(error.localizedDescription)" }
         return nil
     }
+    public var activeCelebration:PresentationCelebration?{celebrationQueue.active}
+    public func dismissCelebration(){celebrationQueue.dismiss()}
     public func coverURL(_ reference: String?) -> URL? {
         guard let reference else { return nil }
         if reference.hasPrefix("asset://"), let id = UUID(uuidString: String(reference.dropFirst(8)).replacingOccurrences(of: ".png", with: "")) {
