@@ -18,6 +18,6 @@ detail = CASE reason
   WHEN 'eligibility-changed' THEN 'Review an assignment affected by changed reading data.'
   ELSE 'Compare the current value with the proposed value.'
 END,
-action_id = entity_id;
+action_id = CASE WHEN category='import' THEN entity_id ELSE NULL END;
 
 CREATE INDEX attention_unresolved_priority ON attention_items(owner_id,status,priority,created_at);
