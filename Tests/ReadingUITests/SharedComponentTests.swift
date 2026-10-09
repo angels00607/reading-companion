@@ -41,7 +41,7 @@ final class SharedComponentTests: XCTestCase {
     }
 
     func testSimultaneousCompletionAchievementAndLevelAreQueuedWithoutDuplicates() throws {
-        let before=try [XPAward(semanticKey:"seed:xp",source:.finishBook,amount:490)]
+        let before=try [XPAward(semanticKey:"finish-book:seed",source:.finishBook,amount:490)]
         let finish=try XPAward(semanticKey:"finish-book:next",source:.finishBook,amount:100)
         let achievement=try XPAward(semanticKey:"achievement:first",source:.achievement,amount:30)
         let after=before+[finish,achievement]
