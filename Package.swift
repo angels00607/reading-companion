@@ -15,7 +15,7 @@ let package = Package(
     targets: [
         .target(name: "ReadingDomain", resources: [.copy("Resources/challenge_catalog_v2.json")]),
         .target(name: "ReadingData", dependencies: ["ReadingDomain", .product(name: "GRDB", package: "GRDB.swift"), .product(name: "ZIPFoundation", package: "ZIPFoundation")],
-                resources: [.copy("Resources/local_v1.sql"), .copy("Resources/local_v2.sql"), .copy("Resources/local_v3.sql"), .copy("Resources/local_v4.sql"), .copy("Resources/local_v5.sql"), .copy("Resources/local_v6.sql"), .copy("Resources/local_v7.sql"), .copy("Resources/local_v8.sql"), .copy("Resources/local_v9.sql"), .copy("Resources/local_v10.sql"), .copy("Resources/local_v11.sql"), .copy("Resources/local_v12.sql")]),
+                resources: [.copy("Resources/local_v1.sql"), .copy("Resources/local_v2.sql"), .copy("Resources/local_v3.sql"), .copy("Resources/local_v4.sql"), .copy("Resources/local_v5.sql"), .copy("Resources/local_v6.sql"), .copy("Resources/local_v7.sql"), .copy("Resources/local_v8.sql"), .copy("Resources/local_v9.sql"), .copy("Resources/local_v10.sql"), .copy("Resources/local_v11.sql"), .copy("Resources/local_v12.sql"), .copy("Resources/local_v13.sql")]),
         .target(name: "ReadingUI", dependencies: ["ReadingDomain"]),
         .testTarget(name: "ReadingDomainTests", dependencies: ["ReadingDomain"]),
         .testTarget(name: "ReadingDataTests", dependencies: ["ReadingData", "ReadingDomain", .product(name: "GRDB", package: "GRDB.swift"), .product(name: "ZIPFoundation", package: "ZIPFoundation")]),

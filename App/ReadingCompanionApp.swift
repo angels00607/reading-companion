@@ -7,6 +7,7 @@ import ReadingDomain
 struct ReadingCompanionApp: App {
     @State private var model: BooksModel?
     @State private var storageError: String?
+    @State private var onboardingState: OnboardingState?
     var body: some Scene {
         WindowGroup {
             Group {
@@ -18,6 +19,9 @@ struct ReadingCompanionApp: App {
                     else if let route = statsQARoute { StatsVisualQA(route: route).environmentObject(model) }
                     else if phase9QARoute != nil { NavigationStack { BackupSettingsScreen(visualQA:true) }.environmentObject(model) }
                     else if let route = profileQARoute { ProfileVisualQA(route:route).environmentObject(model) }
+                    else if let onboardingState, !onboardingState.isComplete {
+                        OnboardingFlow(state:onboardingState) { self.onboardingState = $0 }.environmentObject(model)
+                    }
                     else { FoundationShell(homeContent: AnyView(VStack(alignment:.leading,spacing:20){BooksHome();HomePrimaryQuest()}), journalContent: AnyView(JournalHome()), seriesContent: AnyView(SeriesHome()), challengesContent: AnyView(ChallengesHome(year: challengeQAYear)), statsContent:AnyView(StatsHome()), profileContent:AnyView(ProfileHome())).environmentObject(model) }
                 }
                 else if let storageError { StatePresentation(kind: .error, title: "Library unavailable", message: storageError) }
@@ -143,10 +147,12 @@ struct ReadingCompanionApp: App {
             if ProcessInfo.processInfo.arguments.contains("-phase6-fixture") { try seedStatsQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase7-fixture"), !["quests","collection"].contains(profileQARoute ?? "") { try seedGamificationQA(store) }
             #endif
-            _ = try store.currentQuests()
             let assets=root.appendingPathComponent(owner.uuidString + "-covers")
             let backupService=try Phase9BackupService(store:store,assetDirectory:assets,credentials:KeychainCredentialStore())
-            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, statsRepository:store, gamificationRepository:store, importsRepository:store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService)
+            let onboarding = try store.onboardingState()
+            if onboarding.isComplete || qa || isImportQA { _ = try store.currentQuests() }
+            onboardingState = qa || isImportQA ? OnboardingState(step:.completed,readingHistorySince:2020,preferredEditionLanguage:.english,libraryChoice:.startFresh,completedAt:Date()) : onboarding
+            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, statsRepository:store, gamificationRepository:store, importsRepository:store, onboardingRepository:store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService,preferredEditionLanguage:onboarding.preferredEditionLanguage ?? .english)
             #if DEBUG
             if profileQARoute == "reward", qa {
                 // Genuine live finish actions cross the next 500-XP boundary.
