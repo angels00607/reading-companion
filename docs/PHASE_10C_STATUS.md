@@ -53,3 +53,7 @@ all category toggles, authorization states, contextual requesting, disabled-cate
 cancellation, stable identifiers, replacement, Attention independence, historical
 isolation and unavailable delivery. Focused UI acceptance covers defaults, accessible
 large text and the Needs Attention explanation.
+
+## Review correction — release-date verification boundary
+
+The existing Series model records exact/year/unknown release precision and publication state, but **does not record per-entry verified provenance**. An exact date is not proof that a release date has been verified. Therefore `verifiedNotificationEvents` currently returns no events, preventing unverified alerts. Local delivery infrastructure remains implemented but **actual release alerts are not active** until a separately specified, testable verification source/flag is introduced. The regression test now asserts that an exact, announced, unverified release does not schedule. The app also reconciles pending notifications when it returns to the foreground. Do not advertise verified release alerts as operational in this PR.
