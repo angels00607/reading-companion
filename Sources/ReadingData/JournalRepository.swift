@@ -138,7 +138,10 @@ extension LocalStore: JournalRepository {
         try enqueueJournal(readingID, "journal.review.copied", ["volume":volume.uuidString], db)
     } }
     public func corrections() throws -> [JournalCorrection] { try queue.read { db in try Row.fetchAll(db, sql: "SELECT * FROM journal_corrections WHERE owner_id=? ORDER BY status,created_at DESC", arguments: [ownerID.uuidString]).map { row in JournalCorrection(id: UUID(uuidString: row["id"])!, readingID: UUID(uuidString: row["reading_id"])!, component: JournalComponent(rawValue: row["component"])!, field: row["field"], previousValue: row["previous_value"], currentValue: row["current_value"], resolved: (row["status"] as String) == "resolved") } } }
-    public func resolveCorrection(id: UUID) throws { try queue.write { try $0.execute(sql: "UPDATE journal_corrections SET status='resolved',resolved_at=? WHERE owner_id=? AND id=? AND status='pending'", arguments: [stamp(),ownerID.uuidString,id.uuidString]) } }
+    public func resolveCorrection(id: UUID) throws { try queue.write { db in
+        try db.execute(sql: "UPDATE journal_corrections SET status='resolved',resolved_at=? WHERE owner_id=? AND id=? AND status='pending'", arguments: [stamp(),ownerID.uuidString,id.uuidString])
+        try resolveAttention(category:.journal,actionID:id,db:db)
+    } }
     public func journalUsage() throws -> JournalUsage { try queue.read { db in
         let id = try ensureVolume(db); let row = try Row.fetchOne(db, sql: "SELECT * FROM journal_volumes WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])!
         let volume = JournalVolume(id: id, number: row["number"], archived: row["archived"], createdAt: ISO8601DateFormatter().date(from: row["created_at"])!, archivedAt: nil)
@@ -174,7 +177,12 @@ extension LocalStore: JournalRepository {
     }
     private func createCorrections(readingID: UUID, old: ReviewSnapshot, current: ReviewSnapshot, db: Database) throws {
         let values: [(String,String,String)] = [("Title",old.title,current.title),("Author",old.author,current.author),("Pages",old.pages.map(String.init) ?? "Unknown",current.pages.map(String.init) ?? "Unknown"),("Rating",String(describing: old.rating),String(describing: current.rating)),("Format",old.format.rawValue,current.format.rawValue),("Start",old.start?.isoString ?? "Unknown",current.start?.isoString ?? "Unknown"),("Finish",old.finish?.isoString ?? "Unknown",current.finish?.isoString ?? "Unknown"),("Summary",old.summary,current.summary)]
-        for (field,previous,now) in values where previous != now { try db.execute(sql: "INSERT INTO journal_corrections(owner_id,id,reading_id,component,field,previous_value,current_value,status,created_at) VALUES(?,?,?,'book_review',?,?,?,'pending',?)", arguments: [ownerID.uuidString,UUID().uuidString,readingID.uuidString,field,previous,now,stamp()]) }
+        for (field,previous,now) in values where previous != now {
+            let existing = try String.fetchOne(db,sql:"SELECT id FROM journal_corrections WHERE owner_id=? AND reading_id=? AND component='book_review' AND field=? AND previous_value=? AND current_value=? AND status='pending'",arguments:[ownerID.uuidString,readingID.uuidString,field,previous,now])
+            let correctionID=existing.flatMap(UUID.init(uuidString:)) ?? UUID()
+            if existing == nil { try db.execute(sql: "INSERT INTO journal_corrections(owner_id,id,reading_id,component,field,previous_value,current_value,status,created_at) VALUES(?,?,?,'book_review',?,?,?,'pending',?)", arguments: [ownerID.uuidString,correctionID.uuidString,readingID.uuidString,field,previous,now,stamp()]) }
+            _ = try upsertAttention(.init(category:.journal,priority:.required,entityID:readingID,actionID:correctionID,reason:"copied-\(field.lowercased())-\(correctionID.uuidString)",title:"Update your paper Journal",detail:"The copied \(field.lowercased()) changed. Compare the copied and current values.",source:"Reading Companion"),db:db)
+        }
     }
     private func enqueueJournal<T: Encodable>(_ id: UUID, _ kind: String, _ payload: T, _ db: Database) throws {
         var generation = try String.fetchOne(db, sql: "SELECT generation FROM sync_state WHERE owner_id=?", arguments: [ownerID.uuidString]); if generation == nil { generation = UUID().uuidString; try db.execute(sql: "INSERT INTO sync_state(owner_id,generation) VALUES(?,?)", arguments: [ownerID.uuidString,generation]) }

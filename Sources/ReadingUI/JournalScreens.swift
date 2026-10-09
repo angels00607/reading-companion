@@ -126,7 +126,7 @@ private struct JournalSession: View {
     @ViewBuilder private func copyField(_ label: String, _ value: String) -> some View { VStack(alignment: .leading, spacing: 3) { Text(label.uppercased()).font(DesignTokens.functionalFont(size: 11, relativeTo: .caption, weight: .semiBold)).foregroundStyle(.secondary); Text(value).fixedSize(horizontal: false, vertical: true) } }
 }
 
-private struct JournalCorrections: View {
+struct JournalCorrections: View {
     @EnvironmentObject var model: BooksModel; @State private var rows: [JournalCorrection] = []
     @Environment(\.colorScheme) private var scheme
     var body: some View { BooksScreen("Journal Corrections") { if rows.isEmpty { StatePresentation(kind: .empty, title: "No corrections", message: "Changes made after copying will appear here.") }; ForEach(rows) { row in VStack(alignment: .leading, spacing: 14) { HStack { Text(row.field).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold)); Spacer(); StatusChip(row.resolved ? "Resolved" : "Pending", symbol: row.resolved ? "checkmark" : "pencil", tone: row.resolved ? .special : .neutral) }; correctionValue("Copied in journal", row.previousValue); correctionValue("Current value", row.currentValue); if !row.resolved { AppButton("I've corrected my journal", kind: .secondary) { resolve(row) } } }.padding(16).background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius)) } }.onAppear(perform: load) }

@@ -13,6 +13,7 @@ public final class BooksModel: ObservableObject {
     public let gamificationRepository: (any GamificationRepository)?
     public let importsRepository: (any ImportsRepository)?
     public let onboardingRepository: (any OnboardingRepository)?
+    public let attentionRepository: (any AttentionRepository)?
     public let backupService: (any BackupService)?
     public let assetDirectory: URL
     @Published public var version = 0
@@ -22,12 +23,13 @@ public final class BooksModel: ObservableObject {
     @Published public var gamificationReward: String?
     @Published public var gamificationRewardTitle = "LEVEL UP"
     @Published public var preferredEditionLanguage: PreferredEditionLanguage
-    public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, statsRepository:(any StatsRepository)? = nil, gamificationRepository:(any GamificationRepository)? = nil, importsRepository:(any ImportsRepository)? = nil, onboardingRepository:(any OnboardingRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL, backupService:(any BackupService)? = nil, preferredEditionLanguage:PreferredEditionLanguage = .english) {
+    public init(repository: any BooksRepository, journalRepository: (any JournalRepository)? = nil, seriesRepository: (any SeriesRepository)? = nil, challengesRepository: (any ChallengesRepository)? = nil, statsRepository:(any StatsRepository)? = nil, gamificationRepository:(any GamificationRepository)? = nil, importsRepository:(any ImportsRepository)? = nil, onboardingRepository:(any OnboardingRepository)? = nil, attentionRepository:(any AttentionRepository)? = nil, provider: any BooksCatalogProvider, assetDirectory: URL, backupService:(any BackupService)? = nil, preferredEditionLanguage:PreferredEditionLanguage = .english) {
         self.repository = repository; self.journalRepository = journalRepository; self.seriesRepository = seriesRepository; self.challengesRepository = challengesRepository
         self.statsRepository = statsRepository ?? (repository as? any StatsRepository)
         self.gamificationRepository = gamificationRepository ?? (repository as? any GamificationRepository)
         self.importsRepository = importsRepository ?? (repository as? any ImportsRepository)
         self.onboardingRepository = onboardingRepository ?? (repository as? any OnboardingRepository)
+        self.attentionRepository = attentionRepository ?? (repository as? any AttentionRepository)
         self.provider = provider; self.assetDirectory = assetDirectory;self.backupService=backupService
         self.preferredEditionLanguage = preferredEditionLanguage
     }

@@ -304,8 +304,10 @@ extension LocalStore: ImportsRepository {
     public func importHistory() throws -> [ImportHistory] { try queue.read { db in try Row.fetchAll(db,sql:"SELECT * FROM import_runs WHERE owner_id=? ORDER BY rowid DESC",arguments:[ownerID.uuidString]).map(importHistoryRow) } }
     private func importRun(fingerprint: String, db: Database) throws -> ImportHistory? { try Row.fetchOne(db,sql:"SELECT * FROM import_runs WHERE owner_id=? AND fingerprint=?",arguments:[ownerID.uuidString,fingerprint]).map(importHistoryRow) }
     private func importHistoryRow(_ row: Row) -> ImportHistory { ImportHistory(id:UUID(uuidString:row["id"])!,completedAt:row["completed_at"],rows:row["rows_count"],newBooks:row["new_books"],newReadings:row["new_readings"],review:row["review_count"],unchanged:row["unchanged_count"]) }
-    private func importAttention(_ id: UUID, reason: String, db: Database) throws { try db.execute(sql:"INSERT OR IGNORE INTO attention_items VALUES(?,?,'import',?,?,'open',?)",arguments:[ownerID.uuidString,UUID().uuidString,id.uuidString,reason,stamp()]) }
-    private func importResolveAttention(_ id: UUID, db: Database) throws { try db.execute(sql:"UPDATE attention_items SET status='resolved' WHERE owner_id=? AND category='import' AND entity_id=?",arguments:[ownerID.uuidString,id.uuidString]) }
+    private func importAttention(_ id: UUID, reason: String, db: Database) throws {
+        _ = try upsertAttention(.init(category:.import,entityID:id,actionID:id,reason:reason,title:"Review imported data",detail:"Compare the StoryGraph value with the value already saved in your library.",source:"StoryGraph CSV"),db:db)
+    }
+    private func importResolveAttention(_ id: UUID, db: Database) throws { try resolveAttention(category:.import,actionID:id,db:db) }
     private func importProvenance(_ id:UUID,type:String,field:String,reference:String,db:Database) throws { try db.execute(sql:"INSERT OR IGNORE INTO field_provenance(owner_id,entity_id,entity_type,field,source,source_ref,user_overridden) VALUES(?,?,?,?,'storygraph_csv',?,0)",arguments:[ownerID.uuidString,id.uuidString,type,field,reference]) }
     private func importCommand<T:Encodable>(id:UUID,kind:String,payload:T,db:Database) throws {
         var generation = try String.fetchOne(db,sql:"SELECT generation FROM sync_state WHERE owner_id=?",arguments:[ownerID.uuidString])

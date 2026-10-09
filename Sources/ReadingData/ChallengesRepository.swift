@@ -189,7 +189,8 @@ extension LocalStore: ChallengesRepository {
             }
             if let first { try insertChallengeAssignment(prompt, first, source: "finish-date", db); try updateChallengeJournal(first.id, db) }
             let tied = first == nil && records.contains { $0.reading.status == .read && !$0.reading.historical && $0.reading.finishDate?.isoWeek == week }
-            try db.execute(sql: "INSERT INTO attention_items(owner_id,id,category,entity_id,reason,status,created_at) VALUES(?,?,'challenges',?,'finish-order',?,?) ON CONFLICT(owner_id,category,entity_id,reason) DO UPDATE SET status=excluded.status", arguments: [ownerID.uuidString,UUID().uuidString,prompt.id.uuidString,tied ? "open" : "resolved",stamp()])
+            if tied { _ = try upsertAttention(.init(category:.challenges,priority:.required,entityID:prompt.id,actionID:prompt.id,reason:"finish-order",title:"Choose a weekly finish order",detail:"Two readings need an explicit order before this Challenge placement can be confirmed.",source:"Challenge Engine"),db:db) }
+            else { try db.execute(sql:"UPDATE attention_items SET status='resolved',resolved_at=? WHERE owner_id=? AND category='challenges' AND entity_id=? AND reason='finish-order' AND status='open'",arguments:[stamp(),ownerID.uuidString,prompt.id.uuidString]) }
         }
         // Completion slots, not semantic matches. Existing confirmed placements are stable.
         for record in records where record.reading.status == .read && !record.reading.historical && record.reading.finishDate?.year == year {
@@ -222,7 +223,12 @@ extension LocalStore: ChallengesRepository {
             let needsReview = status == "proposed" && !occupied.contains(promptID) && eligible
             let changedEligibility = status == "confirmed" && !eligible
             for (reason, open) in [("match-review",needsReview),("eligibility-changed",changedEligibility)] {
-                try db.execute(sql: "INSERT INTO attention_items(owner_id,id,category,entity_id,reason,status,created_at) VALUES(?,?,'challenges',?,?,?,?) ON CONFLICT(owner_id,category,entity_id,reason) DO UPDATE SET status=excluded.status", arguments: [ownerID.uuidString,UUID().uuidString,row["id"] as String,reason,open ? "open" : "resolved",stamp()])
+                let assignmentID=UUID(uuidString:row["id"] as String)!
+                if open {
+                    let title=reason == "match-review" ? "Review a Challenge match" : "Review Challenge eligibility"
+                    let detail=reason == "match-review" ? "Confirm or reject the suggested match using its recorded evidence." : "Reading data changed after this assignment was confirmed."
+                    _ = try upsertAttention(.init(category:.challenges,entityID:assignmentID,actionID:assignmentID,reason:reason,title:title,detail:detail,source:"Challenge Engine"),db:db)
+                } else { try db.execute(sql:"UPDATE attention_items SET status='resolved',resolved_at=? WHERE owner_id=? AND category='challenges' AND entity_id=? AND reason=? AND status='open'",arguments:[stamp(),ownerID.uuidString,assignmentID.uuidString,reason]) }
             }
         }
     }
@@ -237,7 +243,11 @@ extension LocalStore: ChallengesRepository {
         if let row = try Row.fetchOne(db, sql: "SELECT state,copied_payload FROM journal_components WHERE owner_id=? AND reading_id=? AND component='challenges'", arguments: [ownerID.uuidString,readingID.uuidString]) {
             if row["state"] as String == "copied", let copied: String = row["copied_payload"], copied != payload {
                 let existing = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM journal_corrections WHERE owner_id=? AND reading_id=? AND component='challenges' AND field='Assignments' AND current_value=? AND status='pending'", arguments: [ownerID.uuidString,readingID.uuidString,payload]) ?? 0
-                if existing == 0 { try db.execute(sql: "INSERT INTO journal_corrections(owner_id,id,reading_id,component,field,previous_value,current_value,status,created_at) VALUES(?,?,?,'challenges','Assignments',?,?,'pending',?)", arguments: [ownerID.uuidString,UUID().uuidString,readingID.uuidString,copied,payload,stamp()]) }
+                if existing == 0 {
+                    let correctionID=UUID()
+                    try db.execute(sql: "INSERT INTO journal_corrections(owner_id,id,reading_id,component,field,previous_value,current_value,status,created_at) VALUES(?,?,?,'challenges','Assignments',?,?,'pending',?)", arguments: [ownerID.uuidString,correctionID.uuidString,readingID.uuidString,copied,payload,stamp()])
+                    _ = try upsertAttention(.init(category:.journal,priority:.required,entityID:readingID,actionID:correctionID,reason:"copied-challenges-\(correctionID.uuidString)",title:"Update your paper Journal",detail:"Copied Challenge assignments changed. Compare the copied and current values.",source:"Challenge Engine"),db:db)
+                }
             } else {
                 try db.execute(sql: "UPDATE journal_components SET state=? WHERE owner_id=? AND reading_id=? AND component='challenges' AND state<>'copied'", arguments: [payload.isEmpty ? "pending" : "ready",ownerID.uuidString,readingID.uuidString])
             }

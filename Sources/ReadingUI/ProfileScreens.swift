@@ -83,7 +83,7 @@ public struct HomePrimaryQuest: View {
 
 public struct ProfileHome:View {
     @EnvironmentObject private var model:BooksModel; @Environment(\.colorScheme) private var scheme; @Environment(\.dynamicTypeSize) private var typeSize
-    @State private var passport=ReaderPassport(); @State private var awards=[XPAward](); @State private var achievements=[AchievementProgress](); @State private var quests=[QuestInstance](); @State private var cosmetics=[String:CosmeticState](); @State private var bookCount=0; @State private var pageCount="Unknown"; @State private var error:String?
+    @State private var passport=ReaderPassport(); @State private var awards=[XPAward](); @State private var achievements=[AchievementProgress](); @State private var quests=[QuestInstance](); @State private var cosmetics=[String:CosmeticState](); @State private var bookCount=0; @State private var pageCount="Unknown"; @State private var attentionCount=0; @State private var error:String?
     public init(){}
     private var xp:Int { awards.reduce(0){$0+$1.amount} }; private var level:Int { GamificationBalance.level(totalXP:xp) }
     public var body:some View { BooksScreen("Reader Passport") {
@@ -95,6 +95,7 @@ public struct ProfileHome:View {
         metrics
         favorites
         featured
+        NavigationLink { NeedsAttentionScreen() } label: { AttentionRow(title:"Needs Attention",detail:attentionCount == 0 ? "No unresolved decisions" : "\(attentionCount) unresolved decision\(attentionCount == 1 ? "" : "s")",category:"All") }.buttonStyle(.plain).accessibilityIdentifier("attention.open")
         NavigationLink("Open Quest Center") { QuestCenter(quests:quests) }.buttonStyle(ProfileLinkStyle())
         NavigationLink("View all Achievements") { AchievementsScreen(values:achievements) }.buttonStyle(ProfileLinkStyle())
         NavigationLink("Open Collection") { CollectionScreen(level:level,states:cosmetics) }.buttonStyle(ProfileLinkStyle())
@@ -142,7 +143,7 @@ public struct ProfileHome:View {
     private func metric(_ label:String,_ value:String)->some View { VStack(spacing:3){Text(value).font(DesignTokens.functionalFont(size:20,weight:.semiBold));Text(label).font(DesignTokens.functionalFont(size:12)).foregroundStyle(DesignTokens.secondaryText(scheme))}.frame(maxWidth:.infinity,minHeight:64).background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:12)) }
     private var favorites:some View { VStack(alignment:.leading,spacing:8){ Text("FAVORITES").font(DesignTokens.functionalFont(size:12,weight:.semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme)); Text("Favorite Books \u{00B7} \(passport.favoriteBooks.count) selected"); Text("Series \u{00B7} \(passport.favoriteSeries ?? "Not configured")\nAuthor \u{00B7} \(passport.favoriteAuthor ?? "Not configured")\nGenre \u{00B7} \(passport.favoriteGenre ?? "Not configured")").foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true) } }
     private var featured:some View { VStack(alignment:.leading,spacing:10){Text("FEATURED ACHIEVEMENTS").font(DesignTokens.functionalFont(size:12,weight:.semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme)); ForEach(achievements.filter{passport.featuredAchievementKeys.contains($0.definition.key)}) { AchievementBadgeView(value:$0) }; Text("Choose exactly 3 from Achievements").font(DesignTokens.functionalFont(size:13)).foregroundStyle(DesignTokens.secondaryText(scheme))} }
-    private func load(){ do { guard let repo=model.gamificationRepository else{return}; passport=try repo.passport();awards=try repo.xpAwards();achievements=try repo.achievementProgress();quests=try repo.currentQuests();cosmetics=try repo.cosmeticStates(); if let stats=try model.statsRepository?.stats(period:.lifetime){bookCount=stats.books;pageCount=stats.pages.display} } catch { self.error="Existing local data has not changed." } }
+    private func load(){ do { guard let repo=model.gamificationRepository else{return}; passport=try repo.passport();awards=try repo.xpAwards();achievements=try repo.achievementProgress();quests=try repo.currentQuests();cosmetics=try repo.cosmeticStates();attentionCount=try model.attentionRepository?.unresolvedAttentionCount() ?? 0;if let stats=try model.statsRepository?.stats(period:.lifetime){bookCount=stats.books;pageCount=stats.pages.display} } catch { self.error="Existing local data has not changed." } }
 }
 struct ProfileLinkStyle:ButtonStyle { func makeBody(configuration:Configuration)->some View { configuration.label.font(DesignTokens.functionalFont(size:16,weight:.semiBold)).frame(maxWidth:.infinity,minHeight:48).background(.thinMaterial,in:RoundedRectangle(cornerRadius:12)).opacity(configuration.isPressed ? 0.7:1) } }
 
