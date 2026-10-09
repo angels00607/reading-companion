@@ -43,7 +43,7 @@ public final class BooksModel: ObservableObject {
             let value = try body()
             if let before = prior, let after = try? gamificationRepository?.xpAwards() {
                 let previous = Set(before.map(\.semanticKey)), added = after.filter { !previous.contains($0.semanticKey) }
-                if let celebration=CelebrationFactory.next(before:before,after:after){celebrationQueue.enqueue(celebration)}
+                for celebration in CelebrationFactory.events(before:before,after:after) { celebrationQueue.enqueue(celebration) }
                 if let quest = added.first(where: { [.dailyQuest,.weeklyQuest,.monthlyQuest].contains($0.source) }) {
                     gamificationRewardTitle = "QUEST COMPLETED"
                     gamificationReward = "+\(quest.amount) XP awarded once. Your reading progress has been saved."
