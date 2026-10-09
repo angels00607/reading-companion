@@ -8,6 +8,7 @@ struct ReadingCompanionApp: App {
     @State private var model: BooksModel?
     @State private var storageError: String?
     @State private var onboardingState: OnboardingState?
+    @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
             Group {
@@ -29,6 +30,11 @@ struct ReadingCompanionApp: App {
                 else if let storageError { StatePresentation(kind: .error, title: "Library unavailable", message: storageError) }
                 else { SkeletonRow() }
             }.preferredColorScheme(acceptanceAppearance)
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active, let coordinator = model?.notificationCoordinator {
+                        Task { await coordinator.reconcile() }
+                    }
+                }
                 .onAppear {
                     if !isFoundationQA && model == nil { openStore() }
                     #if DEBUG
