@@ -14,7 +14,12 @@ final class StoryGraphImportAcceptanceTests:XCTestCase {
         for _ in 0..<45 {
             if element.exists && element.isHittable && (viewport.contains(element.frame) || (element.frame.height>viewport.height && element.frame.minY>=viewport.minY && element.frame.minY<viewport.midY)) { return }
             let down=element.exists && element.frame.minY<viewport.minY
-            app.coordinate(withNormalizedOffset:.init(dx:0.94,dy:down ? 0.4:0.72)).press(forDuration:0.05,thenDragTo:app.coordinate(withNormalizedOffset:.init(dx:0.94,dy:down ? 0.72:0.4)))
+            // Scroll inside the visible scroll container rather than the far-right
+            // screen edge (which may be outside the content or intercepted).
+            let scroll = app.scrollViews.firstMatch
+            let start = scroll.coordinate(withNormalizedOffset:.init(dx:0.5,dy:down ? 0.25:0.75))
+            let end = scroll.coordinate(withNormalizedOffset:.init(dx:0.5,dy:down ? 0.75:0.25))
+            start.press(forDuration:0.05,thenDragTo:end)
         }
         XCTAssertTrue(element.exists && element.isHittable,"Required import element remains reachable: \(element.identifier) \(element.label) \(element.frame)")
     }

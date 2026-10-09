@@ -452,3 +452,12 @@ human-readable title/detail/source, lifecycle status and created/resolved timest
 Resolution never deletes the record. Repeated identical evidence does not reopen a
 resolved decision; restart is explicit. The underlying feature tables remain the
 source of truth for the proposed/current values and the final user decision.
+
+# Phase 10C — Notification preferences
+
+`notification_preferences` is one owner-scoped row containing independent category
+choices. Series releases, release changes and import/system default on; Challenges,
+Journal and Quests default off. Achievements/Levels is nullable because the product
+specification defines independence but no default. iOS authorization remains system
+state and is never stored as a preference. Scheduled delivery is derived from verified
+domain facts and is not an AttentionItem or a Notification history record.
