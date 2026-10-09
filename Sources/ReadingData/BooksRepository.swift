@@ -324,7 +324,9 @@ extension LocalStore: BooksRepository {
         let fields: [(BookField,String?,String?)] = [(.title,record.book.title,work.title),(.author,record.book.author,work.author),(.cover,record.coverReference,work.coverReference),(.synopsis,record.synopsis,work.synopsis)]
         for (field,current,incoming) in fields where incoming != nil && current != incoming {
             let fingerprint = try String(data: JSONEncoder().encode([work.provider,work.reference,field.rawValue,incoming]), encoding: .utf8)!
-            try db.execute(sql: "INSERT OR IGNORE INTO data_change_proposals(owner_id,id,entity_id,entity_type,field,current_json,proposed_json,evidence_fingerprint,status,source) VALUES(?,?,?,'book',?,?,?,?,'pending',?)", arguments: [ownerID.uuidString,UUID().uuidString,bookID.uuidString,field.rawValue,json(current),json(incoming),fingerprint,work.provider + " " + work.reference])
+            let proposalID=UUID()
+            try db.execute(sql: "INSERT OR IGNORE INTO data_change_proposals(owner_id,id,entity_id,entity_type,field,current_json,proposed_json,evidence_fingerprint,status,source) VALUES(?,?,?,'book',?,?,?,?,'pending',?)", arguments: [ownerID.uuidString,proposalID.uuidString,bookID.uuidString,field.rawValue,json(current),json(incoming),fingerprint,work.provider + " " + work.reference])
+            if db.changesCount > 0 { _ = try upsertAttention(.init(category:.books,entityID:bookID,actionID:proposalID,reason:"metadata-"+fingerprint,title:"Review book information",detail:"A source proposed a different \(field.rawValue) value.",source:work.provider+" "+work.reference),db:db) }
         }
     }
     public func proposals(bookID: UUID) throws -> [MetadataReview] {
@@ -346,6 +348,7 @@ extension LocalStore: BooksRepository {
                 try provenance(id: bookID, type: "book", field: field.rawValue, source: "manual", reference: row["source"], db: db)
             }
             try db.execute(sql: "UPDATE data_change_proposals SET status=? WHERE owner_id=? AND id=?", arguments: [accept ? "accepted" : "kept",ownerID.uuidString,proposalID.uuidString])
+            try resolveAttention(category:.books,actionID:proposalID,db:db)
             try command(id: bookID, kind: "book.proposal_decision", revision: 0, payload: catalog(bookID, db: db), db: db)
         }
     }

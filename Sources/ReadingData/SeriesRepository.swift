@@ -85,7 +85,9 @@ extension LocalStore: SeriesRepository {
             _ = try detail(seriesID, db)
             let rejected = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM series_rejections WHERE owner_id=? AND series_id=? AND field=? AND evidence_fingerprint=?", arguments: [ownerID.uuidString,seriesID.uuidString,field,evidenceFingerprint]) ?? 0
             guard rejected == 0 else { return }
-            try db.execute(sql: "INSERT OR IGNORE INTO data_change_proposals(owner_id,id,entity_id,entity_type,field,current_json,proposed_json,evidence_fingerprint,status,source) VALUES(?,?,?,'series',?,?,?,?, 'pending',?)", arguments: [ownerID.uuidString,UUID().uuidString,seriesID.uuidString,field,current,proposed,evidenceFingerprint,source])
+            let proposalID=UUID()
+            try db.execute(sql: "INSERT OR IGNORE INTO data_change_proposals(owner_id,id,entity_id,entity_type,field,current_json,proposed_json,evidence_fingerprint,status,source) VALUES(?,?,?,'series',?,?,?,?, 'pending',?)", arguments: [ownerID.uuidString,proposalID.uuidString,seriesID.uuidString,field,current,proposed,evidenceFingerprint,source])
+            if db.changesCount > 0 { _ = try upsertAttention(.init(category:.series,entityID:seriesID,actionID:proposalID,reason:"proposal-"+evidenceFingerprint,title:"Review a Series update",detail:"Compare the current \(field.lowercased()) with the proposed value.",source:source),db:db) }
         }
     }
     public func acceptProposal(id: UUID) throws { try queue.write { db in
@@ -100,11 +102,13 @@ extension LocalStore: SeriesRepository {
         }
         else { throw DomainError.invalidTransition }
         try db.execute(sql: "UPDATE data_change_proposals SET status='accepted' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
+        try resolveAttention(category:.series,actionID:id,db:db)
     } }
     public func rejectProposal(id: UUID) throws { try queue.write { db in
         guard let row = try Row.fetchOne(db, sql: "SELECT entity_id,field,evidence_fingerprint FROM data_change_proposals WHERE owner_id=? AND id=? AND entity_type='series' AND status='pending'", arguments: [ownerID.uuidString,id.uuidString]) else { throw DomainError.invalidTransition }
         try db.execute(sql: "INSERT OR IGNORE INTO series_rejections(owner_id,series_id,field,evidence_fingerprint,rejected_at) VALUES(?,?,?,?,?)", arguments: [ownerID.uuidString,row["entity_id"] as String,row["field"] as String,row["evidence_fingerprint"] as String,stamp()])
         try db.execute(sql: "UPDATE data_change_proposals SET status='kept' WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,id.uuidString])
+        try resolveAttention(category:.series,actionID:id,db:db)
     } }
     public func setSeriesJournalReady(readingID: UUID, ready: Bool) throws { try queue.write { db in
         let state = ready ? "ready" : "pending"

@@ -310,3 +310,11 @@ Do not code the application before these decisions are reviewed.
   confirmation of completion alone is insufficient: ambiguous cases return Unknown.
   Active, Completed, explicit Abandoned and override precedence retain their locked meanings.
 - No listening-time/playback behavior, feature screens or Phase 1 implementation.
+# Phase 10B attention boundary
+
+`AttentionRepository` provides the cross-feature unresolved index and count. Feature
+repositories create and resolve attention inside the same GRDB transaction as their
+existing proposal, correction or review state. The central SwiftUI screen routes back
+to those established feature flows; it does not apply domain changes itself. This
+keeps user decisions, provenance, historical exclusions and gamification side effects
+owned by their original repositories.

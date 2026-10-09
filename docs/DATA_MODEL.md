@@ -442,3 +442,13 @@ User
   confirmation of completion alone is insufficient: ambiguous cases return Unknown.
   Active, Completed, explicit Abandoned and override precedence retain their locked meanings.
 - No listening-time/playback behavior, feature screens or Phase 1 implementation.
+# Phase 10B — Needs Attention
+
+`attention_items` is an owner-scoped durable index of genuine unresolved decisions.
+Its stable deduplication key is `(owner_id, category, entity_id, reason)`. Each item
+stores a category (`journal`, `series`, `challenges`, `books`, `import`), priority
+(`required`, `review`, `optional`), underlying entity, optional action identifier,
+human-readable title/detail/source, lifecycle status and created/resolved timestamps.
+Resolution never deletes the record. Repeated identical evidence does not reopen a
+resolved decision; restart is explicit. The underlying feature tables remain the
+source of truth for the proposed/current values and the final user decision.

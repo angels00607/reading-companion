@@ -63,7 +63,7 @@ private struct SeriesListRow: View {
     }
 }
 
-private struct SeriesPage: View {
+struct SeriesPage: View {
     @EnvironmentObject private var model: BooksModel
     @Environment(\.colorScheme) private var scheme
     let detailID: UUID
@@ -145,7 +145,7 @@ private struct SeriesReview: View {
     @EnvironmentObject private var model: BooksModel
     @Environment(\.dismiss) private var dismiss
     let proposal: SeriesChangeProposal; let reload: () -> Void
-    var body: some View { BooksScreen("Review Series Update") { DataChangeReview(field: proposal.field, current: proposal.current, proposed: proposal.proposed, source: proposal.source, accept: { _ = model.perform { try model.seriesRepository?.acceptProposal(id: proposal.id) }; reload(); dismiss() }, keep: { _ = model.perform { try model.seriesRepository?.rejectProposal(id: proposal.id) }; reload(); dismiss() }, edit: {}) } }
+    var body: some View { BooksScreen("Review Series Update") { DataChangeReview(field: proposal.field, current: proposal.current, proposed: proposal.proposed, source: proposal.source, canEdit:false, accept: { _ = model.perform { try model.seriesRepository?.acceptProposal(id: proposal.id) }; reload(); dismiss() }, keep: { _ = model.perform { try model.seriesRepository?.rejectProposal(id: proposal.id) }; reload(); dismiss() }, edit: {}) } }
 }
 
 private func statusName(_ status: SeriesStatus) -> String { status.rawValue.capitalized }

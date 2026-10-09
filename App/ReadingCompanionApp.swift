@@ -18,6 +18,7 @@ struct ReadingCompanionApp: App {
                     else if let route = challengeQARoute { ChallengesVisualQA(route: route).environmentObject(model) }
                     else if let route = statsQARoute { StatsVisualQA(route: route).environmentObject(model) }
                     else if phase9QARoute != nil { NavigationStack { BackupSettingsScreen(visualQA:true) }.environmentObject(model) }
+                    else if isAttentionQA { NavigationStack { NeedsAttentionScreen() }.environmentObject(model) }
                     else if let route = profileQARoute { ProfileVisualQA(route:route).environmentObject(model) }
                     else if let onboardingState, !onboardingState.isComplete {
                         OnboardingFlow(state:onboardingState) { self.onboardingState = $0 }.environmentObject(model)
@@ -38,6 +39,13 @@ struct ReadingCompanionApp: App {
     private var isImportQA:Bool {
         #if DEBUG
         return ProcessInfo.processInfo.arguments.contains("-phase8-fixture")
+        #else
+        return false
+        #endif
+    }
+    private var isAttentionQA:Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.arguments.contains("-phase10b-fixture")
         #else
         return false
         #endif
@@ -128,7 +136,7 @@ struct ReadingCompanionApp: App {
                 owner = value
             } else { owner = UUID(); try owner.uuidString.write(to: identity, atomically: true, encoding: .utf8) }
             #if DEBUG
-            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture") || ProcessInfo.processInfo.arguments.contains("-phase7-fixture") || ProcessInfo.processInfo.arguments.contains("-phase9-fixture")
+            let qa = ProcessInfo.processInfo.arguments.contains("-phase2-fixture") || ProcessInfo.processInfo.arguments.contains("-phase3-fixture") || ProcessInfo.processInfo.arguments.contains("-phase4-fixture") || ProcessInfo.processInfo.arguments.contains("-phase5-fixture") || ProcessInfo.processInfo.arguments.contains("-phase6-fixture") || ProcessInfo.processInfo.arguments.contains("-phase7-fixture") || ProcessInfo.processInfo.arguments.contains("-phase9-fixture") || isAttentionQA
             #else
             let qa = false
             #endif
@@ -146,13 +154,14 @@ struct ReadingCompanionApp: App {
             if ProcessInfo.processInfo.arguments.contains("-phase5-fixture") { try seedChallengesQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase6-fixture") { try seedStatsQA(store) }
             if ProcessInfo.processInfo.arguments.contains("-phase7-fixture"), !["quests","collection"].contains(profileQARoute ?? "") { try seedGamificationQA(store) }
+            if isAttentionQA { try seedAttentionQA(store) }
             #endif
             let assets=root.appendingPathComponent(owner.uuidString + "-covers")
             let backupService=try Phase9BackupService(store:store,assetDirectory:assets,credentials:KeychainCredentialStore())
             let onboarding = try store.onboardingState()
             if onboarding.isComplete || qa || isImportQA { _ = try store.currentQuests() }
             onboardingState = qa || isImportQA ? OnboardingState(step:.completed,readingHistorySince:2020,preferredEditionLanguage:.english,libraryChoice:.startFresh,completedAt:Date()) : onboarding
-            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, statsRepository:store, gamificationRepository:store, importsRepository:store, onboardingRepository:store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService,preferredEditionLanguage:onboarding.preferredEditionLanguage ?? .english)
+            model = BooksModel(repository: store, journalRepository: store, seriesRepository: store, challengesRepository: store, statsRepository:store, gamificationRepository:store, importsRepository:store, onboardingRepository:store, attentionRepository:store, provider: qa ? BooksAcceptanceProvider() : OpenLibraryProvider(), assetDirectory: assets,backupService:backupService,preferredEditionLanguage:onboarding.preferredEditionLanguage ?? .english)
             #if DEBUG
             if profileQARoute == "reward", qa {
                 // Genuine live finish actions cross the next 500-XP boundary.
@@ -165,6 +174,18 @@ struct ReadingCompanionApp: App {
             #endif
         } catch { storageError = "Could not open the local database. Existing files have not been reset or deleted." }
     }
+    #if DEBUG
+    private func seedAttentionQA(_ store:LocalStore) throws {
+        let fixtures:[AttentionDraft] = [
+            .init(category:.journal,priority:.required,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000101")!,reason:"qa-journal",title:"Update your paper Journal",detail:"A copied review changed after it was written.",source:"Reading Companion"),
+            .init(category:.series,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000102")!,reason:"qa-series",title:"Review a Series update",detail:"Compare the current series name with the proposed value.",source:"Catalogue"),
+            .init(category:.challenges,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000103")!,reason:"qa-challenge",title:"Review a Challenge match",detail:"Confirm or reject the suggested match using its evidence.",source:"Challenge Engine"),
+            .init(category:.books,priority:.optional,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000104")!,reason:"qa-book",title:"Review book information",detail:"A source proposed different book information.",source:"Catalogue"),
+            .init(category:.import,entityID:UUID(uuidString:"00000000-0000-4000-8000-000000000105")!,reason:"qa-import",title:"Review imported data",detail:"Compare the StoryGraph value with your saved library.",source:"StoryGraph CSV")
+        ]
+        for fixture in fixtures { try store.createAttention(fixture) }
+    }
+    #endif
     #if DEBUG
     private func seedGamificationQA(_ store:LocalStore) throws {
         // Visual scenario replay. Every mutation below uses the same production lifecycle;
