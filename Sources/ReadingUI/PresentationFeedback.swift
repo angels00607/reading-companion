@@ -22,16 +22,29 @@ public struct CelebrationQueue:Equatable,Sendable {
     public mutating func dismiss(){if !pending.isEmpty{pending.removeFirst()}}
 }
 public enum CelebrationFactory {
-    public static func next(before:[XPAward],after:[XPAward])->PresentationCelebration? {
-        let previous=Set(before.map(\.semanticKey)),added=after.filter{!previous.contains($0.semanticKey)}
-        let oldLevel=GamificationBalance.level(totalXP:before.reduce(0){$0+$1.amount}),newLevel=GamificationBalance.level(totalXP:after.reduce(0){$0+$1.amount})
-        if newLevel > oldLevel { return .init(id:"level:\(newLevel)",kind:.levelUp,eyebrow:"LEVEL UP",title:"Level \(newLevel)",message:"Your configured cosmetics are available. Every reading feature remains available.",symbol:"sparkles") }
-        if let award=added.first(where:{$0.source == .achievement}) {
-            let key=String(award.semanticKey.dropFirst("achievement:".count)),name=AchievementCatalog.all.first{$0.key == key}?.name ?? "Achievement"
-            return .init(id:award.semanticKey,kind:.achievementUnlocked,eyebrow:"ACHIEVEMENT UNLOCKED",title:name,message:"+\(award.amount) XP awarded once.",symbol:"medal.fill")
+    public static func events(before:[XPAward],after:[XPAward])->[PresentationCelebration] {
+        let previous=Set(before.map(\.semanticKey))
+        let added=after.filter{!previous.contains($0.semanticKey)}
+        let oldLevel=GamificationBalance.level(totalXP:before.reduce(0){$0+$1.amount})
+        let newLevel=GamificationBalance.level(totalXP:after.reduce(0){$0+$1.amount})
+        var results:[PresentationCelebration]=[]
+        if let award=added.first(where:{$0.source == .finishBook}) {
+            results.append(.init(id:award.semanticKey,kind:.bookCompleted,eyebrow:"BOOK COMPLETED",title:"A reading journey finished",message:"Your completion is saved and the Journal can be prepared when you are ready.",symbol:"book.closed.fill"))
         }
-        if let award=added.first(where:{$0.source == .finishBook}) { return .init(id:award.semanticKey,kind:.bookCompleted,eyebrow:"BOOK COMPLETED",title:"A reading journey finished",message:"Your completion is saved and the Journal can be prepared when you are ready.",symbol:"book.closed.fill") }
-        return nil
+        for award in added where award.source == .achievement {
+            let key=String(award.semanticKey.dropFirst("achievement:".count))
+            let name=AchievementCatalog.all.first{$0.key == key}?.name ?? "Achievement"
+            results.append(.init(id:award.semanticKey,kind:.achievementUnlocked,eyebrow:"ACHIEVEMENT UNLOCKED",title:name,message:"+\(award.amount) XP awarded once.",symbol:"medal.fill"))
+        }
+        if newLevel > oldLevel {
+            for level in (oldLevel+1)...newLevel {
+                results.append(.init(id:"level:\(level)",kind:.levelUp,eyebrow:"LEVEL UP",title:"Level \(level)",message:"Your configured cosmetics are available. Every reading feature remains available.",symbol:"sparkles"))
+            }
+        }
+        return results
+    }
+    public static func next(before:[XPAward],after:[XPAward])->PresentationCelebration? {
+        events(before:before,after:after).first
     }
 }
 
