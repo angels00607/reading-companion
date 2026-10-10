@@ -147,7 +147,7 @@ struct ChallengeReviewScreen: View {
                 Text(String(year))
                 if let proposal = state.proposals.first {
                     AttentionRow(title: "Review a suggested match", detail: "A proposal does not occupy a prompt until you confirm.", category: "Challenges")
-                    ChallengeProposalPanel(proposal: proposal, state: state, reload: reload)
+                    ChallengeProposalPanel(proposal: proposal, state: state, reload: reload).id(proposal.id)
                 } else {
                     StatePresentation(kind: .empty, title: state.hasAnalysis ? "No more eligible matches" : "Not enough information", message: state.hasAnalysis ? "No remaining free prompt reaches 70% with the stored evidence. You can assign a book manually." : "Reliable book evidence is not available for semantic analysis. You can assign a book manually.")
                 }
