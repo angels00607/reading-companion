@@ -16,8 +16,9 @@ public struct FoundationShell: View {
     private let seriesContent: AnyView?
     private let statsContent: AnyView?
     private let profileContent: AnyView?
-    public init() { homeContent = nil; journalContent = nil; seriesContent = nil; challengesContent = nil; statsContent = nil; profileContent=nil }
-    public init(homeContent: AnyView, journalContent: AnyView? = nil, seriesContent: AnyView? = nil, challengesContent: AnyView? = nil, statsContent: AnyView? = nil, profileContent:AnyView?=nil) { self.homeContent = homeContent; self.journalContent = journalContent; self.seriesContent = seriesContent; self.challengesContent = challengesContent; self.statsContent = statsContent; self.profileContent=profileContent }
+    private let celebrationContent:AnyView?
+    public init() { homeContent = nil; journalContent = nil; seriesContent = nil; challengesContent = nil; statsContent = nil; profileContent=nil;celebrationContent=nil }
+    public init(homeContent: AnyView, journalContent: AnyView? = nil, seriesContent: AnyView? = nil, challengesContent: AnyView? = nil, statsContent: AnyView? = nil, profileContent:AnyView?=nil,celebrationContent:AnyView?=nil) { self.homeContent = homeContent; self.journalContent = journalContent; self.seriesContent = seriesContent; self.challengesContent = challengesContent; self.statsContent = statsContent; self.profileContent=profileContent;self.celebrationContent=celebrationContent }
     public var body: some View {
         NavigationStack {
             ScrollView {
@@ -36,6 +37,7 @@ public struct FoundationShell: View {
             .toolbar(.hidden, for: .navigationBar)
             #endif
         }.tint(DesignTokens.primary(scheme)).safeAreaInset(edge: .bottom, spacing: 0) { tabBar }
+            .overlay { if let celebrationContent { celebrationContent } }
     }
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -62,7 +64,7 @@ public struct FoundationShell: View {
                     }.padding(.vertical, 6).padding(.horizontal, 4).frame(minWidth: 44, maxWidth: typeSize.isAccessibilitySize ? nil : .infinity, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
                 }.buttonStyle(.plain).accessibilityLabel(tab.rawValue).accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton).accessibilityIdentifier("foundationTab." + tab.rawValue)
             }
-        }.padding(.horizontal, 8).frame(maxWidth: .infinity)
+        }.padding(.horizontal, 8).frame(maxWidth: .infinity).sensoryFeedback(.selection,trigger:selectedTab)
     }
 }
 

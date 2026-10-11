@@ -12,6 +12,7 @@ struct BookPageScreen: View {
     @State private var reviews: [MetadataReview] = []
     @State private var refreshing = false
     @State private var finishAfterProgress = false
+    @State private var finishing=false
     private enum BookSheet: String, Identifiable { case start, progress, history, info; var id: String { rawValue } }
     var body: some View {
         BooksScreen("Book Page") {
@@ -25,7 +26,7 @@ struct BookPageScreen: View {
                 if let reading = record.active {
                     ReadingProgressBar(displayProgress(reading.progress))
                     AppButton("Update Progress") { action = .progress }.accessibilityIdentifier("books.update")
-                    AppButton("Finish Book", kind: .secondary) { confirmFinish = true }.accessibilityIdentifier("books.finish")
+                    AppButton("Finish Book", kind: .secondary) { finishing = false; confirmFinish = true }.accessibilityIdentifier("books.finish")
                     AppButton("Mark DNF", kind: .tertiary) { _ = model.perform { try model.repository.markDNF(readingID: reading.id, revision: reading.revision) }; reload() }
                     ForEach(reading.progressObservations.filter(\.requiresReview), id: \.id) { observation in
                         DataChangeReview(field: "Progress conflict", current: displayProgress(reading.progress).label, proposed: displayProgress(observation.value).label, source: "Saved progress update", accept: {
@@ -62,8 +63,8 @@ struct BookPageScreen: View {
                 }
             }
             BooksErrorMessage()
-        }.onAppear { reload(); if showFinishOnAppear { confirmFinish = true } }.onChange(of: model.version) { reload() }
-            .sheet(item: $action, onDismiss: { reload(); if finishAfterProgress { finishAfterProgress = false; confirmFinish = true } }) { sheet in
+        }.onAppear { reload(); if showFinishOnAppear { finishing = false; confirmFinish = true } }.onChange(of: model.version) { reload() }
+            .sheet(item: $action, onDismiss: { reload(); if finishAfterProgress { finishAfterProgress = false; finishing = false; confirmFinish = true } }) { sheet in
                 NavigationStack {
                     if let record {
                         switch sheet {
@@ -75,7 +76,7 @@ struct BookPageScreen: View {
                     }
                 }
             }
-            .sheet(isPresented: $confirmFinish) {
+            .sheet(isPresented: $confirmFinish, onDismiss: { finishing = false }) {
                 NavigationStack {
                     BooksScreen("Finish Book") {
                         AppBottomSheet(title: "Confirm completion") {
@@ -83,9 +84,10 @@ struct BookPageScreen: View {
                                 Text("Reaching the final page or 100% does not finish this reading. Confirm only when you have finished.")
                                 BooksField(label: "Finish date (YYYY-MM-DD or unknown)", value: $finishDate)
                                 AppButton("Confirm Finish") {
-                                    guard let active = record?.active else { return }
-                                    if model.perform({ try model.repository.finish(readingID: active.id, confirmed: true, date: BooksModel.parseDate(finishDate), revision: active.revision) }) != nil { confirmFinish = false; reload() }
-                                }.accessibilityIdentifier("books.confirmFinish")
+                                    guard !finishing, let active = record?.active else { return }
+                                    finishing=true
+                                    if model.perform({ try model.repository.finish(readingID: active.id, confirmed: true, date: BooksModel.parseDate(finishDate), revision: active.revision) }) != nil { confirmFinish = false; reload() } else { finishing=false }
+                                }.disabled(finishing).accessibilityIdentifier("books.confirmFinish")
                                 AppButton("Keep Reading", kind: .secondary) { confirmFinish = false }
                                 BooksErrorMessage()
                             }
@@ -183,7 +185,7 @@ struct UpdateProgressScreen: View {
         }.onAppear {
             position = reading.progress.currentPage.map(String.init) ?? reading.progress.percentage.map { String($0) } ?? ""
             total = reading.progress.totalPages.map(String.init) ?? ""
-        }
+        }.sensoryFeedback(.impact(weight:.light),trigger:feedback)
     }
 }
 
@@ -256,7 +258,7 @@ struct EditReadingScreen: View {
             if reading.status == .read { BooksField(label: "Finish date (YYYY-MM-DD or unknown)", value: $finish) }
             BooksField(label: "Primary Genre", value: $genre)
             Text("One user-selected Primary Genre belongs to this reading. Catalogue categories remain separate suggestions.")
-            Picker("Rating", selection: $rating) { ForEach(["Unknown","No rating","1","2","3","4","5"], id: \.self) { Text($0).tag($0) } }.frame(minHeight: 44)
+            Picker("Rating", selection: $rating) { ForEach(["Unknown","No rating","1","2","3","4","5"], id: \.self) { Text($0).tag($0) } }.frame(minHeight: 44).sensoryFeedback(.selection,trigger:rating)
             Picker("Format — your choice only", selection: $format) { Text("Unknown").tag("Unknown"); ForEach(JournalFormat.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0.rawValue) } }.frame(minHeight: 44)
             AppButton("Save Reading Info") {
                 if model.perform({

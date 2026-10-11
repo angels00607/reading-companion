@@ -88,9 +88,7 @@ public struct ProfileHome:View {
     private var xp:Int { awards.reduce(0){$0+$1.amount} }; private var level:Int { GamificationBalance.level(totalXP:xp) }
     public var body:some View { BooksScreen("Reader Passport") {
         passportHeader
-        if let reward = model.gamificationReward {
-            FeatureCelebration(eyebrow:model.gamificationRewardTitle,title:"Your reading milestone",message:reward,dismiss:{ model.gamificationReward = nil })
-        }
+        if let reward = model.gamificationReward { AppToast(reward,actionTitle:"Dismiss",action:{model.gamificationReward=nil}) }
         levelCard
         metrics
         favorites

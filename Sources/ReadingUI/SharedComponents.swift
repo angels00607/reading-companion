@@ -115,6 +115,7 @@ public enum ReadingProgressValue: Equatable, Sendable {
 
 public struct ReadingProgressBar: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     public let value: ReadingProgressValue; public let showsLabel: Bool
     public init(_ value: ReadingProgressValue, showsLabel: Bool = true) { self.value = value; self.showsLabel = showsLabel }
     public var body: some View {
@@ -129,6 +130,7 @@ public struct ReadingProgressBar: View {
         }
         .accessibilityElement(children: .ignore).accessibilityLabel("Reading progress").accessibilityValue(value.label)
         .accessibilityIdentifier("phase1.progressBar")
+        .animation(reduceMotion ? nil:.easeInOut(duration:0.24),value:value.fraction)
     }
 }
 
@@ -170,7 +172,7 @@ public struct FilterChip: View {
                 .foregroundStyle(isSelected ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme))
                 .background(isSelected ? DesignTokens.blueSurface(scheme) : DesignTokens.surface(scheme), in: Capsule())
                 .overlay(Capsule().stroke(DesignTokens.border(scheme)))
-        }.buttonStyle(.plain).accessibilityValue(isSelected ? "Selected" : "Not selected")
+        }.buttonStyle(.plain).accessibilityValue(isSelected ? "Selected" : "Not selected").sensoryFeedback(.selection,trigger:isSelected)
     }
 }
 
@@ -188,7 +190,7 @@ public struct AppSegmentedControl<Option: Hashable>: View {
                 }.buttonStyle(.plain).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selection == option ? DesignTokens.text(scheme) : DesignTokens.secondaryText(scheme))
                     .accessibilityAddTraits(selection == option ? .isSelected : [])
             }
-        }.padding(4).background(DesignTokens.blueSurface(scheme), in: RoundedRectangle(cornerRadius: 12))
+        }.padding(4).background(DesignTokens.blueSurface(scheme), in: RoundedRectangle(cornerRadius: 12)).sensoryFeedback(.selection,trigger:selection)
     }
 }
 
@@ -340,11 +342,11 @@ public struct FeatureCelebration: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var visible = false
-    public let eyebrow: String; public let title: String; public let message: String; public let dismiss: () -> Void
-    public init(eyebrow: String, title: String, message: String, dismiss: @escaping () -> Void = {}) { self.eyebrow = eyebrow; self.title = title; self.message = message; self.dismiss = dismiss }
+    public let eyebrow: String; public let title: String; public let message: String;public let symbol:String; public let dismiss: () -> Void
+    public init(eyebrow: String, title: String, message: String, symbol:String="bookmark.fill",dismiss: @escaping () -> Void = {}) { self.eyebrow = eyebrow; self.title = title; self.message = message;self.symbol=symbol; self.dismiss = dismiss }
     public var body: some View {
         VStack(spacing: 14) {
-            Image(systemName: "bookmark.fill").font(.largeTitle).foregroundStyle(DesignTokens.secondary(scheme)).overlay(alignment: .topTrailing) { Image(systemName: "sparkle").foregroundStyle(DesignTokens.primary(scheme)).offset(x: 10, y: -8) }.accessibilityHidden(true)
+            Image(systemName:symbol).font(.largeTitle).foregroundStyle(DesignTokens.secondary(scheme)).overlay(alignment: .topTrailing) { Image(systemName: "sparkle").foregroundStyle(DesignTokens.primary(scheme)).offset(x: 10, y: -8) }.accessibilityHidden(true)
             Text(eyebrow).font(DesignTokens.functionalFont(size: 13, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondary(scheme))
             Text(title).font(DesignTokens.celebrationAccent(size: 32)).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             Text(message).font(DesignTokens.functionalFont(size: 15)).foregroundStyle(DesignTokens.secondaryText(scheme)).multilineTextAlignment(.center)
