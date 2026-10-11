@@ -65,10 +65,10 @@ public struct FoundationShell: View {
                             .font(.system(.caption2, design: .default,
                                           weight: selectedTab == tab ? .semibold : .medium))
                             .multilineTextAlignment(.center)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
+                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+                            .fixedSize(horizontal: false, vertical: true)
                     }.padding(.vertical, 6).padding(.horizontal, 8)
-                        .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 90 : 68, minHeight: 44)
+                        .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 100 : 68, minHeight: 44)
                         .contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
                 }.buttonStyle(.plain).accessibilityLabel(tab.rawValue).accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton).accessibilityIdentifier("foundationTab." + tab.rawValue)
             }
