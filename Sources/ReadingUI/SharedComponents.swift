@@ -133,6 +133,7 @@ public struct ReadingProgressBar: View {
                 }
             }.frame(height: 10)
         }
+        .frame(minHeight: DesignTokens.minimumTouchTarget, alignment: .center)
         .accessibilityElement(children: .ignore).accessibilityLabel("Reading progress").accessibilityValue(value.label)
         .accessibilityIdentifier("phase1.progressBar")
         .animation(reduceMotion ? nil:.easeInOut(duration:0.24),value:value.fraction)
