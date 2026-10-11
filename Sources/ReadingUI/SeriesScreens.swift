@@ -11,14 +11,17 @@ public struct SeriesHome: View {
     public init() {}
     public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            TextField("Search series or book", text: $query).textFieldStyle(.roundedBorder).frame(minHeight: 44)
+            TextField("", text: $query, prompt: Text("Search series or book").foregroundStyle(DesignTokens.secondaryText(scheme)))
+                .textFieldStyle(AppTextFieldStyle(scheme: scheme))
+                .font(DesignTokens.functionalFont(size: 16, relativeTo: .body))
+                .frame(minHeight: 44)
                 .accessibilityIdentifier("series.search").onChange(of: query) { _,_ in reload() }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack { ForEach(SeriesFilter.allCases, id: \.self) { option in FilterChip(option.rawValue, isSelected: Binding(get: { filter == option }, set: { if $0 { filter = option; reload() } })) } }
             }
-            Menu { ForEach(SeriesSort.allCases, id: \.self) { option in Button(option.rawValue) { sort = option; reload() } } } label: {
+            Menu { ForEach(SeriesSort.allCases, id: \.self) { option in Button(option.rawValue) { sort = option; reload() }.accessibilityIdentifier("series.sort." + option.rawValue) } } label: {
                 Label("Sort: \(sort.rawValue)", systemImage: "arrow.up.arrow.down").frame(minHeight: 44)
-            }.accessibilityIdentifier("series.sort")
+            }.frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("series.sort")
             if rows.isEmpty { StatePresentation(kind: .empty, title: "No series found", message: "Stored series remain available offline. Try another search or filter.") }
             LazyVStack(spacing: DesignTokens.Spacing.medium) {
                 ForEach(rows, id: \.series.id) { detail in NavigationLink { SeriesPage(detailID: detail.series.id) } label: { SeriesListRow(detail: detail) }.buttonStyle(.plain) }

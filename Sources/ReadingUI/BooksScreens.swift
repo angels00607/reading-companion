@@ -233,20 +233,30 @@ struct ManualAddScreen: View {
             } label: {
                 BooksDisclosureLabel("Optional book information", detail: "Edition, genre, series and cover")
             }.frame(minHeight: 44)
-            AppButton("Continue") {
-                _ = model.perform {
-                    let t = try BooksRules.validatedText(title), a = try BooksRules.validatedText(author)
-                    let total = try BooksModel.optionalPages(pages)
-                    candidate = WorkCandidate(provider: "manual", reference: UUID().uuidString, title: t, author: a, coverReference: cover.isEmpty ? nil : cover)
-                    if !cover.isEmpty, model.coverURL(cover) == nil { throw BooksError.invalidMetadata }
-                    edition = EditionCandidate(provider: "manual", reference: UUID().uuidString, title: t, isbn10: isbn.count == 10 ? isbn : nil, isbn13: isbn.isEmpty || isbn.count == 10 ? nil : isbn, pageCount: total)
-                    showAdd = true
-                }
-            }.accessibilityIdentifier("books.manual.continue")
             BooksErrorMessage()
-        }.navigationDestination(isPresented: $showAdd) {
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            continueButton
+                .padding(.horizontal, DesignTokens.margin)
+                .padding(.vertical, 8)
+                .background(.bar)
+        }
+        .navigationDestination(isPresented: $showAdd) {
             if let candidate { ManualAddCompletion(work: candidate, edition: edition, genre: genre, series: series) }
         }
+    }
+
+    private var continueButton: some View {
+        AppButton("Continue") {
+            _ = model.perform {
+                let t = try BooksRules.validatedText(title), a = try BooksRules.validatedText(author)
+                let total = try BooksModel.optionalPages(pages)
+                candidate = WorkCandidate(provider: "manual", reference: UUID().uuidString, title: t, author: a, coverReference: cover.isEmpty ? nil : cover)
+                if !cover.isEmpty, model.coverURL(cover) == nil { throw BooksError.invalidMetadata }
+                edition = EditionCandidate(provider: "manual", reference: UUID().uuidString, title: t, isbn10: isbn.count == 10 ? isbn : nil, isbn13: isbn.isEmpty || isbn.count == 10 ? nil : isbn, pageCount: total)
+                showAdd = true
+            }
+        }.accessibilityIdentifier("books.manual.continue")
     }
 }
 private struct ManualAddCompletion: View {

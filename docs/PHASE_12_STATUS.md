@@ -36,6 +36,25 @@
    No authoritative palette value was changed.
 9. Status chips now allow vertical text growth and continue to communicate state with
    text and a symbol, never color alone.
+10. The failed PR audit identified a 36 × 19.5 pt Toast action. Toast actions and
+    filter chips now enforce the shared 44 × 44 pt minimum target, including their
+    complete hit shape.
+11. The five tab buttons exposed both the button and its visual label as separate
+    accessibility elements. The decorative child label is now hidden from the
+    accessibility tree while the full-size button retains its name and selected
+    trait. This removes duplicate reading stops without removing the visible label.
+12. Shared book fields and Series search no longer depend on the native rounded
+    field's appearance-dependent fill. They render explicit semantic surface, text,
+    prompt and border colors, preserving audited contrast in Light and Dark Mode.
+13. Manual Add now keeps its primary Continue action in a bottom safe-area inset, so
+    it remains visible and hittable above the software keyboard. The form remains
+    scrollable and the existing validation/business rules are unchanged.
+14. Journal inbox cards, filter chips and attention rows now expose one deliberate
+    accessible label/value instead of duplicate descendant text. Visible content is
+    unchanged and no audit category or assertion is filtered.
+15. Series search received an explicit scalable functional font and multiline-safe
+    semantic prompt. The sort control now has an explicit 44 pt frame and stable menu
+    option identifiers; its product behavior is unchanged.
 
 ## Automated evidence
 
@@ -52,11 +71,23 @@
   and includes a dark System-appearance check. The existing CI device selector prefers
   an available iPhone SE.
 - `swift build`: PASS locally.
+- `swift build -c release`: PASS locally after the PR #15 correction pass.
 - `swift test --filter SharedComponentTests`: not executable on this host because the
   selected Command Line Tools installation does not provide the `XCTest` module. This
   is recorded as an environment limitation, not a passing test.
 - Native iOS UI execution is delegated to the single PR CI run because this host has
   no full Xcode installation selected.
+
+## PR #15 correction validation
+
+- Failed run inspected: `38126581422`, including complete native job logs and live
+  accessibility hierarchies. The concrete failures included the undersized Toast
+  action, duplicated tab labels, Dark native-field contrast, Series search clipping,
+  and Manual Add's off-screen Continue action while the keyboard was present.
+- Local debug and release Swift builds: PASS.
+- Full native accessibility and UI acceptance: pending the single correction CI run;
+  this host exposes Command Line Tools only (`/Library/Developer/CommandLineTools`),
+  with no installed Xcode simulator runtime.
 
 ## Preserved behavior
 

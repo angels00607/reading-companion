@@ -168,12 +168,20 @@ public struct FilterChip: View {
                 if isSelected { Image(systemName: "checkmark").accessibilityHidden(true) }
                 Text(title)
             }.font(DesignTokens.functionalFont(size: 14, relativeTo: .body, weight: .medium))
-                .fixedSize(horizontal: true, vertical: true)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 12).frame(minHeight: 44)
                 .foregroundStyle(isSelected ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme))
                 .background(isSelected ? DesignTokens.blueSurface(scheme) : DesignTokens.surface(scheme), in: Capsule())
                 .overlay(Capsule().stroke(DesignTokens.border(scheme)))
-        }.buttonStyle(.plain).accessibilityValue(isSelected ? "Selected" : "Not selected").sensoryFeedback(.selection,trigger:isSelected)
+        }.buttonStyle(.plain)
+            .frame(minWidth: DesignTokens.minimumTouchTarget,
+                   minHeight: DesignTokens.minimumTouchTarget)
+            .contentShape(Rectangle())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(title)
+            .accessibilityValue(isSelected ? "Selected" : "Not selected")
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+            .sensoryFeedback(.selection,trigger:isSelected)
     }
 }
 
@@ -226,7 +234,13 @@ public struct AppToast: View {
             Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignTokens.primary(scheme)).accessibilityHidden(true)
             Text(message).font(DesignTokens.functionalFont(size: 14)).fixedSize(horizontal: false, vertical: true)
             Spacer()
-            if let actionTitle, let action { Button(actionTitle, action: action).font(DesignTokens.functionalFont(size: 14, weight: .semiBold)).frame(minHeight: 44) }
+            if let actionTitle, let action {
+                Button(actionTitle, action: action)
+                    .font(DesignTokens.functionalFont(size: 14, weight: .semiBold))
+                    .frame(minWidth: DesignTokens.minimumTouchTarget,
+                           minHeight: DesignTokens.minimumTouchTarget)
+                    .contentShape(Rectangle())
+            }
         }.padding(.horizontal, 16).padding(.vertical, 8).background(DesignTokens.raisedSurface(scheme), in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(DesignTokens.border(scheme))).accessibilityElement(children: .contain)
             .accessibilityIdentifier("phase1.toast")
@@ -315,7 +329,9 @@ public struct AttentionRow: View {
                 Text(detail).font(DesignTokens.functionalFont(size: 14)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal: false, vertical: true)
                 Text(category).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondary(scheme))
             }; Spacer(); Image(systemName: "chevron.right").foregroundStyle(DesignTokens.secondaryText(scheme)).accessibilityHidden(true)
-        }.padding(.vertical, 8).accessibilityElement(children: .combine).accessibilityHint("Opens review")
+        }.padding(.vertical, 8).accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(title), \(detail), \(category)")
+            .accessibilityHint("Opens review")
             .accessibilityIdentifier("phase1.attentionRow")
     }
 }

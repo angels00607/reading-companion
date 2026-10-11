@@ -60,7 +60,8 @@ private struct JournalInboxCard: View {
                 HStack(alignment: .top, spacing: 12) { BookCover(title: item.book.title, symbol: "book.closed"); metadata; Spacer(minLength: 8); StatusChip(status, symbol: item.entry.bookReviewState == .ready ? "checkmark" : "ellipsis", tone: item.entry.bookReviewState == .ready ? .special : .neutral) }
             }
         }.padding(14).background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
-            .accessibilityElement(children: .combine).accessibilityLabel("\(item.book.title), by \(item.book.author), Book Review \(status)")
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(item.book.title), by \(item.book.author), Book Review \(status)")
     }
     private var metadata: some View { VStack(alignment: .leading, spacing: 4) {
         Text(item.book.title).font(DesignTokens.functionalFont(size: 17, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
