@@ -58,12 +58,12 @@ public struct FoundationShell: View {
                             .background(selectedTab == tab ? DesignTokens.blueSurface(scheme) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
                             .accessibilityHidden(true)
                         Text(tab.rawValue)
-                            .font(DesignTokens.functionalFont(size: 11, relativeTo: .body, weight: selectedTab == tab ? .semiBold : .medium))
+                            // Persistent system navigation uses a semantic style so
+                            // iOS can scale it directly at every content size.
+                            .font(.system(.caption2, design: .default,
+                                          weight: selectedTab == tab ? .semibold : .medium))
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
-                            // The enclosing button owns the spoken label and target.
-                            // Hiding this duplicate child leaves one coherent tab stop.
-                            .accessibilityHidden(true)
                     }.padding(.vertical, 6).padding(.horizontal, 2).frame(minWidth: 44, maxWidth: .infinity, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
                 }.buttonStyle(.plain).accessibilityLabel(tab.rawValue).accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton).accessibilityIdentifier("foundationTab." + tab.rawValue)
             }

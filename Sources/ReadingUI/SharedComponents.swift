@@ -86,10 +86,14 @@ public struct StatusChip: View {
     private var color: Color { tone == .special ? DesignTokens.onPlum(scheme) : DesignTokens.primary(scheme) }
     private var fill: Color { tone == .special ? DesignTokens.plumSurface(scheme) : DesignTokens.blueSurface(scheme) }
     public var body: some View {
-        Label(text, systemImage: symbol).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .medium))
+        HStack(spacing: 6) {
+            Image(systemName: symbol).accessibilityHidden(true)
+            Text(text)
+        }.font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .semiBold))
             .foregroundStyle(color).padding(.horizontal, 10).padding(.vertical, 6).background(fill, in: Capsule())
             .fixedSize(horizontal: false, vertical: true)
-            .accessibilityElement(children: .combine).accessibilityLabel(text)
+            .accessibilityElement(children: .ignore).accessibilityLabel(text)
+            .accessibilityRespondsToUserInteraction(false)
     }
 }
 
@@ -167,7 +171,7 @@ public struct FilterChip: View {
             HStack(spacing: 6) {
                 if isSelected { Image(systemName: "checkmark").accessibilityHidden(true) }
                 Text(title)
-            }.font(DesignTokens.functionalFont(size: 14, relativeTo: .body, weight: .medium))
+            }.font(DesignTokens.functionalFont(size: 14, relativeTo: .body, weight: .semiBold))
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 12).frame(minHeight: 44)
                 .foregroundStyle(isSelected ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme))
@@ -327,7 +331,7 @@ public struct AttentionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(DesignTokens.functionalFont(size: 16, relativeTo: .headline, weight: .semiBold))
                 Text(detail).font(DesignTokens.functionalFont(size: 14)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal: false, vertical: true)
-                Text(category).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondary(scheme))
+                Text(category).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .semiBold)).foregroundStyle(DesignTokens.primary(scheme))
             }; Spacer(); Image(systemName: "chevron.right").foregroundStyle(DesignTokens.secondaryText(scheme)).accessibilityHidden(true)
         }.padding(.vertical, 8).accessibilityElement(children: .ignore)
             .accessibilityLabel("\(title), \(detail), \(category)")
@@ -356,8 +360,11 @@ public struct AccessibleBarChart: View {
             } else {
                 HStack { Text(item.label).frame(width: 48, alignment: .leading); GeometryReader { proxy in Capsule().fill(DesignTokens.primary(scheme)).frame(width: proxy.size.width * normalized(item.value)) }.frame(height: 10); Text(item.value.formatted()).monospacedDigit() }
             }
-        }.font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).frame(minHeight: 44)
+        }.font(DesignTokens.functionalFont(size: 13, relativeTo: .caption))
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
             .accessibilityElement(children: .ignore).accessibilityLabel("\(item.label), \(item.value.formatted())")
+            .accessibilityRespondsToUserInteraction(false)
     }
     private func normalized(_ value: Double) -> Double { let maximum = data.map(\.value).max() ?? 1; return maximum > 0 ? max(0, value / maximum) : 0 }
 }

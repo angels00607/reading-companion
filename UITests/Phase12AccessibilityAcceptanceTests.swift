@@ -91,13 +91,13 @@ final class Phase12AccessibilityAcceptanceTests: XCTestCase {
         attachment.name = "Phase12-" + context
         attachment.lifetime = .keepAlways
         add(attachment)
-        do {
-            try app.performAccessibilityAudit(for: [
-                .contrast, .dynamicType, .hitRegion, .sufficientElementDescription,
-                .textClipped, .trait
-            ])
-        } catch {
-            XCTFail("Accessibility audit failed for \(context): \(error)")
+        try app.performAccessibilityAudit(for: [
+            .contrast, .dynamicType, .hitRegion, .sufficientElementDescription,
+            .textClipped, .trait
+        ]) { issue in
+            print("PHASE12 AUDIT ISSUE [\(context)]: \(issue.detailedDescription)")
+            print("PHASE12 AUDIT ELEMENT [\(context)]: \(issue.element?.debugDescription ?? "unavailable")")
+            return false
         }
     }
 }

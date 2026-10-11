@@ -65,8 +65,8 @@ private struct JournalInboxCard: View {
     }
     private var metadata: some View { VStack(alignment: .leading, spacing: 4) {
         Text(item.book.title).font(DesignTokens.functionalFont(size: 17, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
-        Text(item.book.author).font(DesignTokens.functionalFont(size: 14, relativeTo: .subheadline)).foregroundStyle(DesignTokens.secondaryText(scheme))
-        Text("Book Review").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondaryText(scheme))
+        Text(item.book.author).font(DesignTokens.functionalFont(size: 14, relativeTo: .subheadline, weight: .medium)).foregroundStyle(DesignTokens.secondaryText(scheme))
+        Text("Book Review").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme))
     } }
 }
 

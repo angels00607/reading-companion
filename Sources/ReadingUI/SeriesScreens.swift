@@ -11,10 +11,11 @@ public struct SeriesHome: View {
     public init() {}
     public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            TextField("", text: $query, prompt: Text("Search series or book").foregroundStyle(DesignTokens.secondaryText(scheme)))
+            TextField("Search series or book", text: $query,
+                      prompt: Text("Search series or book").foregroundStyle(DesignTokens.secondaryText(scheme)))
                 .textFieldStyle(AppTextFieldStyle(scheme: scheme))
                 .font(DesignTokens.functionalFont(size: 16, relativeTo: .body))
-                .frame(minHeight: 44)
+                .frame(minHeight: 48)
                 .accessibilityIdentifier("series.search").onChange(of: query) { _,_ in reload() }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack { ForEach(SeriesFilter.allCases, id: \.self) { option in FilterChip(option.rawValue, isSelected: Binding(get: { filter == option }, set: { if $0 { filter = option; reload() } })) } }

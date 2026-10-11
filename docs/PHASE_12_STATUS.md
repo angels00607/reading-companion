@@ -21,7 +21,10 @@
 2. Shared segmented controls remained horizontal at accessibility sizes. They now
    reflow vertically and expose explicit selected/not-selected values.
 3. The five-tab shell removed visible labels at accessibility sizes. Labels now remain
-   present, wrap vertically and preserve 44 × 44 pt minimum targets.
+   present, wrap vertically and preserve 44 × 44 pt minimum targets. Its five
+   persistent navigation labels use the native semantic `caption2` style because the
+   XCTest Dynamic Type audit does not accept a fixed custom base size for system
+   navigation; Manrope remains the functional application typeface everywhere else.
 4. The Home currently-reading carousel used fixed-width, fixed-height nested scrolling
    at accessibility sizes. It now becomes a vertically expanding list for large text.
 5. Series timeline rows and Journal Correction headings could crowd long content. They
@@ -39,10 +42,9 @@
 10. The failed PR audit identified a 36 × 19.5 pt Toast action. Toast actions and
     filter chips now enforce the shared 44 × 44 pt minimum target, including their
     complete hit shape.
-11. The five tab buttons exposed both the button and its visual label as separate
-    accessibility elements. The decorative child label is now hidden from the
-    accessibility tree while the full-size button retains its name and selected
-    trait. This removes duplicate reading stops without removing the visible label.
+11. The five tab buttons retain one 44 pt interactive target with an explicit name and
+    selected trait. Their visible labels use semantic scaling and remain available to
+    the audit instead of being hidden to mask a Dynamic Type finding.
 12. Shared book fields and Series search no longer depend on the native rounded
     field's appearance-dependent fill. They render explicit semantic surface, text,
     prompt and border colors, preserving audited contrast in Light and Dark Mode.
@@ -55,6 +57,22 @@
 15. Series search received an explicit scalable functional font and multiline-safe
     semantic prompt. The sort control now has an explicit 44 pt frame and stable menu
     option identifiers; its product behavior is unchanged.
+16. The final audit logs mapped the five repeated Dynamic Type findings to the visible
+    Home, Journal, Challenges, Series and Stats tab labels. The shared shell correction
+    removes all five at their source.
+17. Stats chart rows are readable accessibility elements, not controls. Their complete
+    labels and values remain exposed, while they now explicitly report that they do
+    not respond to interaction; this addresses the three false 18 pt hit-region
+    findings without removing chart information.
+18. Status chips now expose one non-interactive state value, with their decorative
+    symbol hidden and small text set semibold. Shared filter chips also use semibold
+    text. This preserves approved colors while strengthening small-state contrast and
+    avoids treating decorative chip content as an undersized action.
+19. The remaining logged small-text contrast findings were mapped to Journal inbox
+    metadata, Stats metric detail and Needs Attention category text. Those source
+    elements now use stronger existing semantic foreground/weight combinations; no
+    palette token changed. Series search has an explicit accessible title and a 48 pt
+    field, and shared text fields use 12 pt vertical padding for a stable target.
 
 ## Automated evidence
 
@@ -62,16 +80,17 @@
   body-text combination used by the shared UI. Required text pairs use a 4.5:1 floor.
 - Targeted component tests cover contrast reference values and the existing Reduce
   Motion presentation policy.
-- A native font test verifies that every functional Manrope weight scales from the
-  standard category through Accessibility XXXL while retaining its registered font.
+- Native font tests verify that every functional Manrope weight plus Papernotes and
+  Hello Baby scale from the standard category through Accessibility XXXL while
+  retaining their registered PostScript font instead of falling back.
 - `Phase12AccessibilityAcceptanceTests` runs the unfiltered XCTest accessibility audit
   categories for contrast, Dynamic Type, hit regions, descriptions, clipped text and
   traits across the real five-tab shell and representative secondary screens.
 - CI changes content size at simulator level, retains screenshots and result bundles,
   and includes a dark System-appearance check. The existing CI device selector prefers
   an available iPhone SE.
-- `swift build`: PASS locally.
-- `swift build -c release`: PASS locally after the PR #15 correction pass.
+- `swift build`: PASS locally on the final correction candidate.
+- `swift build -c release`: PASS locally on the final correction candidate.
 - `swift test --filter SharedComponentTests`: not executable on this host because the
   selected Command Line Tools installation does not provide the `XCTest` module. This
   is recorded as an environment limitation, not a passing test.
@@ -80,10 +99,21 @@
 
 ## PR #15 correction validation
 
-- Failed run inspected: `38126581422`, including complete native job logs and live
-  accessibility hierarchies. The concrete failures included the undersized Toast
-  action, duplicated tab labels, Dark native-field contrast, Series search clipping,
-  and Manual Add's off-screen Continue action while the keyboard was present.
+- Failed runs inspected: `38126581422` and `38129357651`, including complete native
+  job logs and live accessibility hierarchies. Run `38129357651` published only
+  `Regression.xcresult`; neither `Phase12Standard.xcresult` nor
+  `Phase12Accessibility.xcresult` was present in the downloadable artifact. The
+  detailed audit logs therefore provide the reproducible element-level diagnosis;
+  this status does not pretend the missing bundles were inspected.
+- The workflow now runs both Phase 12 audit groups while retaining their exit statuses,
+  fails if either fails, and uploads both result bundles. Audit callbacks print the
+  context, detailed issue and live element while always returning `false`; no finding
+  is ignored or softened.
+- The concrete failures included five tab-label Dynamic Type findings, three Stats
+  chart hit-region findings, Series search clipping and small-text contrast findings
+  in Journal, Stats, Series status/filter content and Needs Attention. Earlier fixed
+  items included the undersized Toast action, native-field contrast and Manual Add's
+  off-screen Continue action while the keyboard was present.
 - Local debug and release Swift builds: PASS.
 - Full native accessibility and UI acceptance: pending the single correction CI run;
   this host exposes Command Line Tools only (`/Library/Developer/CommandLineTools`),

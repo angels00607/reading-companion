@@ -149,7 +149,7 @@ struct AppTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.vertical, 12)
             .foregroundStyle(DesignTokens.text(scheme))
             .background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.inputRadius))
             .overlay {
