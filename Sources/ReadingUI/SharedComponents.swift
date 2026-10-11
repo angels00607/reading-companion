@@ -134,6 +134,9 @@ public struct ReadingProgressBar: View {
             }.frame(height: 10)
         }
         .frame(minHeight: DesignTokens.minimumTouchTarget, alignment: .center)
+        // A progress indicator reports information; it is not an interactive target.
+        // Expose its value through a full-height accessibility element rather than
+        // the 10-point visual capsule, which fails the iOS hit-region audit.
         .accessibilityElement(children: .ignore).accessibilityLabel("Reading progress").accessibilityValue(value.label)
         .accessibilityIdentifier("phase1.progressBar")
         .animation(reduceMotion ? nil:.easeInOut(duration:0.24),value:value.fraction)
