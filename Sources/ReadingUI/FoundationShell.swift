@@ -8,6 +8,7 @@ public enum MainTab: String, CaseIterable, Identifiable, Hashable {
 
 public struct FoundationShell: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selectedTab: MainTab = .home
     private let homeContent: AnyView?
     private let journalContent: AnyView?
@@ -50,7 +51,8 @@ public struct FoundationShell: View {
             .accessibilityElement(children: .contain).accessibilityLabel("Main navigation")
     }
     private var tabButtons: some View {
-        HStack(alignment: .top, spacing: 0) {
+        ScrollView(.horizontal) {
+            HStack(alignment: .top, spacing: 0) {
             ForEach(MainTab.allCases) { tab in
                 Button { selectedTab = tab } label: {
                     VStack(spacing: 4) {
@@ -63,11 +65,17 @@ public struct FoundationShell: View {
                             .font(.system(.caption2, design: .default,
                                           weight: selectedTab == tab ? .semibold : .medium))
                             .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }.padding(.vertical, 6).padding(.horizontal, 2).frame(minWidth: 44, maxWidth: .infinity, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                    }.padding(.vertical, 6).padding(.horizontal, 8)
+                        .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 90 : 68, minHeight: 44)
+                        .contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
                 }.buttonStyle(.plain).accessibilityLabel(tab.rawValue).accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton).accessibilityIdentifier("foundationTab." + tab.rawValue)
             }
-        }.padding(.horizontal, 8).frame(maxWidth: .infinity).sensoryFeedback(.selection,trigger:selectedTab)
+            }.padding(.horizontal, 8)
+        }
+        .accessibilityIdentifier("foundationTabScroll")
+        .sensoryFeedback(.selection,trigger:selectedTab)
     }
 }
 
