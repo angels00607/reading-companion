@@ -108,18 +108,24 @@ struct SeriesPage: View {
 
 private struct SeriesTimelineRow: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     let entry: SeriesEntry; let toggle: (Bool) -> Void
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text(positionLabel(entry.position)).font(DesignTokens.functionalFont(size: 15, weight: .semiBold)).frame(minWidth: 38, alignment: .leading)
-            VStack(alignment: .leading, spacing: 6) {
-                Text(entry.title).font(DesignTokens.functionalFont(size: 16, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
-                ViewThatFits { HStack { labels }; VStack(alignment: .leading, spacing: 6) { labels } }
-                Toggle("Include in physical tracker", isOn: Binding(get: { entry.includedInTracker }, set: toggle)).frame(minHeight: 44)
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 8) { position; details }
+            } else {
+                HStack(alignment: .top, spacing: 12) { position; details }
             }
         }.padding(.vertical, DesignTokens.Spacing.large).overlay(alignment: .bottom) { Divider() }.accessibilityElement(children: .contain)
     }
-    @ViewBuilder private var labels: some View { StatusChip(entry.kind == .main ? "Main" : entry.kind == .related ? "Related" : "Companion", symbol: entry.kind == .main ? "book.closed" : "link"); StatusChip(entry.isRead ? "Read" : publicationLabel(entry), symbol: entry.isRead ? "checkmark" : "calendar", tone: entry.isRead ? .active : .neutral); Text(releaseLabel(entry.release)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
+    private var position: some View { Text(positionLabel(entry.position)).font(DesignTokens.functionalFont(size: 15, weight: .semiBold)).frame(minWidth: 38, alignment: .leading).accessibilityLabel("Series position \(positionLabel(entry.position))") }
+    private var details: some View { VStack(alignment: .leading, spacing: 6) {
+        Text(entry.title).font(DesignTokens.functionalFont(size: 16, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
+        ViewThatFits(in: .horizontal) { HStack { labels }; VStack(alignment: .leading, spacing: 6) { labels } }
+        Toggle("Include in physical tracker", isOn: Binding(get: { entry.includedInTracker }, set: { included in toggle(included) })).frame(minHeight: 44)
+    } }
+    @ViewBuilder private var labels: some View { StatusChip(entry.kind == .main ? "Main" : entry.kind == .related ? "Related" : "Companion", symbol: entry.kind == .main ? "book.closed" : "link"); StatusChip(entry.isRead ? "Read" : publicationLabel(entry), symbol: entry.isRead ? "checkmark" : "calendar", tone: entry.isRead ? .active : .neutral); Text(releaseLabel(entry.release)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true) }
 }
 
 private struct SeriesProgressBar: View {

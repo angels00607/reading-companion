@@ -83,12 +83,13 @@ public struct StatusChip: View {
     @Environment(\.colorScheme) private var scheme
     public let text: String; public let symbol: String; public let tone: StatusTone
     public init(_ text: String, symbol: String, tone: StatusTone = .neutral) { self.text = text; self.symbol = symbol; self.tone = tone }
-    private var color: Color { tone == .special ? DesignTokens.secondary(scheme) : DesignTokens.primary(scheme) }
+    private var color: Color { tone == .special ? DesignTokens.onPlum(scheme) : DesignTokens.primary(scheme) }
     private var fill: Color { tone == .special ? DesignTokens.plumSurface(scheme) : DesignTokens.blueSurface(scheme) }
     public var body: some View {
         Label(text, systemImage: symbol).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .medium))
             .foregroundStyle(color).padding(.horizontal, 10).padding(.vertical, 6).background(fill, in: Capsule())
-            .accessibilityLabel(text)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityElement(children: .combine).accessibilityLabel(text)
     }
 }
 
@@ -153,7 +154,7 @@ public struct AppButton: View {
                 .overlay(RoundedRectangle(cornerRadius: DesignTokens.buttonRadius)
                     .stroke(kind == .secondary ? DesignTokens.border(scheme) : Color.clear))
                 .contentShape(Rectangle())
-        }.buttonStyle(.plain).frame(minHeight: DesignTokens.minimumTouchTarget)
+        }.buttonStyle(.plain).frame(minWidth: DesignTokens.minimumTouchTarget, minHeight: DesignTokens.minimumTouchTarget)
     }
 }
 
@@ -167,7 +168,7 @@ public struct FilterChip: View {
                 if isSelected { Image(systemName: "checkmark").accessibilityHidden(true) }
                 Text(title)
             }.font(DesignTokens.functionalFont(size: 14, relativeTo: .body, weight: .medium))
-                .lineLimit(1).fixedSize(horizontal: true, vertical: true)
+                .fixedSize(horizontal: true, vertical: true)
                 .padding(.horizontal, 12).frame(minHeight: 44)
                 .foregroundStyle(isSelected ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme))
                 .background(isSelected ? DesignTokens.blueSurface(scheme) : DesignTokens.surface(scheme), in: Capsule())
@@ -178,19 +179,26 @@ public struct FilterChip: View {
 
 public struct AppSegmentedControl<Option: Hashable>: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     public let options: [(Option, String)]; @Binding public var selection: Option
     public init(options: [(Option, String)], selection: Binding<Option>) { self.options = options; _selection = selection }
     public var body: some View {
-        HStack(spacing: 4) {
+        Group {
+            if typeSize.isAccessibilitySize { VStack(spacing: 4) { buttons } }
+            else { HStack(spacing: 4) { buttons } }
+        }.padding(4).background(DesignTokens.blueSurface(scheme), in: RoundedRectangle(cornerRadius: 12)).sensoryFeedback(.selection,trigger:selection)
+    }
+    @ViewBuilder private var buttons: some View {
             ForEach(options, id: \.0) { option, label in
                 Button { selection = option } label: {
                     Text(label).font(DesignTokens.functionalFont(size: 14, relativeTo: .body, weight: selection == option ? .semiBold : .medium))
+                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, minHeight: 44).padding(.horizontal, 6)
                         .background(selection == option ? DesignTokens.surface(scheme) : Color.clear, in: RoundedRectangle(cornerRadius: 9))
                 }.buttonStyle(.plain).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selection == option ? DesignTokens.text(scheme) : DesignTokens.secondaryText(scheme))
+                    .accessibilityLabel(label).accessibilityValue(selection == option ? "Selected" : "Not selected")
                     .accessibilityAddTraits(selection == option ? .isSelected : [])
             }
-        }.padding(4).background(DesignTokens.blueSurface(scheme), in: RoundedRectangle(cornerRadius: 12)).sensoryFeedback(.selection,trigger:selection)
     }
 }
 
@@ -220,7 +228,7 @@ public struct AppToast: View {
             Spacer()
             if let actionTitle, let action { Button(actionTitle, action: action).font(DesignTokens.functionalFont(size: 14, weight: .semiBold)).frame(minHeight: 44) }
         }.padding(.horizontal, 16).padding(.vertical, 8).background(DesignTokens.raisedSurface(scheme), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(DesignTokens.border(scheme))).accessibilityElement(children: .combine)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(DesignTokens.border(scheme))).accessibilityElement(children: .contain)
             .accessibilityIdentifier("phase1.toast")
     }
 }
@@ -249,7 +257,7 @@ public struct StatePresentation: View {
     public var body: some View {
         VStack(spacing: 6) {
             Image(systemName: symbol).font(.title).foregroundStyle(kind == .error ? DesignTokens.error(scheme) : DesignTokens.primary(scheme)).accessibilityHidden(true)
-            Text(title).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold))
+            Text(title).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold)).accessibilityAddTraits(.isHeader)
             Text(message).font(DesignTokens.functionalFont(size: 14)).foregroundStyle(DesignTokens.secondaryText(scheme)).multilineTextAlignment(.center)
         }.frame(maxWidth: .infinity).padding(.horizontal, 20).padding(.vertical, 12).accessibilityElement(children: .combine)
     }
@@ -320,7 +328,7 @@ public struct AccessibleBarChart: View {
     public init(title: String, data: [AccessibleChartDatum]) { self.title = title; self.data = data }
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold))
+            Text(title).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold)).accessibilityAddTraits(.isHeader)
             ForEach(data) { item in chartRow(item) }
         }.accessibilityElement(children: .contain).accessibilityLabel(title)
             .accessibilityIdentifier("phase1.accessibleChart")

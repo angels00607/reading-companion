@@ -8,7 +8,6 @@ public enum MainTab: String, CaseIterable, Identifiable, Hashable {
 
 public struct FoundationShell: View {
     @Environment(\.colorScheme) private var scheme
-    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var selectedTab: MainTab = .home
     private let homeContent: AnyView?
     private let journalContent: AnyView?
@@ -58,10 +57,8 @@ public struct FoundationShell: View {
                         Image(systemName: tab.symbol).font(.system(size: 20)).frame(width: 40, height: 36)
                             .background(selectedTab == tab ? DesignTokens.blueSurface(scheme) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
                             .accessibilityHidden(true)
-                        if !typeSize.isAccessibilitySize {
-                            Text(tab.rawValue).font(DesignTokens.functionalFont(size: 11, relativeTo: .body, weight: selectedTab == tab ? .semiBold : .medium)).multilineTextAlignment(.center)
-                        }
-                    }.padding(.vertical, 6).padding(.horizontal, 4).frame(minWidth: 44, maxWidth: typeSize.isAccessibilitySize ? nil : .infinity, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
+                        Text(tab.rawValue).font(DesignTokens.functionalFont(size: 11, relativeTo: .body, weight: selectedTab == tab ? .semiBold : .medium)).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                    }.padding(.vertical, 6).padding(.horizontal, 2).frame(minWidth: 44, maxWidth: .infinity, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
                 }.buttonStyle(.plain).accessibilityLabel(tab.rawValue).accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton).accessibilityIdentifier("foundationTab." + tab.rawValue)
             }
         }.padding(.horizontal, 8).frame(maxWidth: .infinity).sensoryFeedback(.selection,trigger:selectedTab)

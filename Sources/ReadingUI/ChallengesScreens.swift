@@ -168,13 +168,13 @@ private struct ChallengeProposalPanel: View {
     @State private var submitting=false;@State private var successPulse=0
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("Suggested match", systemImage: "questionmark.circle").font(DesignTokens.functionalFont(size: 14, weight: .semiBold)).foregroundStyle(DesignTokens.secondary(scheme))
+            Label("Suggested match", systemImage: "questionmark.circle").font(DesignTokens.functionalFont(size: 14, weight: .semiBold)).foregroundStyle(DesignTokens.onPlum(scheme))
             Text(state.bookTitle(readingID: proposal.readingID)).font(DesignTokens.functionalFont(size: 19, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
             if let prompt = state.configuration.prompts.first(where: { $0.id == proposal.promptID }) {
                 Text(prompt.challenge.name).foregroundStyle(DesignTokens.secondaryText(scheme))
                 Text(prompt.text ?? "Not configured").fixedSize(horizontal: false, vertical: true)
             }
-            Text(proposal.percentage).font(DesignTokens.functionalFont(size: 13, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondary(scheme)).accessibilityIdentifier("challenges.confidence")
+            Text(proposal.percentage).font(DesignTokens.functionalFont(size: 13, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.onPlum(scheme)).accessibilityIdentifier("challenges.confidence")
             Text("Match confidence, not a probability.").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption)).foregroundStyle(DesignTokens.secondaryText(scheme))
             Text(proposal.evidence.explanation).fixedSize(horizontal: false, vertical: true)
             Text("Source: \(proposal.evidence.source) · \(proposal.evidence.reference)").font(DesignTokens.functionalFont(size: 13, relativeTo: .caption)).fixedSize(horizontal: false, vertical: true)

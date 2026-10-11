@@ -62,4 +62,16 @@ final class SharedComponentTests: XCTestCase {
         XCTAssertEqual(PresentationMotionPolicy.celebrationDuration(reduceMotion: true), 0.18)
         XCTAssertEqual(PresentationMotionPolicy.celebrationDuration(reduceMotion: false), 0.24)
     }
+
+    func testAllSemanticBodyTextPairsMeetWCAGAA() {
+        let failures = SemanticContrastAudit.bodyTextPairs.filter { !$0.passes }
+        XCTAssertTrue(failures.isEmpty, failures.map { "\($0.id): \($0.measuredRatio) < \($0.minimumRatio)" }.joined(separator: "\n"))
+    }
+
+    func testContrastMathUsesWCAGReferenceValues() {
+        let black = AccessibilityRGB(hex: 0x000000)
+        let white = AccessibilityRGB(hex: 0xFFFFFF)
+        XCTAssertEqual(black.contrastRatio(against: white), 21, accuracy: 0.0001)
+        XCTAssertEqual(white.contrastRatio(against: white), 1, accuracy: 0.0001)
+    }
 }

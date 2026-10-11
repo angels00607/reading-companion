@@ -204,8 +204,8 @@ private struct AchievementBadgeView: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dynamicTypeSize) private var typeSize
     let value: AchievementProgress
-    private var icon: some View { ZStack { Circle().fill(value.isUnlocked ? DesignTokens.plumSurface(scheme):DesignTokens.blueSurface(scheme)).frame(width:54,height:54); Image(systemName:value.definition.symbol).font(.system(size:23)) } }
-    @ViewBuilder private var check: some View { if value.isUnlocked { Image(systemName:"checkmark.circle.fill").accessibilityLabel("Unlocked") } }
+    private var icon: some View { ZStack { Circle().fill(value.isUnlocked ? DesignTokens.plumSurface(scheme):DesignTokens.blueSurface(scheme)).frame(width:54,height:54); Image(systemName:value.definition.symbol).font(.system(size:23)) }.accessibilityHidden(true) }
+    @ViewBuilder private var check: some View { if value.isUnlocked { Image(systemName:"checkmark.circle.fill").accessibilityHidden(true) } }
     private var details: some View {
         VStack(alignment:.leading,spacing:4) {
             Text(value.definition.name).font(DesignTokens.functionalFont(size:16,weight:.semiBold)).fixedSize(horizontal:false,vertical:true)
@@ -222,7 +222,14 @@ private struct AchievementBadgeView: View {
             else { HStack(spacing:14) { icon; details; Spacer(); check } }
         }.frame(maxWidth:.infinity,alignment:.leading).padding(12)
             .background(DesignTokens.surface(scheme),in:RoundedRectangle(cornerRadius:14))
-            .accessibilityElement(children:.contain)
+            .accessibilityElement(children:.ignore)
+            .accessibilityLabel(value.definition.name)
+            .accessibilityValue(accessibilityValue)
+    }
+    private var accessibilityValue:String {
+        if value.isUnlocked { return "Unlocked" }
+        if value.progressKnown { return "Locked. \(value.definition.condition). \(min(value.progress,value.definition.target)) of \(value.definition.target)" }
+        return "Locked. \(value.definition.condition). Progress unknown"
     }
 }
 public struct CollectionScreen: View {
