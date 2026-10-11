@@ -67,6 +67,9 @@ public struct FoundationShell: View {
                             .multilineTextAlignment(.center)
                             .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                             .fixedSize(horizontal: false, vertical: true)
+                            // The enclosing Button supplies the spoken tab name and selected trait.
+                            // Do not expose its visual label as a second accessibility element.
+                            .accessibilityHidden(true)
                     }.padding(.vertical, 6).padding(.horizontal, 8)
                         .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 100 : 68, minHeight: 44)
                         .contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
