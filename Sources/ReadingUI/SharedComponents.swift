@@ -139,6 +139,7 @@ public struct ReadingProgressBar: View {
         // the 10-point visual capsule, which fails the iOS hit-region audit.
         .accessibilityElement(children: .ignore).accessibilityLabel("Reading progress").accessibilityValue(value.label)
         .accessibilityIdentifier("phase1.progressBar")
+        .accessibilityRespondsToUserInteraction(false)
         .animation(reduceMotion ? nil:.easeInOut(duration:0.24),value:value.fraction)
     }
 }
