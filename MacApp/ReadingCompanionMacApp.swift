@@ -19,6 +19,8 @@ private struct MacLibraryView: View {
     @State private var store: LocalStore?
     @State private var books: [CatalogRecord] = []
     @State private var search = ""
+    @State private var libraryView: LibraryView = .all
+    @State private var librarySort: LibrarySort = .recentlyAdded
     @State private var newTitle = ""
     @State private var newAuthor = ""
     @State private var showingAdd = false
@@ -35,6 +37,23 @@ private struct MacLibraryView: View {
             TextField("Search by title or author", text: $search)
                 .textFieldStyle(.roundedBorder)
                 .onChange(of: search) { _, _ in refresh() }
+            HStack {
+                Picker("Books", selection: $libraryView) {
+                    Text("All").tag(LibraryView.all)
+                    Text("To Read").tag(LibraryView.toRead)
+                    Text("Read").tag(LibraryView.read)
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: libraryView) { _, _ in refresh() }
+                Picker("Sort by", selection: $librarySort) {
+                    Text("Recently Added").tag(LibrarySort.recentlyAdded)
+                    Text("Title A–Z").tag(LibrarySort.title)
+                    Text("Author A–Z").tag(LibrarySort.author)
+                    Text("Recently Finished").tag(LibrarySort.recentlyFinished)
+                }
+                .onChange(of: librarySort) { _, _ in refresh() }
+                .frame(maxWidth: 220)
+            }
             if let errorMessage {
                 Text(errorMessage).foregroundStyle(.red)
                     .accessibilityIdentifier("macLibrary.error")
@@ -43,7 +62,8 @@ private struct MacLibraryView: View {
                 ContentUnavailableView("No books found", systemImage: "books.vertical",
                                        description: Text("Add a book to begin your Mac library."))
             } else {
-                LazyVStack(alignment: .leading, spacing: 12) {
+                ScrollView {
+                  LazyVStack(alignment: .leading, spacing: 12) {
                     ForEach(books, id: \.book.id) { record in
                         HStack {
                             Image(systemName: "book.closed").foregroundStyle(.secondary)
@@ -56,6 +76,7 @@ private struct MacLibraryView: View {
                         .padding(.vertical, 4)
                         Divider()
                     }
+                  }
                 }
             }
             Text("Stored locally on this Mac. iPhone synchronization is not yet available.")
@@ -110,7 +131,7 @@ private struct MacLibraryView: View {
     @MainActor private func refresh() {
         guard let store else { return }
         do {
-            books = try store.library(query: search, limit: 500)
+            books = try store.library(query: search, view: libraryView, sort: librarySort, limit: 500)
             errorMessage = nil
         } catch {
             errorMessage = "Unable to load books: \(error.localizedDescription)"
