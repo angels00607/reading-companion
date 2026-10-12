@@ -51,34 +51,53 @@ public struct FoundationShell: View {
             .accessibilityElement(children: .contain).accessibilityLabel("Main navigation")
     }
     private var tabButtons: some View {
-        ScrollView(.horizontal) {
-            HStack(alignment: .top, spacing: 0) {
+        // All five destinations must stay visible and tappable at every Dynamic Type size.
+        // A horizontally scrolling tab bar placed Series and Stats outside the screen,
+        // causing both functional acceptance and accessibility navigation to fail.
+        HStack(alignment: .top, spacing: 0) {
             ForEach(MainTab.allCases) { tab in
                 Button { selectedTab = tab } label: {
                     VStack(spacing: 4) {
-                        Image(systemName: tab.symbol).font(.system(size: 20)).frame(width: 40, height: 36)
-                            .background(selectedTab == tab ? DesignTokens.blueSurface(scheme) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
+                        Image(systemName: tab.symbol)
+                            .font(.system(size: 20))
+                            .frame(height: 36)
+                            .background(
+                                selectedTab == tab ? DesignTokens.blueSurface(scheme) : Color.clear,
+                                in: RoundedRectangle(cornerRadius: 10)
+                            )
                             .accessibilityHidden(true)
                         Text(tab.rawValue)
-                            // Persistent system navigation uses a semantic style so
-                            // iOS can scale it directly at every content size.
                             .font(.system(.caption2, design: .default,
                                           weight: selectedTab == tab ? .semibold : .medium))
                             .multilineTextAlignment(.center)
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.8)
                             .fixedSize(horizontal: false, vertical: true)
-                            // The enclosing Button supplies the spoken tab name and selected trait.
-                            // Do not expose its visual label as a second accessibility element.
                             .accessibilityHidden(true)
-                    }.padding(.vertical, 6).padding(.horizontal, 8)
-                        .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? 100 : 68, minHeight: 44)
-                        .contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
-                }.buttonStyle(.plain).accessibilityLabel(tab.rawValue).accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton).accessibilityIdentifier("foundationTab." + tab.rawValue)
+                    }
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 2)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
+                    .foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme))
+                    .overlay(alignment: .top) {
+                        if selectedTab == tab {
+                            Rectangle().fill(DesignTokens.primary(scheme))
+                                .frame(width: 24, height: 2)
+                                .accessibilityHidden(true)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel(tab.rawValue)
+                .accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton)
+                .accessibilityIdentifier("foundationTab." + tab.rawValue)
             }
-            }.padding(.horizontal, 8)
         }
+        .padding(.horizontal, 8)
         .accessibilityIdentifier("foundationTabScroll")
-        .sensoryFeedback(.selection,trigger:selectedTab)
+        .sensoryFeedback(.selection, trigger: selectedTab)
     }
 }
 
