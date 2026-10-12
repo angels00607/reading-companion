@@ -2,6 +2,7 @@ name: ReadingCompanion
 options:
   deploymentTarget:
     iOS: "17.0"
+    macOS: "14.0"
 packages:
   Foundations:
     path: .
@@ -44,6 +45,24 @@ targets:
           - Manrope-SemiBold.ttf
           - PapernotesRegular.otf
           - Hello Baby.otf
+  ReadingCompanionMac:
+    type: application
+    platform: macOS
+    sources:
+      - MacApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.readingcompanion.mac
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Reading Companion
+    dependencies:
+      - package: Foundations
+        product: ReadingUI
+      - package: Foundations
+        product: ReadingData
+      - package: Foundations
+        product: ReadingDomain
   FoundationFontTests:
     type: bundle.unit-test
     platform: iOS
@@ -79,3 +98,8 @@ schemes:
       targets:
         - FoundationFontTests
         - FoundationAcceptanceTests
+
+  ReadingCompanionMac:
+    build:
+      targets:
+        ReadingCompanionMac: all
