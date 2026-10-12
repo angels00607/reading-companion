@@ -5,6 +5,7 @@ on:
     branches:
       - codex/mac-support
       - codex/macos-app-shell
+      - codex/mac-sidebar-navigation
   workflow_dispatch:
 
 permissions:
