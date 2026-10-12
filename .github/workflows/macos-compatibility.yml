@@ -1,0 +1,23 @@
+name: macOS compatibility check
+
+on:
+  push:
+    branches:
+      - codex/mac-support
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-package:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Swift toolchain
+        run: swift --version
+      - name: Build shared Swift packages for macOS
+        run: swift build
+      - name: Test shared Swift packages on macOS
+        run: swift test
