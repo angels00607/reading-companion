@@ -208,7 +208,7 @@ private struct MacJournalView: View {
             entries = try store.journalInbox()
             errorMessage = nil
         } catch {
-            errorMessage = "Unable to load journal: \\(error.localizedDescription)"
+            errorMessage = "Unable to load journal: \(error.localizedDescription)"
         }
     }
 }
