@@ -197,34 +197,12 @@ private struct MacJournalView: View {
                     }
                 }
             }
-            Text("Read-only journal overview on Mac. Editing is not yet supported.")
+            Text("Entries with a saved reading format can be edited on Mac.")
                 .font(.caption).foregroundStyle(.secondary)
         }
         .task { loadJournal() }
-        .sheet(item: $selectedEntry) { item in
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text(item.book.title).font(.title2.bold())
-                    Spacer()
-                    Button("Close") { selectedEntry = nil }
-                }
-                Text(item.book.author).foregroundStyle(.secondary)
-                Divider()
-                LabeledContent("Review status", value: item.entry.bookReviewState.rawValue)
-                if let pages = item.entry.pageCount {
-                    LabeledContent("Pages", value: String(pages))
-                }
-                Text("Summary").font(.headline)
-                ScrollView {
-                    Text(item.entry.summary ?? "No summary saved yet.")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .textSelection(.enabled)
-                }
-                Text("This view is read-only. Editing will be added in a later phase.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            .padding(24)
-            .frame(minWidth: 500, minHeight: 340)
+        .sheet(item: $selectedEntry, onDismiss: { loadJournal() }) { item in
+            MacJournalEditor(item: item)
         }
     }
 
@@ -245,6 +223,73 @@ private struct MacJournalView: View {
             errorMessage = nil
         } catch {
             errorMessage = "Unable to load journal: \(error.localizedDescription)"
+        }
+    }
+}
+
+private struct MacJournalEditor: View {
+    @Environment(\.dismiss) private var dismiss
+    let item: JournalInboxItem
+    @State private var summary: String
+    @State private var pages: String
+    @State private var errorMessage: String?
+
+    init(item: JournalInboxItem) {
+        self.item = item
+        _summary = State(initialValue: item.entry.summary ?? "")
+        _pages = State(initialValue: item.entry.pageCount.map(String.init) ?? "")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text(item.book.title).font(.title2.bold())
+                Spacer()
+                Button("Close") { dismiss() }
+            }
+            Text(item.book.author).foregroundStyle(.secondary)
+            LabeledContent("Review status", value: item.entry.bookReviewState.rawValue)
+            TextField("Pages (optional)", text: $pages)
+            Text("Summary").font(.headline)
+            TextEditor(text: $summary).frame(minHeight: 180)
+            if item.reading.journalFormat == nil {
+                Text("Set a reading format on iPhone before editing this entry.")
+                    .foregroundStyle(.secondary)
+            }
+            if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }
+                Button("Save Changes") { save() }
+                    .disabled(item.reading.journalFormat == nil ||
+                              summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                              (!pages.isEmpty && (Int(pages) ?? 0) <= 0))
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(24)
+        .frame(minWidth: 520, minHeight: 440)
+    }
+
+    @MainActor private func save() {
+        guard let format = item.reading.journalFormat else { return }
+        do {
+            let root = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                                   appropriateFor: nil, create: true)
+                .appendingPathComponent("ReadingCompanion", isDirectory: true)
+            let identity = root.appendingPathComponent("local-owner.txt")
+            guard let owner = UUID(uuidString: try String(contentsOf: identity, encoding: .utf8)) else {
+                throw CocoaError(.fileReadCorruptFile)
+            }
+            let store = try LocalStore(path: root.appendingPathComponent(owner.uuidString + ".sqlite").path,
+                                       ownerID: owner)
+            let draft = BookReviewDraft(summary: summary, pageCount: pages.isEmpty ? nil : Int(pages),
+                                        rating: item.reading.rating, format: format,
+                                        start: item.reading.startDate, finish: item.reading.finishDate)
+            try store.saveBookReview(readingID: item.reading.id, draft: draft)
+            dismiss()
+        } catch {
+            errorMessage = "Unable to save review: \(error.localizedDescription)"
         }
     }
 }
