@@ -7,7 +7,8 @@ import ReadingDomain
 struct ReadingCompanionMacApp: App {
     var body: some Scene {
         WindowGroup("Reading Companion") {
-            FoundationShell(homeContent: AnyView(MacLibraryView()))
+            FoundationShell(homeContent: AnyView(MacLibraryView()),
+                            journalContent: AnyView(MacJournalView()))
                 .frame(minWidth: 760, minHeight: 520)
         }
         .defaultSize(width: 1100, height: 760)
@@ -151,6 +152,63 @@ private struct MacLibraryView: View {
             refresh()
         } catch {
             errorMessage = "Unable to add book: \(error.localizedDescription)"
+        }
+    }
+}
+
+
+private struct MacJournalView: View {
+    @State private var entries: [JournalInboxItem] = []
+    @State private var errorMessage: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Journal").font(.title2.bold())
+            Text("Finished books and their journal entries, loaded from your local Mac library.")
+                .foregroundStyle(.secondary)
+            if let errorMessage {
+                Text(errorMessage).foregroundStyle(.red)
+            } else if entries.isEmpty {
+                ContentUnavailableView("No journal entries yet", systemImage: "book.closed",
+                                       description: Text("Finish a book to create a journal entry."))
+            } else {
+                LazyVStack(alignment: .leading, spacing: 12) {
+                    ForEach(entries, id: \.entry.id) { item in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.book.title).font(.headline)
+                            Text(item.book.author).foregroundStyle(.secondary)
+                            if let summary = item.entry.summary, !summary.isEmpty {
+                                Text(summary).lineLimit(4)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        Divider()
+                    }
+                }
+            }
+            Text("Read-only journal overview on Mac. Editing is not yet supported.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .task { loadJournal() }
+    }
+
+    @MainActor private func loadJournal() {
+        do {
+            let root = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                                   appropriateFor: nil, create: true)
+                .appendingPathComponent("ReadingCompanion", isDirectory: true)
+            let identity = root.appendingPathComponent("local-owner.txt")
+            guard FileManager.default.fileExists(atPath: identity.path),
+                  let owner = UUID(uuidString: try String(contentsOf: identity, encoding: .utf8)) else {
+                entries = []
+                return
+            }
+            let store = try LocalStore(path: root.appendingPathComponent(owner.uuidString + ".sqlite").path,
+                                       ownerID: owner)
+            entries = try store.journalInbox()
+            errorMessage = nil
+        } catch {
+            errorMessage = "Unable to load journal: \(error.localizedDescription)"
         }
     }
 }
