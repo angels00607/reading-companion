@@ -231,6 +231,8 @@ private struct MacJournalEditor: View {
     @Environment(\.dismiss) private var dismiss
     let item: JournalInboxItem
     @State private var summary: String
+    @State private var startDateText: String
+    @State private var finishDateText: String
     @State private var ratingSelection: Int
     @State private var pages: String
     @State private var errorMessage: String?
@@ -239,6 +241,8 @@ private struct MacJournalEditor: View {
         self.item = item
         _summary = State(initialValue: item.entry.summary ?? "")
         _pages = State(initialValue: item.entry.pageCount.map(String.init) ?? "")
+        _startDateText = State(initialValue: item.reading.startDate?.isoString ?? "")
+        _finishDateText = State(initialValue: item.reading.finishDate?.isoString ?? "")
         let initialRating: Int
         switch item.reading.rating {
         case .unknown: initialRating = -1
@@ -265,6 +269,8 @@ private struct MacJournalEditor: View {
                 }
             }
             TextField("Pages (optional)", text: $pages)
+            TextField("Start date (YYYY-MM-DD, optional)", text: $startDateText)
+            TextField("Finish date (YYYY-MM-DD, optional)", text: $finishDateText)
             Text("Summary").font(.headline)
             TextEditor(text: $summary).frame(minHeight: 180)
             if item.reading.journalFormat == nil {
@@ -278,12 +284,25 @@ private struct MacJournalEditor: View {
                 Button("Save Changes") { save() }
                     .disabled(item.reading.journalFormat == nil ||
                               summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                              (!pages.isEmpty && (Int(pages) ?? 0) <= 0))
+                              (!pages.isEmpty && (Int(pages) ?? 0) <= 0) ||
+                              !validDateText(startDateText) || !validDateText(finishDateText))
                     .keyboardShortcut(.defaultAction)
             }
         }
         .padding(24)
         .frame(minWidth: 520, minHeight: 440)
+    }
+
+    private func parsedDate(_ text: String) -> ReadingDate? {
+        if text.isEmpty { return nil }
+        let parts = text.split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.count == 3, parts[0].count == 4, parts[1].count == 2, parts[2].count == 2,
+              let year = Int(parts[0]), let month = Int(parts[1]), let day = Int(parts[2]) else { return nil }
+        return try? ReadingDate(year: year, month: month, day: day)
+    }
+
+    private func validDateText(_ text: String) -> Bool {
+        text.isEmpty || parsedDate(text) != nil
     }
 
     @MainActor private func save() {
@@ -306,7 +325,7 @@ private struct MacJournalEditor: View {
             }
             let draft = BookReviewDraft(summary: summary, pageCount: pages.isEmpty ? nil : Int(pages),
                                         rating: rating, format: format,
-                                        start: item.reading.startDate, finish: item.reading.finishDate)
+                                        start: parsedDate(startDateText), finish: parsedDate(finishDateText))
             try store.saveBookReview(readingID: item.reading.id, draft: draft)
             dismiss()
         } catch {
