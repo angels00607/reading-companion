@@ -231,6 +231,7 @@ private struct MacJournalEditor: View {
     @Environment(\.dismiss) private var dismiss
     let item: JournalInboxItem
     @State private var summary: String
+    @State private var ratingSelection: Int
     @State private var pages: String
     @State private var errorMessage: String?
 
@@ -238,6 +239,13 @@ private struct MacJournalEditor: View {
         self.item = item
         _summary = State(initialValue: item.entry.summary ?? "")
         _pages = State(initialValue: item.entry.pageCount.map(String.init) ?? "")
+        let initialRating: Int
+        switch item.reading.rating {
+        case .unknown: initialRating = -1
+        case .noRating: initialRating = 0
+        case .stars(let stars): initialRating = stars
+        }
+        _ratingSelection = State(initialValue: initialRating)
     }
 
     var body: some View {
@@ -249,6 +257,13 @@ private struct MacJournalEditor: View {
             }
             Text(item.book.author).foregroundStyle(.secondary)
             LabeledContent("Review status", value: item.entry.bookReviewState.rawValue)
+            Picker("Rating", selection: $ratingSelection) {
+                Text("Not set").tag(-1)
+                Text("No rating").tag(0)
+                ForEach(1...5, id: \.self) { stars in
+                    Text("\(stars) stars").tag(stars)
+                }
+            }
             TextField("Pages (optional)", text: $pages)
             Text("Summary").font(.headline)
             TextEditor(text: $summary).frame(minHeight: 180)
@@ -283,8 +298,14 @@ private struct MacJournalEditor: View {
             }
             let store = try LocalStore(path: root.appendingPathComponent(owner.uuidString + ".sqlite").path,
                                        ownerID: owner)
+            let rating: Rating
+            switch ratingSelection {
+            case -1: rating = .unknown
+            case 0: rating = .noRating
+            default: rating = .stars(ratingSelection)
+            }
             let draft = BookReviewDraft(summary: summary, pageCount: pages.isEmpty ? nil : Int(pages),
-                                        rating: item.reading.rating, format: format,
+                                        rating: rating, format: format,
                                         start: item.reading.startDate, finish: item.reading.finishDate)
             try store.saveBookReview(readingID: item.reading.id, draft: draft)
             dismiss()
