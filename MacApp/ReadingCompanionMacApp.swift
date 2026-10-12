@@ -180,6 +180,14 @@ private struct MacJournalView: View {
                             if let summary = item.entry.summary, !summary.isEmpty {
                                 Text(summary).lineLimit(4)
                             }
+                            HStack(spacing: 12) {
+                                if let pages = item.entry.pageCount {
+                                    Label("\(pages) pages", systemImage: "book.pages")
+                                }
+                                Text("Review: \(item.entry.bookReviewState.rawValue)")
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         Divider()
