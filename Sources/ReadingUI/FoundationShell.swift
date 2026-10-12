@@ -8,7 +8,7 @@ public enum MainTab: String, CaseIterable, Identifiable, Hashable {
 
 public struct FoundationShell: View {
     @Environment(\.colorScheme) private var scheme
-    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selectedTab: MainTab = .home
     private let homeContent: AnyView?
     private let journalContent: AnyView?
@@ -51,20 +51,53 @@ public struct FoundationShell: View {
             .accessibilityElement(children: .contain).accessibilityLabel("Main navigation")
     }
     private var tabButtons: some View {
+        // All five destinations must stay visible and tappable at every Dynamic Type size.
+        // A horizontally scrolling tab bar placed Series and Stats outside the screen,
+        // causing both functional acceptance and accessibility navigation to fail.
         HStack(alignment: .top, spacing: 0) {
             ForEach(MainTab.allCases) { tab in
                 Button { selectedTab = tab } label: {
                     VStack(spacing: 4) {
-                        Image(systemName: tab.symbol).font(.system(size: 20)).frame(width: 40, height: 36)
-                            .background(selectedTab == tab ? DesignTokens.blueSurface(scheme) : Color.clear, in: RoundedRectangle(cornerRadius: 10))
+                        Image(systemName: tab.symbol)
+                            .font(.system(size: 20))
+                            .frame(height: 36)
+                            .background(
+                                selectedTab == tab ? DesignTokens.blueSurface(scheme) : Color.clear,
+                                in: RoundedRectangle(cornerRadius: 10)
+                            )
                             .accessibilityHidden(true)
-                        if !typeSize.isAccessibilitySize {
-                            Text(tab.rawValue).font(DesignTokens.functionalFont(size: 11, relativeTo: .body, weight: selectedTab == tab ? .semiBold : .medium)).multilineTextAlignment(.center)
+                        Text(tab.rawValue)
+                            .font(.system(.caption2, design: .default,
+                                          weight: selectedTab == tab ? .semibold : .medium))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.8)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityHidden(true)
+                    }
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 2)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
+                    .foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme))
+                    .overlay(alignment: .top) {
+                        if selectedTab == tab {
+                            Rectangle().fill(DesignTokens.primary(scheme))
+                                .frame(width: 24, height: 2)
+                                .accessibilityHidden(true)
                         }
-                    }.padding(.vertical, 6).padding(.horizontal, 4).frame(minWidth: 44, maxWidth: typeSize.isAccessibilitySize ? nil : .infinity, minHeight: 44).contentShape(Rectangle()).foregroundStyle(selectedTab == tab ? DesignTokens.primary(scheme) : DesignTokens.secondaryText(scheme)).overlay(alignment: .top) { if selectedTab == tab { Rectangle().fill(DesignTokens.primary(scheme)).frame(width: 24, height: 2).accessibilityHidden(true) } }
-                }.buttonStyle(.plain).accessibilityLabel(tab.rawValue).accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton).accessibilityIdentifier("foundationTab." + tab.rawValue)
+                    }
+                }
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel(tab.rawValue)
+                .accessibilityAddTraits(selectedTab == tab ? [.isButton, .isSelected] : .isButton)
+                .accessibilityIdentifier("foundationTab." + tab.rawValue)
             }
-        }.padding(.horizontal, 8).frame(maxWidth: .infinity).sensoryFeedback(.selection,trigger:selectedTab)
+        }
+        .padding(.horizontal, 8)
+        .accessibilityElement(children: .contain)
+        .sensoryFeedback(.selection, trigger: selectedTab)
     }
 }
 

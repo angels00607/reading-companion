@@ -78,6 +78,21 @@ jobs:
         if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase8-targeted]') && !contains(github.event.head_commit.message, '[phase8-qa]'))) }}
         run: |
           xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Regression.xcresult -only-testing:FoundationAcceptanceTests/JournalAcceptanceTests -only-testing:FoundationAcceptanceTests/SeriesAcceptanceTests -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testMonthIncompleteDataRatingAndManualYearChoice -only-testing:FoundationAcceptanceTests/StatsAcceptanceTests/testRereadLifetimeUnknownAndJournalReuse -only-testing:FoundationAcceptanceTests/ProfileGamificationAcceptanceTests/testCleanProductionLaunchA -only-testing:FoundationAcceptanceTests/ProfileGamificationAcceptanceTests/testProductionCollectionCancelApplyReopenHIJ -only-testing:FoundationAcceptanceTests/BooksCoreAcceptanceTests/testOfficialAcceptanceFlow -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testExplicitConfirmOccupancyAndIndependentNextChallenge -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testRejectNextBestAndNoReasonOrRecurrence -only-testing:FoundationAcceptanceTests/ChallengesAcceptanceTests/testManualAndSameWeekReplacement CODE_SIGNING_ALLOWED=NO test
+      - name: Phase 12 accessibility and responsive acceptance (diagnostic)
+        # Run the complete native audit and preserve its evidence, but do not block
+        # unrelated functional regressions while accessibility findings are triaged.
+        # Phase 12 is NOT accepted until this step succeeds without this exception.
+        continue-on-error: true
+        if: ${{ always() && ((github.event_name == 'workflow_dispatch' && inputs.stage == 'candidate') || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase8-targeted]') && !contains(github.event.head_commit.message, '[phase8-qa]'))) }}
+        run: |
+          xcrun simctl ui "$READING_SIMULATOR_ID" appearance dark
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size large
+          standard_status=0
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase12Standard.xcresult -only-testing:FoundationFontTests/Phase12FontScalingTests -only-testing:FoundationAcceptanceTests/Phase12AccessibilityAcceptanceTests/testStandardFiveTabAndSecondaryFlowAudit -only-testing:FoundationAcceptanceTests/Phase12AccessibilityAcceptanceTests/testKeyboardActionsRemainReachable -only-testing:FoundationAcceptanceTests/FoundationAcceptanceTests/testSystemFollowsSimulatorDarkAppearance CODE_SIGNING_ALLOWED=NO test || standard_status=$?
+          xcrun simctl ui "$READING_SIMULATOR_ID" content_size accessibility-extra-extra-extra-large
+          accessibility_status=0
+          xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanion -destination "platform=iOS Simulator,id=$READING_SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath work/Phase12Accessibility.xcresult -only-testing:FoundationAcceptanceTests/Phase12AccessibilityAcceptanceTests/testAccessibilityXXXLFiveTabAndLandscapeAudit CODE_SIGNING_ALLOWED=NO test || accessibility_status=$?
+          if [ "$standard_status" -ne 0 ] || [ "$accessibility_status" -ne 0 ]; then exit 1; fi
       - name: Default-size foundation acceptance
         if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.stage == 'foundations' }}
         run: |
@@ -96,6 +111,7 @@ jobs:
           path: |
             work/Regression.xcresult
             work/Foundation*.xcresult
+            work/Phase12*.xcresult
   sqlite:
     if: ${{ !contains(github.event.head_commit.message, '[phase9-targeted]') && !(github.event_name == 'workflow_dispatch' && inputs.stage == 'qa') && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[phase8-qa]')) }}
     runs-on: ubuntu-latest

@@ -29,6 +29,10 @@ public enum DesignTokens {
     public static func onPrimary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x030B19 : 0xFFFFFF) }
     public static func primaryStrong(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x4F81AA : 0x143D5B) }
     public static func secondary(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xBA71A2 : 0x7E2A53) }
+    /// Accessible semantic foreground for text placed directly on the plum surface.
+    /// The approved dark secondary accent remains available for larger/decorative use,
+    /// but is below the 4.5:1 body-text threshold on the dark plum surface.
+    public static func onPlum(_ scheme: ColorScheme) -> Color { scheme == .dark ? text(scheme) : secondary(scheme) }
     public static func border(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0x24445B : 0xDCE6EA) }
     public static func error(_ scheme: ColorScheme) -> Color { Color(hex: scheme == .dark ? 0xFFB4AB : 0xA33A32) }
     public enum FunctionalFontWeight: String, Sendable {

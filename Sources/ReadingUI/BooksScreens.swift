@@ -7,6 +7,7 @@ import UIKit
 
 public struct BooksHome: View {
     @EnvironmentObject private var model: BooksModel
+    @Environment(\.dynamicTypeSize) private var typeSize
     @ScaledMetric(relativeTo: .body) private var cardHeight: CGFloat = 320
     public init() {}
     public var body: some View {
@@ -16,21 +17,34 @@ public struct BooksHome: View {
             Text("Currently Reading").font(DesignTokens.functionalFont(size: 22, relativeTo: .title2, weight: .semiBold)).accessibilityAddTraits(.isHeader)
             let active = (try? model.repository.library(query: "", view: .all, sort: .recentlyAdded, filters: activeFilter, limit: 200, offset: 0)) ?? []
             if active.isEmpty { StatePresentation(kind: .empty, title: "No active reading", message: "Add a book or start one from My Books.") }
+            else if typeSize.isAccessibilitySize {
+                LazyVStack(alignment: .leading, spacing: 20) {
+                    ForEach(active) { record in activeReading(record) }
+                }
+            }
             else {
                 ScrollView(.horizontal) {
                     HStack(alignment: .top, spacing: 16) {
                         ForEach(active) { record in
                             ScrollView {
-                              VStack(alignment: .leading, spacing: 12) {
-                                BooksRow(record: record)
-                                if let reading = record.active { ReadingProgressBar(displayProgress(reading.progress)); NavigationLink { BookPageScreen(bookID: record.id) } label: { Text("Update Progress").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()) } }
-                              }
+                              activeReading(record)
                             }.frame(width: 270, height: cardHeight, alignment: .top)
                         }
                     }
                 }
             }
             BooksErrorMessage()
+        }
+    }
+    @ViewBuilder private func activeReading(_ record: CatalogRecord) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            BooksRow(record: record)
+            if let reading = record.active {
+                ReadingProgressBar(displayProgress(reading.progress))
+                NavigationLink { BookPageScreen(bookID: record.id) } label: {
+                    Text("Update Progress").frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+                }.accessibilityLabel("Update progress for \(record.book.title)")
+            }
         }
     }
     private var activeFilter: LibraryFilters { var f = LibraryFilters(); f.status = .currentlyReading; return f }
@@ -219,20 +233,30 @@ struct ManualAddScreen: View {
             } label: {
                 BooksDisclosureLabel("Optional book information", detail: "Edition, genre, series and cover")
             }.frame(minHeight: 44)
-            AppButton("Continue") {
-                _ = model.perform {
-                    let t = try BooksRules.validatedText(title), a = try BooksRules.validatedText(author)
-                    let total = try BooksModel.optionalPages(pages)
-                    candidate = WorkCandidate(provider: "manual", reference: UUID().uuidString, title: t, author: a, coverReference: cover.isEmpty ? nil : cover)
-                    if !cover.isEmpty, model.coverURL(cover) == nil { throw BooksError.invalidMetadata }
-                    edition = EditionCandidate(provider: "manual", reference: UUID().uuidString, title: t, isbn10: isbn.count == 10 ? isbn : nil, isbn13: isbn.isEmpty || isbn.count == 10 ? nil : isbn, pageCount: total)
-                    showAdd = true
-                }
-            }
             BooksErrorMessage()
-        }.navigationDestination(isPresented: $showAdd) {
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            continueButton
+                .padding(.horizontal, DesignTokens.margin)
+                .padding(.vertical, 8)
+                .background(.bar)
+        }
+        .navigationDestination(isPresented: $showAdd) {
             if let candidate { ManualAddCompletion(work: candidate, edition: edition, genre: genre, series: series) }
         }
+    }
+
+    private var continueButton: some View {
+        AppButton("Continue") {
+            _ = model.perform {
+                let t = try BooksRules.validatedText(title), a = try BooksRules.validatedText(author)
+                let total = try BooksModel.optionalPages(pages)
+                candidate = WorkCandidate(provider: "manual", reference: UUID().uuidString, title: t, author: a, coverReference: cover.isEmpty ? nil : cover)
+                if !cover.isEmpty, model.coverURL(cover) == nil { throw BooksError.invalidMetadata }
+                edition = EditionCandidate(provider: "manual", reference: UUID().uuidString, title: t, isbn10: isbn.count == 10 ? isbn : nil, isbn13: isbn.isEmpty || isbn.count == 10 ? nil : isbn, pageCount: total)
+                showAdd = true
+            }
+        }.accessibilityIdentifier("books.manual.continue")
     }
 }
 private struct ManualAddCompletion: View {

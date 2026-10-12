@@ -120,7 +120,7 @@ struct BooksField: View {
             Text(label).font(DesignTokens.functionalFont(size: 14, weight: .medium))
             TextField(text: $value, axis: .vertical) {
                 Text(label).foregroundStyle(DesignTokens.secondaryText(scheme))
-            }.textFieldStyle(.roundedBorder)
+            }.textFieldStyle(AppTextFieldStyle(scheme: scheme))
                 .font(DesignTokens.functionalFont(size: 16)).frame(minHeight: 44)
                 .focused($focused)
                 .accessibilityLabel(label).accessibilityIdentifier("books.field." + label)
@@ -138,6 +138,24 @@ struct BooksField: View {
                 }
                 #endif
         }
+    }
+}
+
+/// Keeps the prompt and entered value on an explicit semantic surface. The native
+/// rounded field can retain a light fill in Dark Mode, which breaks token contrast.
+struct AppTextFieldStyle: TextFieldStyle {
+    let scheme: ColorScheme
+
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+            .foregroundStyle(DesignTokens.text(scheme))
+            .background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.inputRadius))
+            .overlay {
+                RoundedRectangle(cornerRadius: DesignTokens.inputRadius)
+                    .stroke(DesignTokens.border(scheme), lineWidth: 1)
+            }
     }
 }
 struct BooksErrorMessage: View {

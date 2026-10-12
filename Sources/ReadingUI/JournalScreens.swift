@@ -60,12 +60,13 @@ private struct JournalInboxCard: View {
                 HStack(alignment: .top, spacing: 12) { BookCover(title: item.book.title, symbol: "book.closed"); metadata; Spacer(minLength: 8); StatusChip(status, symbol: item.entry.bookReviewState == .ready ? "checkmark" : "ellipsis", tone: item.entry.bookReviewState == .ready ? .special : .neutral) }
             }
         }.padding(14).background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius))
-            .accessibilityElement(children: .combine).accessibilityLabel("\(item.book.title), by \(item.book.author), Book Review \(status)")
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(item.book.title), by \(item.book.author), Book Review \(status)")
     }
     private var metadata: some View { VStack(alignment: .leading, spacing: 4) {
         Text(item.book.title).font(DesignTokens.functionalFont(size: 17, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
-        Text(item.book.author).font(DesignTokens.functionalFont(size: 14, relativeTo: .subheadline)).foregroundStyle(DesignTokens.secondaryText(scheme))
-        Text("Book Review").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .medium)).foregroundStyle(DesignTokens.secondaryText(scheme))
+        Text(item.book.author).font(DesignTokens.functionalFont(size: 14, relativeTo: .subheadline, weight: .medium)).foregroundStyle(DesignTokens.secondaryText(scheme))
+        Text("Book Review").font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .semiBold)).foregroundStyle(DesignTokens.secondaryText(scheme))
     } }
 }
 
@@ -131,7 +132,9 @@ private struct JournalSession: View {
 struct JournalCorrections: View {
     @EnvironmentObject var model: BooksModel; @State private var rows: [JournalCorrection] = []
     @Environment(\.colorScheme) private var scheme
-    var body: some View { BooksScreen("Journal Corrections") { if rows.isEmpty { StatePresentation(kind: .empty, title: "No corrections", message: "Changes made after copying will appear here.") }; ForEach(rows) { row in VStack(alignment: .leading, spacing: 14) { HStack { Text(row.field).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold)); Spacer(); StatusChip(row.resolved ? "Resolved" : "Pending", symbol: row.resolved ? "checkmark" : "pencil", tone: row.resolved ? .special : .neutral) }; correctionValue("Copied in journal", row.previousValue); correctionValue("Current value", row.currentValue); if !row.resolved { AppButton("I've corrected my journal", kind: .secondary) { resolve(row) } } }.padding(16).background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius)) } }.onAppear(perform: load) }
+    var body: some View { BooksScreen("Journal Corrections") { if rows.isEmpty { StatePresentation(kind: .empty, title: "No corrections", message: "Changes made after copying will appear here.") }; ForEach(rows) { row in VStack(alignment: .leading, spacing: 14) { ViewThatFits(in:.horizontal) { HStack { correctionTitle(row); Spacer(); correctionStatus(row) }; VStack(alignment:.leading,spacing:8) { correctionTitle(row); correctionStatus(row) } }; correctionValue("Copied in journal", row.previousValue); correctionValue("Current value", row.currentValue); if !row.resolved { AppButton("I've corrected my journal", kind: .secondary) { resolve(row) } } }.padding(16).background(DesignTokens.surface(scheme), in: RoundedRectangle(cornerRadius: DesignTokens.cardRadius)) } }.onAppear(perform: load) }
+    private func correctionTitle(_ row:JournalCorrection)->some View { Text(row.field).font(DesignTokens.functionalFont(size: 18, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal:false,vertical:true) }
+    private func correctionStatus(_ row:JournalCorrection)->some View { StatusChip(row.resolved ? "Resolved" : "Pending", symbol: row.resolved ? "checkmark" : "pencil", tone: row.resolved ? .special : .neutral) }
     private func load() { rows = (try? model.journalRepository?.corrections()) ?? [] }
     private func resolve(_ row: JournalCorrection) { _ = model.perform { try model.journalRepository?.resolveCorrection(id: row.id) }; load() }
     @ViewBuilder private func correctionValue(_ label: String, _ value: String) -> some View { VStack(alignment: .leading, spacing: 5) { Text(label.uppercased()).font(DesignTokens.functionalFont(size: 12, relativeTo: .caption, weight: .semiBold)).foregroundStyle(.secondary); Text(value).fixedSize(horizontal: false, vertical: true) } }

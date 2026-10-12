@@ -165,7 +165,7 @@ struct StatsMetric: View {
         VStack(alignment:.leading,spacing:6) {
             Text(title).font(DesignTokens.functionalFont(size:17,relativeTo:.headline,weight:.semiBold)).accessibilityAddTraits(.isHeader)
             Text(value).font(DesignTokens.functionalFont(size:26,relativeTo:.title2,weight:.semiBold)).fixedSize(horizontal:false,vertical:true).accessibilityIdentifier(id+".value")
-            Text(detail).font(DesignTokens.functionalFont(size:13)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true)
+            Text(detail).font(DesignTokens.functionalFont(size:13,weight:.medium)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true)
         }.frame(maxWidth:.infinity,alignment:.leading)
     }
 }

@@ -9,6 +9,7 @@ public struct OnboardingFlow: View {
     @State private var yearText: String
     @State private var error: String?
     @State private var importCompleted = false
+    @FocusState private var yearFocused: Bool
     private let onComplete: (OnboardingState) -> Void
 
     public init(state: OnboardingState, onComplete: @escaping (OnboardingState) -> Void) {
@@ -83,6 +84,16 @@ public struct OnboardingFlow: View {
                 #endif
                 .accessibilityLabel("Reading history start year")
                 .accessibilityIdentifier("onboarding.readingSince")
+                .focused($yearFocused)
+                #if os(iOS)
+                .toolbar {
+                    ToolbarItemGroup(placement:.keyboard) {
+                        Spacer()
+                        Button("Done") { yearFocused=false }.frame(minWidth:44,minHeight:44)
+                            .accessibilityIdentifier("onboarding.keyboardDone")
+                    }
+                }
+                #endif
             AppButton("Continue", action: saveYear).accessibilityIdentifier("onboarding.readingSince.continue")
             back(to: .welcome)
         }

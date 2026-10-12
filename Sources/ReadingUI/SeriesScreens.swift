@@ -11,14 +11,19 @@ public struct SeriesHome: View {
     public init() {}
     public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            TextField("Search series or book", text: $query).textFieldStyle(.roundedBorder).frame(minHeight: 44)
+            TextField("Search series", text: $query,
+                      prompt: Text("Search series").foregroundStyle(DesignTokens.secondaryText(scheme)))
+                .textFieldStyle(AppTextFieldStyle(scheme: scheme))
+                .font(DesignTokens.functionalFont(size: 16, relativeTo: .body))
+                .frame(minHeight: 48)
+                .accessibilityLabel("Search series or book")
                 .accessibilityIdentifier("series.search").onChange(of: query) { _,_ in reload() }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack { ForEach(SeriesFilter.allCases, id: \.self) { option in FilterChip(option.rawValue, isSelected: Binding(get: { filter == option }, set: { if $0 { filter = option; reload() } })) } }
             }
-            Menu { ForEach(SeriesSort.allCases, id: \.self) { option in Button(option.rawValue) { sort = option; reload() } } } label: {
+            Menu { ForEach(SeriesSort.allCases, id: \.self) { option in Button(option.rawValue) { sort = option; reload() }.accessibilityIdentifier("series.sort." + option.rawValue) } } label: {
                 Label("Sort: \(sort.rawValue)", systemImage: "arrow.up.arrow.down").frame(minHeight: 44)
-            }.accessibilityIdentifier("series.sort")
+            }.frame(minWidth: 44, minHeight: 44).accessibilityIdentifier("series.sort")
             if rows.isEmpty { StatePresentation(kind: .empty, title: "No series found", message: "Stored series remain available offline. Try another search or filter.") }
             LazyVStack(spacing: DesignTokens.Spacing.medium) {
                 ForEach(rows, id: \.series.id) { detail in NavigationLink { SeriesPage(detailID: detail.series.id) } label: { SeriesListRow(detail: detail) }.buttonStyle(.plain) }
@@ -108,18 +113,24 @@ struct SeriesPage: View {
 
 private struct SeriesTimelineRow: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
     let entry: SeriesEntry; let toggle: (Bool) -> Void
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text(positionLabel(entry.position)).font(DesignTokens.functionalFont(size: 15, weight: .semiBold)).frame(minWidth: 38, alignment: .leading)
-            VStack(alignment: .leading, spacing: 6) {
-                Text(entry.title).font(DesignTokens.functionalFont(size: 16, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
-                ViewThatFits { HStack { labels }; VStack(alignment: .leading, spacing: 6) { labels } }
-                Toggle("Include in physical tracker", isOn: Binding(get: { entry.includedInTracker }, set: toggle)).frame(minHeight: 44)
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 8) { position; details }
+            } else {
+                HStack(alignment: .top, spacing: 12) { position; details }
             }
         }.padding(.vertical, DesignTokens.Spacing.large).overlay(alignment: .bottom) { Divider() }.accessibilityElement(children: .contain)
     }
-    @ViewBuilder private var labels: some View { StatusChip(entry.kind == .main ? "Main" : entry.kind == .related ? "Related" : "Companion", symbol: entry.kind == .main ? "book.closed" : "link"); StatusChip(entry.isRead ? "Read" : publicationLabel(entry), symbol: entry.isRead ? "checkmark" : "calendar", tone: entry.isRead ? .active : .neutral); Text(releaseLabel(entry.release)).foregroundStyle(DesignTokens.secondaryText(scheme)) }
+    private var position: some View { Text(positionLabel(entry.position)).font(DesignTokens.functionalFont(size: 15, weight: .semiBold)).frame(minWidth: 38, alignment: .leading).accessibilityLabel("Series position \(positionLabel(entry.position))") }
+    private var details: some View { VStack(alignment: .leading, spacing: 6) {
+        Text(entry.title).font(DesignTokens.functionalFont(size: 16, relativeTo: .headline, weight: .semiBold)).fixedSize(horizontal: false, vertical: true)
+        ViewThatFits(in: .horizontal) { HStack { labels }; VStack(alignment: .leading, spacing: 6) { labels } }
+        Toggle("Include in physical tracker", isOn: Binding(get: { entry.includedInTracker }, set: { included in toggle(included) })).frame(minHeight: 44)
+    } }
+    @ViewBuilder private var labels: some View { StatusChip(entry.kind == .main ? "Main" : entry.kind == .related ? "Related" : "Companion", symbol: entry.kind == .main ? "book.closed" : "link"); StatusChip(entry.isRead ? "Read" : publicationLabel(entry), symbol: entry.isRead ? "checkmark" : "calendar", tone: entry.isRead ? .active : .neutral); Text(releaseLabel(entry.release)).foregroundStyle(DesignTokens.secondaryText(scheme)).fixedSize(horizontal:false,vertical:true) }
 }
 
 private struct SeriesProgressBar: View {
