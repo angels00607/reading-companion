@@ -96,7 +96,7 @@ public struct FoundationShell: View {
             }
         }
         .padding(.horizontal, 8)
-        .accessibilityIdentifier("foundationTabScroll")
+        .accessibilityElement(children: .contain)
         .sensoryFeedback(.selection, trigger: selectedTab)
     }
 }
