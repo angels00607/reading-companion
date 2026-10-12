@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - codex/mac-support
+      - codex/macos-app-shell
   workflow_dispatch:
 
 permissions:
@@ -21,3 +22,9 @@ jobs:
         run: swift build
       - name: Test shared Swift packages on macOS
         run: swift test
+      - name: Generate native Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Build native macOS app
+        run: xcodebuild -project ReadingCompanion.xcodeproj -scheme ReadingCompanionMac -destination 'generic/platform=macOS' CODE_SIGNING_ALLOWED=NO build
