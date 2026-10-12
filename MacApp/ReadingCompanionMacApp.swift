@@ -159,6 +159,7 @@ private struct MacLibraryView: View {
 
 private struct MacJournalView: View {
     @State private var entries: [JournalInboxItem] = []
+    @State private var selectedEntry: JournalInboxItem?
     @State private var errorMessage: String?
 
     var body: some View {
@@ -190,6 +191,8 @@ private struct MacJournalView: View {
                             .foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        Button("View details") { selectedEntry = item }
+                            .buttonStyle(.link)
                         Divider()
                     }
                 }
@@ -198,6 +201,31 @@ private struct MacJournalView: View {
                 .font(.caption).foregroundStyle(.secondary)
         }
         .task { loadJournal() }
+        .sheet(item: $selectedEntry) { item in
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text(item.book.title).font(.title2.bold())
+                    Spacer()
+                    Button("Close") { selectedEntry = nil }
+                }
+                Text(item.book.author).foregroundStyle(.secondary)
+                Divider()
+                LabeledContent("Review status", value: item.entry.bookReviewState.rawValue)
+                if let pages = item.entry.pageCount {
+                    LabeledContent("Pages", value: String(pages))
+                }
+                Text("Summary").font(.headline)
+                ScrollView {
+                    Text(item.entry.summary ?? "No summary saved yet.")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                }
+                Text("This view is read-only. Editing will be added in a later phase.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            .padding(24)
+            .frame(minWidth: 500, minHeight: 340)
+        }
     }
 
     @MainActor private func loadJournal() {
