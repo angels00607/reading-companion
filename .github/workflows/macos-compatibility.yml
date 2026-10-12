@@ -3,8 +3,12 @@ name: macOS compatibility check
 on:
   push:
     branches:
-      - codex/mac-support
-      - codex/macos-app-shell
+      - main
+      - 'codex/mac-*'
+      - 'codex/macos-*'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:

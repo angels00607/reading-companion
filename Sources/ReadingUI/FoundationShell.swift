@@ -20,6 +20,28 @@ public struct FoundationShell: View {
     public init() { homeContent = nil; journalContent = nil; seriesContent = nil; challengesContent = nil; statsContent = nil; profileContent=nil;celebrationContent=nil }
     public init(homeContent: AnyView, journalContent: AnyView? = nil, seriesContent: AnyView? = nil, challengesContent: AnyView? = nil, statsContent: AnyView? = nil, profileContent:AnyView?=nil,celebrationContent:AnyView?=nil) { self.homeContent = homeContent; self.journalContent = journalContent; self.seriesContent = seriesContent; self.challengesContent = challengesContent; self.statsContent = statsContent; self.profileContent=profileContent;self.celebrationContent=celebrationContent }
     public var body: some View {
+        #if os(macOS)
+        NavigationSplitView {
+            List(MainTab.allCases, selection: $selectedTab) { tab in
+                Label(tab.rawValue, systemImage: tab.symbol)
+                    .tag(tab)
+                    .accessibilityIdentifier("foundationTab." + tab.rawValue)
+            }
+            .navigationTitle("Reading Companion")
+            .listStyle(.sidebar)
+            .frame(minWidth: 190)
+        } detail: {
+            mainContent
+        }
+        .tint(DesignTokens.primary(scheme))
+        .overlay { if let celebrationContent { celebrationContent } }
+        #else
+        mainContent
+            .safeAreaInset(edge: .bottom, spacing: 0) { tabBar }
+            .overlay { if let celebrationContent { celebrationContent } }
+        #endif
+    }
+    private var mainContent: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
@@ -36,8 +58,7 @@ public struct FoundationShell: View {
             #if os(iOS)
             .toolbar(.hidden, for: .navigationBar)
             #endif
-        }.tint(DesignTokens.primary(scheme)).safeAreaInset(edge: .bottom, spacing: 0) { tabBar }
-            .overlay { if let celebrationContent { celebrationContent } }
+        }.tint(DesignTokens.primary(scheme))
     }
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
