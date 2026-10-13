@@ -349,6 +349,8 @@ private struct MacJournalEditor: View {
 private struct MacSeriesView: View {
     @State private var series: [SeriesDetail] = []
     @State private var showingCreate = false
+    @State private var confirmingSeriesDeletion = false
+    @State private var entryToDelete: SeriesEntry?
     @State private var showingEditSeries = false
     @State private var editSeriesName = ""
     @State private var editSeriesAuthor = ""
@@ -427,6 +429,22 @@ private struct MacSeriesView: View {
                 .font(.caption).foregroundStyle(.secondary)
         }
         .task { refresh() }
+        .confirmationDialog("Delete this series?", isPresented: $confirmingSeriesDeletion,
+                            titleVisibility: .visible) {
+            Button("Delete Series", role: .destructive) { deleteSelectedSeries() }
+        } message: {
+            Text("This removes the series and its volumes, but does not delete books or reading records in your library.")
+        }
+        .confirmationDialog("Delete this volume?", isPresented: Binding(
+            get: { entryToDelete != nil },
+            set: { if !$0 { entryToDelete = nil } }
+        ), titleVisibility: .visible) {
+            Button("Delete Volume", role: .destructive) {
+                if let entry = entryToDelete { deleteVolume(entry) }
+            }
+        } message: {
+            Text("The volume is removed from this series. Its linked library book and reading records remain untouched.")
+        }
         .sheet(isPresented: $showingCreate) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Add a Series").font(.title2.bold())
@@ -560,6 +578,9 @@ private struct MacSeriesView: View {
                         volumeKind = .main
                         showingAddVolume = true
                     }
+                    Button("Delete Series", role: .destructive) {
+                        confirmingSeriesDeletion = true
+                    }
                     Button("Close") { selectedSeries = nil }
                 }
                 Text("\(detail.readConfirmed) of \(detail.confirmedTotal) confirmed books read")
@@ -579,6 +600,10 @@ private struct MacSeriesView: View {
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
+                                    Button("Delete", role: .destructive) {
+                                        entryToDelete = entry
+                                    }
+                                    .buttonStyle(.link)
                                     Button("Edit") {
                                         editVolumeTitle = entry.title
                                         editVolumePosition = NSDecimalNumber(decimal: entry.position).stringValue
@@ -603,6 +628,33 @@ private struct MacSeriesView: View {
             .padding(24)
             .frame(minWidth: 540, minHeight: 420)
             }
+        }
+    }
+
+    @MainActor private func deleteSelectedSeries() {
+        guard let detail = selectedSeries else { return }
+        do {
+            try existingSeriesStore().deleteSeries(id: detail.series.id)
+            selectedSeries = nil
+            errorMessage = nil
+            refresh()
+        } catch {
+            errorMessage = "Unable to delete series: \(error.localizedDescription)"
+        }
+    }
+
+    @MainActor private func deleteVolume(_ entry: SeriesEntry) {
+        guard let detail = selectedSeries else { return }
+        do {
+            let store = try existingSeriesStore()
+            try store.deleteSeriesEntry(id: entry.id, seriesID: detail.series.id)
+            selectedSeries = try store.seriesDetail(id: detail.series.id)
+            entryToDelete = nil
+            errorMessage = nil
+            refresh()
+        } catch {
+            entryToDelete = nil
+            errorMessage = "Unable to delete volume: \(error.localizedDescription)"
         }
     }
 
