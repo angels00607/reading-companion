@@ -53,6 +53,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.readingcompanion.mac
+        CODE_SIGN_ENTITLEMENTS: MacApp/ReadingCompanionMac.entitlements
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Reading Companion
