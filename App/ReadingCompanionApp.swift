@@ -2,16 +2,22 @@ import SwiftUI
 import ReadingUI
 import ReadingData
 import ReadingDomain
+import Supabase
 
 @main
 struct ReadingCompanionApp: App {
+    @State private var googleAuth = IOSGoogleAuthState()
     @State private var model: BooksModel?
     @State private var storageError: String?
     @State private var onboardingState: OnboardingState?
     @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
-            Group {
+            VStack(spacing: 0) {
+                if !isFoundationQA {
+                    IOSGoogleSignInPanel(state: googleAuth)
+                }
+                Group {
                 if isFoundationQA { FoundationShell() }
                 else if let model {
                     if isImportQA { NavigationStack { ImportHome() }.environmentObject(model) }
@@ -29,6 +35,7 @@ struct ReadingCompanionApp: App {
                 }
                 else if let storageError { StatePresentation(kind: .error, title: "Library unavailable", message: storageError) }
                 else { SkeletonRow() }
+                }
             }.preferredColorScheme(acceptanceAppearance)
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active, let coordinator = model?.notificationCoordinator {
@@ -321,3 +328,87 @@ struct ReadingCompanionApp: App {
         return nil // Normal launches and Release builds follow the system.
     }
 }
+
+// Authentication is independent of the device-local library. Cloud identity
+// must not replace local ownership until an explicit migration is verified.
+private enum IOSGoogleAuthConfiguration {
+    static let callback = URL(string: "readingcompanion://auth-callback")!
+    static let client = SupabaseClient(
+        supabaseURL: URL(string: "https://qpkliwzcfhyyifmvuygh.supabase.co")!,
+        supabaseKey: "sb_publishable_LrCG-sz30gDrAlPX_txa5g_pAM7HsLM"
+    )
+}
+
+@MainActor @Observable
+private final class IOSGoogleAuthState {
+    private(set) var isLoading = false
+    private(set) var email: String?
+    private(set) var errorMessage: String?
+
+    func signIn() async {
+        guard !isLoading else { return }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let session = try await IOSGoogleAuthConfiguration.client.auth.signInWithOAuth(
+                provider: .google,
+                redirectTo: IOSGoogleAuthConfiguration.callback
+            )
+            email = session.user.email
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func restoreSession() async {
+        do {
+            let session = try await IOSGoogleAuthConfiguration.client.auth.session
+            email = session.user.email
+        } catch {
+            email = nil
+        }
+    }
+
+    func signOut() async {
+        do {
+            try await IOSGoogleAuthConfiguration.client.auth.signOut()
+            email = nil
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}
+
+private struct IOSGoogleSignInPanel: View {
+    let state: IOSGoogleAuthState
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if state.email == nil {
+                Button("Continue with Google") {
+                    Task { await state.signIn() }
+                }
+                .disabled(state.isLoading)
+            } else {
+                Button("Sign out") {
+                    Task { await state.signOut() }
+                }
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Google Account").font(.headline)
+                Text(state.email ?? "Local library. Cloud sync is not enabled.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if let error = state.errorMessage {
+                    Text(error).font(.caption).foregroundStyle(.red)
+                }
+            }
+            if state.isLoading { ProgressView() }
+            Spacer()
+        }
+        .padding(12)
+        .task { await state.restoreSession() }
+    }
+}
+
