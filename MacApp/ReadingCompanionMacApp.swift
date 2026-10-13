@@ -406,7 +406,11 @@ private struct MacSeriesView: View {
                 .font(.caption).foregroundStyle(.secondary)
         }
         .task { refresh() }
-        .sheet(item: $selectedSeries) { detail in
+        .sheet(isPresented: Binding(
+            get: { selectedSeries != nil },
+            set: { if !$0 { selectedSeries = nil } }
+        )) {
+            if let detail = selectedSeries {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Text(detail.series.name).font(.title2.bold())
@@ -442,6 +446,7 @@ private struct MacSeriesView: View {
             }
             .padding(24)
             .frame(minWidth: 540, minHeight: 420)
+            }
         }
     }
 
