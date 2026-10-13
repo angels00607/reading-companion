@@ -270,9 +270,13 @@ private struct MacJournalEditor: View {
                     Text("\(stars) stars").tag(stars)
                 }
             }
-            TextField("Reading format", text: $formatText)
-            Text("Enter a supported format identifier. The format must be valid to save.")
-                .font(.caption).foregroundStyle(.secondary)
+            Picker("Reading format", selection: $formatText) {
+                Text("Select a format").tag("")
+                ForEach(JournalFormat.allCases, id: \.rawValue) { format in
+                    Text(format.rawValue.replacingOccurrences(of: "_", with: " ").capitalized)
+                        .tag(format.rawValue)
+                }
+            }
             TextField("Pages (optional)", text: $pages)
             TextField("Start date (YYYY-MM-DD, optional)", text: $startDateText)
             TextField("Finish date (YYYY-MM-DD, optional)", text: $finishDateText)
