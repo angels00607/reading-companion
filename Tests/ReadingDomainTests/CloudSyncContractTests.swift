@@ -7,7 +7,7 @@ final class CloudSyncContractTests: XCTestCase {
 
     private func make(_ value: Int, deleted: Bool = false) throws -> CloudReadingRecord {
         try CloudReadingRecord(ownerID: owner, recordType: .book,
-                               recordID: record, payload: Data("{\\"value\\":\(value)}".utf8),
+                               recordID: record, payload: Data("{\"value\":\(value)}".utf8),
                                revision: Int64(value), isDeleted: deleted)
     }
 
