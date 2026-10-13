@@ -37,4 +37,18 @@ final class CloudSyncContractTests: XCTestCase {
         XCTAssertThrowsError(try CloudReadingRecord(ownerID: owner, recordType: .book, recordID: record,
                                                     payload: Data("{}".utf8), revision: 0))
     }
+
+    func testInitialTombstoneRequiresReview() throws {
+        let deleted = try make(2, deleted: true)
+        XCTAssertEqual(ReadingSyncPlanner.decide(local: deleted, remote: nil, base: nil), .needsUserReview)
+        XCTAssertEqual(ReadingSyncPlanner.decide(local: nil, remote: deleted, base: nil), .needsUserReview)
+    }
+
+    func testInitialNonDeletedRecordCanTransfer() throws {
+        let active = try make(1)
+        XCTAssertEqual(ReadingSyncPlanner.decide(local: active, remote: nil, base: nil), .uploadLocal)
+        XCTAssertEqual(ReadingSyncPlanner.decide(local: nil, remote: active, base: nil), .downloadRemote)
+    }
+
+
 }
