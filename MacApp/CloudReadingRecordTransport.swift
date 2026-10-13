@@ -15,7 +15,7 @@ struct CloudReadingRecordTransport {
         let ownerID: UUID
         let recordType: CloudReadingRecord.RecordType
         let recordID: UUID
-        let payload: [String: JSONValue]
+        let payload: JSONDocument
         let revision: Int64
         let isDeleted: Bool
 
@@ -51,5 +51,26 @@ struct CloudReadingRecordTransport {
     enum TransportError: Error {
         case invalidPagination
         case accountMismatch
+    }
+}
+
+private struct JSONDocument: Decodable, Sendable {
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        _ = try container.decode([String: JSONNode].self)
+    }
+}
+
+private indirect enum JSONNode: Decodable, Sendable {
+    case null, bool(Bool), number(Double), string(String), array([JSONNode]), object([String: JSONNode])
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if c.decodeNil() { self = .null }
+        else if let x = try? c.decode(Bool.self) { self = .bool(x) }
+        else if let x = try? c.decode(Double.self) { self = .number(x) }
+        else if let x = try? c.decode(String.self) { self = .string(x) }
+        else if let x = try? c.decode([JSONNode].self) { self = .array(x) }
+        else { self = .object(try c.decode([String: JSONNode].self)) }
     }
 }
