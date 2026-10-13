@@ -8,7 +8,8 @@ struct ReadingCompanionMacApp: App {
     var body: some Scene {
         WindowGroup("Reading Companion") {
             FoundationShell(homeContent: AnyView(MacLibraryView()),
-                            journalContent: AnyView(MacJournalView()))
+                            journalContent: AnyView(MacJournalView()),
+                            seriesContent: AnyView(MacSeriesView()))
                 .frame(minWidth: 760, minHeight: 520)
         }
         .defaultSize(width: 1100, height: 760)
@@ -339,6 +340,134 @@ private struct MacJournalEditor: View {
             dismiss()
         } catch {
             errorMessage = "Unable to save review: \(error.localizedDescription)"
+        }
+    }
+}
+
+ 
+/// Read-only series browser backed by the same device-local database as Home and Journal.
+private struct MacSeriesView: View {
+    @State private var series: [SeriesDetail] = []
+    @State private var query = ""
+    @State private var filter: SeriesFilter = .all
+    @State private var sort: SeriesSort = .recentlyUpdated
+    @State private var selectedSeries: SeriesDetail?
+    @State private var errorMessage: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Series").font(.title2.bold())
+            TextField("Search series or book titles", text: $query)
+                .textFieldStyle(.roundedBorder)
+                .onChange(of: query) { _, _ in refresh() }
+            HStack {
+                Picker("Status", selection: $filter) {
+                    ForEach(SeriesFilter.allCases, id: \.self) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                }
+                .onChange(of: filter) { _, _ in refresh() }
+                Picker("Sort", selection: $sort) {
+                    ForEach(SeriesSort.allCases, id: \.self) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                }
+                .onChange(of: sort) { _, _ in refresh() }
+            }
+            if let errorMessage {
+                Text(errorMessage).foregroundStyle(.red)
+            } else if series.isEmpty {
+                ContentUnavailableView("No series found", systemImage: "books.vertical",
+                                       description: Text("Series saved in your local library will appear here."))
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 12) {
+                        ForEach(series, id: \.series.id) { detail in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(detail.series.name).font(.headline)
+                                    if let author = detail.series.author {
+                                        Text(author).foregroundStyle(.secondary)
+                                    }
+                                    Text("\(detail.readConfirmed) of \(detail.confirmedTotal) confirmed books read")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Text(detail.series.effectiveStatus.rawValue.capitalized)
+                                    .foregroundStyle(.secondary)
+                                Button("View Books") { selectedSeries = detail }
+                            }
+                            Divider()
+                        }
+                    }
+                }
+            }
+            Text("Series are read from this Mac only; iPhone sync is not yet available.")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+        .task { refresh() }
+        .sheet(isPresented: Binding(
+            get: { selectedSeries != nil },
+            set: { if !$0 { selectedSeries = nil } }
+        )) {
+            if let detail = selectedSeries {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Text(detail.series.name).font(.title2.bold())
+                    Spacer()
+                    Button("Close") { selectedSeries = nil }
+                }
+                Text("\(detail.readConfirmed) of \(detail.confirmedTotal) confirmed books read")
+                    .foregroundStyle(.secondary)
+                if detail.entries.isEmpty {
+                    ContentUnavailableView("No books in this series", systemImage: "book.closed")
+                } else {
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 10) {
+                            ForEach(detail.entries) { entry in
+                                HStack {
+                                    Text(NSDecimalNumber(decimal: entry.position).stringValue)
+                                        .monospacedDigit().foregroundStyle(.secondary)
+                                    VStack(alignment: .leading) {
+                                        Text(entry.title)
+                                        Text(entry.kind.rawValue.capitalized)
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    if entry.isRead {
+                                        Label("Read", systemImage: "checkmark.circle.fill")
+                                    }
+                                }
+                                Divider()
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(24)
+            .frame(minWidth: 540, minHeight: 420)
+            }
+        }
+    }
+
+    @MainActor private func refresh() {
+        do {
+            let root = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                                   appropriateFor: nil, create: true)
+                .appendingPathComponent("ReadingCompanion", isDirectory: true)
+            let identity = root.appendingPathComponent("local-owner.txt")
+            guard FileManager.default.fileExists(atPath: identity.path),
+                  let owner = UUID(uuidString: try String(contentsOf: identity, encoding: .utf8)) else {
+                series = []
+                errorMessage = nil
+                return
+            }
+            let store = try LocalStore(path: root.appendingPathComponent(owner.uuidString + ".sqlite").path,
+                                       ownerID: owner)
+            series = try store.series(query: query, filter: filter, sort: sort)
+            errorMessage = nil
+        } catch {
+            errorMessage = "Unable to load series: \(error.localizedDescription)"
         }
     }
 }
