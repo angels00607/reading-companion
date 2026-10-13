@@ -2,6 +2,7 @@ import SwiftUI
 import ReadingUI
 import ReadingData
 import ReadingDomain
+import Supabase
 
 @main
 struct ReadingCompanionMacApp: App {
@@ -21,19 +22,73 @@ struct ReadingCompanionMacApp: App {
 }
 
 
-/// Google OAuth will be enabled only after its provider, callback and secure
-/// session exchange have been configured. No unverified identity may own data.
+private enum GoogleAuthConfiguration {
+    static let callback = URL(string: "readingcompanion://auth-callback")!
+    static let client = SupabaseClient(
+        supabaseURL: URL(string: "https://qpkliwzcfhyyifmvuygh.supabase.co")!,
+        supabaseKey: "sb_publishable_LrCG-sz30gDrAlPX_txa5g_pAM7HsLM"
+    )
+}
+
+/// The Supabase SDK performs OAuth code exchange and session storage.
+/// A verified session must never silently replace the local SQLite owner.
+@MainActor @Observable
+private final class MacGoogleAuthState {
+    private(set) var isLoading = false
+    private(set) var email: String?
+    private(set) var errorMessage: String?
+
+    func signIn() async {
+        guard !isLoading else { return }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let session = try await GoogleAuthConfiguration.client.auth.signInWithOAuth(
+                provider: .google,
+                redirectTo: GoogleAuthConfiguration.callback
+            )
+            email = session.user.email
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func signOut() async {
+        do {
+            try await GoogleAuthConfiguration.client.auth.signOut()
+            email = nil
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}
+
 private struct MacGoogleSignInPanel: View {
+    @State private var auth = MacGoogleAuthState()
+
     var body: some View {
         HStack(spacing: 12) {
-            Button("Continue with Google") {}
-                .disabled(true)
-                .accessibilityHint("Google sign-in requires OAuth configuration.")
+            if auth.email == nil {
+                Button("Continue with Google") {
+                    Task { await auth.signIn() }
+                }
+                .disabled(auth.isLoading)
+            } else {
+                Button("Sign out") {
+                    Task { await auth.signOut() }
+                }
+            }
             VStack(alignment: .leading, spacing: 3) {
                 Text("Google Account").font(.headline)
-                Text("Google sign-in setup pending. Your library remains local.")
+                Text(auth.email ?? "Local-only library. Sign in to connect your account.")
                     .font(.caption).foregroundStyle(.secondary)
+                if let error = auth.errorMessage {
+                    Text(error).font(.caption).foregroundStyle(.red)
+                }
             }
+            if auth.isLoading { ProgressView() }
             Spacer()
         }
         .padding(.horizontal, 16)
