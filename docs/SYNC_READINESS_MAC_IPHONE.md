@@ -7,7 +7,7 @@ Status: **audit only; synchronization is not enabled**.
 - LocalStore: owner-scoped SQLite, durable outbox, remote-change cursor.
 - Mac: independently generated local owner UUID in Application Support/ReadingCompanion/local-owner.txt; local UUID.sqlite database.
 - Mac Series operations save/edit/delete records locally. Do not assume they emit cloud mutations.
-- Approved auth direction: Sign in with Apple. A local UUID is not proof of a cloud account identity.
+- Chosen auth direction: Google OAuth (Gmail accounts). Configure Google Cloud OAuth credentials and Supabase Google provider before enabling sign-in. A local UUID is not proof of a cloud account identity.
 
 ## Blockers before live sync
 1. Authenticate the same account on both platforms; securely map it to the cloud owner ID.
@@ -21,7 +21,7 @@ Status: **audit only; synchronization is not enabled**.
 
 ## Delivery order
 - Gate A: inventory existing transport/schema, add regression tests for currently missing series outbox coverage.
-- Gate B: Sign in with Apple on both platforms; account mapping and local-data migration.
+- Gate B: Sign in with Google on both platforms; account mapping and local-data migration.
 - Gate C: sync one book between two distinct local databases, authenticated against an isolated Supabase test project.
 - Gate D: readings, progress, journal reviews and conflicts.
 - Gate E: series, entries, book links, edits and deletion events.
