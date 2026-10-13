@@ -349,6 +349,10 @@ private struct MacJournalEditor: View {
 private struct MacSeriesView: View {
     @State private var series: [SeriesDetail] = []
     @State private var showingCreate = false
+    @State private var showingAddVolume = false
+    @State private var volumeTitle = ""
+    @State private var volumePosition = ""
+    @State private var volumeKind: SeriesEntryKind = .main
     @State private var newSeriesName = ""
     @State private var newSeriesAuthor = ""
     @State private var query = ""
@@ -418,7 +422,7 @@ private struct MacSeriesView: View {
                 Text("Add a Series").font(.title2.bold())
                 TextField("Series name", text: $newSeriesName)
                 TextField("Author (optional)", text: $newSeriesAuthor)
-                Text("You can add volumes to this series in a later step.")
+                Text("Add volumes using View Books after creating the series.")
                     .font(.caption).foregroundStyle(.secondary)
                 HStack {
                     Button("Cancel") { showingCreate = false }
@@ -431,6 +435,30 @@ private struct MacSeriesView: View {
             .padding(24)
             .frame(width: 440)
         }
+        .sheet(isPresented: $showingAddVolume) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Add a Volume").font(.title2.bold())
+                TextField("Volume title", text: $volumeTitle)
+                TextField("Position (e.g. 1, 1.5)", text: $volumePosition)
+                Picker("Type", selection: $volumeKind) {
+                    Text("Main volume").tag(SeriesEntryKind.main)
+                    Text("Related / novella").tag(SeriesEntryKind.related)
+                    Text("Companion").tag(SeriesEntryKind.companion)
+                }
+                Text("The volume is added to this series; it is not automatically linked to a library book.")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Button("Cancel") { showingAddVolume = false }
+                    Spacer()
+                    Button("Add Volume") { addVolume() }
+                        .disabled(volumeTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                                  validVolumePosition == nil)
+                        .keyboardShortcut(.defaultAction)
+                }
+            }
+            .padding(24)
+            .frame(width: 460)
+        }
         .sheet(isPresented: Binding(
             get: { selectedSeries != nil },
             set: { if !$0 { selectedSeries = nil } }
@@ -440,6 +468,12 @@ private struct MacSeriesView: View {
                 HStack {
                     Text(detail.series.name).font(.title2.bold())
                     Spacer()
+                    Button("Add Volume", systemImage: "plus") {
+                        volumeTitle = ""
+                        volumePosition = ""
+                        volumeKind = .main
+                        showingAddVolume = true
+                    }
                     Button("Close") { selectedSeries = nil }
                 }
                 Text("\(detail.readConfirmed) of \(detail.confirmedTotal) confirmed books read")
@@ -472,6 +506,47 @@ private struct MacSeriesView: View {
             .padding(24)
             .frame(minWidth: 540, minHeight: 420)
             }
+        }
+    }
+
+    private var validVolumePosition: Decimal? {
+        let raw = volumePosition.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty, let number = Decimal(string: raw, locale: Locale(identifier: "en_US_POSIX")),
+              number >= 0 else { return nil }
+        return number
+    }
+
+    @MainActor private func addVolume() {
+        guard let detail = selectedSeries, let position = validVolumePosition else { return }
+        do {
+            let root = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                                   appropriateFor: nil, create: true)
+                .appendingPathComponent("ReadingCompanion", isDirectory: true)
+            let identity = root.appendingPathComponent("local-owner.txt")
+            guard let owner = UUID(uuidString: try String(contentsOf: identity, encoding: .utf8)) else {
+                throw CocoaError(.fileReadCorruptFile)
+            }
+            let store = try LocalStore(path: root.appendingPathComponent(owner.uuidString + ".sqlite").path,
+                                       ownerID: owner)
+            guard !detail.entries.contains(where: { $0.position == position && $0.kind == volumeKind }) else {
+                errorMessage = "A volume with this position and type already exists."
+                showingAddVolume = false
+                return
+            }
+            let entry = SeriesEntry(seriesID: detail.series.id, bookID: nil,
+                                    title: volumeTitle.trimmingCharacters(in: .whitespacesAndNewlines),
+                                    position: position, kind: volumeKind,
+                                    publication: .unknown, release: .unknown)
+            try store.saveSeries(detail.series, entries: detail.entries + [entry])
+            selectedSeries = try store.seriesDetail(id: detail.series.id)
+            showingAddVolume = false
+            volumeTitle = ""
+            volumePosition = ""
+            errorMessage = nil
+            refresh()
+        } catch {
+            errorMessage = "Unable to add volume: \(error.localizedDescription)"
+            showingAddVolume = false
         }
     }
 
