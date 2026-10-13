@@ -349,6 +349,13 @@ private struct MacJournalEditor: View {
 private struct MacSeriesView: View {
     @State private var series: [SeriesDetail] = []
     @State private var showingCreate = false
+    @State private var showingEditSeries = false
+    @State private var editSeriesName = ""
+    @State private var editSeriesAuthor = ""
+    @State private var editingEntry: SeriesEntry?
+    @State private var editVolumeTitle = ""
+    @State private var editVolumePosition = ""
+    @State private var editVolumeKind: SeriesEntryKind = .main
     @State private var showingAddVolume = false
     @State private var linkingEntry: SeriesEntry?
     @State private var linkCandidates: [CatalogRecord] = []
@@ -466,6 +473,49 @@ private struct MacSeriesView: View {
                 .frame(width: 500)
             }
         }
+        .sheet(isPresented: $showingEditSeries) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Edit Series").font(.title2.bold())
+                TextField("Series name", text: $editSeriesName)
+                TextField("Author (optional)", text: $editSeriesAuthor)
+                HStack {
+                    Button("Cancel") { showingEditSeries = false }
+                    Spacer()
+                    Button("Save Changes") { saveSeriesEdits() }
+                        .disabled(editSeriesName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .keyboardShortcut(.defaultAction)
+                }
+            }
+            .padding(24)
+            .frame(width: 440)
+        }
+        .sheet(isPresented: Binding(
+            get: { editingEntry != nil },
+            set: { if !$0 { editingEntry = nil } }
+        )) {
+            if let entry = editingEntry {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Edit Volume").font(.title2.bold())
+                    TextField("Volume title", text: $editVolumeTitle)
+                    TextField("Position (e.g. 1, 1.5)", text: $editVolumePosition)
+                    Picker("Type", selection: $editVolumeKind) {
+                        Text("Main volume").tag(SeriesEntryKind.main)
+                        Text("Related / novella").tag(SeriesEntryKind.related)
+                        Text("Companion").tag(SeriesEntryKind.companion)
+                    }
+                    HStack {
+                        Button("Cancel") { editingEntry = nil }
+                        Spacer()
+                        Button("Save Changes") { saveVolumeEdits(entry) }
+                            .disabled(editVolumeTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                                      validEditPosition == nil)
+                            .keyboardShortcut(.defaultAction)
+                    }
+                }
+                .padding(24)
+                .frame(width: 460)
+            }
+        }
         .sheet(isPresented: $showingAddVolume) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Add a Volume").font(.title2.bold())
@@ -499,6 +549,11 @@ private struct MacSeriesView: View {
                 HStack {
                     Text(detail.series.name).font(.title2.bold())
                     Spacer()
+                    Button("Edit Series") {
+                        editSeriesName = detail.series.name
+                        editSeriesAuthor = detail.series.author ?? ""
+                        showingEditSeries = true
+                    }
                     Button("Add Volume", systemImage: "plus") {
                         volumeTitle = ""
                         volumePosition = ""
@@ -524,6 +579,13 @@ private struct MacSeriesView: View {
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
+                                    Button("Edit") {
+                                        editVolumeTitle = entry.title
+                                        editVolumePosition = NSDecimalNumber(decimal: entry.position).stringValue
+                                        editVolumeKind = entry.kind
+                                        editingEntry = entry
+                                    }
+                                    .buttonStyle(.link)
                                     Button(entry.bookID == nil ? "Link Book" : "Change Link") {
                                         beginLink(entry)
                                     }
@@ -541,6 +603,66 @@ private struct MacSeriesView: View {
             .padding(24)
             .frame(minWidth: 540, minHeight: 420)
             }
+        }
+    }
+
+    private var validEditPosition: Decimal? {
+        let raw = editVolumePosition.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty, let number = Decimal(string: raw, locale: Locale(identifier: "en_US_POSIX")),
+              number >= 0 else { return nil }
+        return number
+    }
+
+    @MainActor private func saveSeriesEdits() {
+        guard let detail = selectedSeries else { return }
+        do {
+            let store = try existingSeriesStore()
+            let name = editSeriesName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let author = editSeriesAuthor.trimmingCharacters(in: .whitespacesAndNewlines)
+            var record = detail.series
+            record.name = name
+            record.author = author.isEmpty ? nil : author
+            record.updatedAt = Date()
+            try store.saveSeries(record, entries: detail.entries)
+            selectedSeries = try store.seriesDetail(id: record.id)
+            showingEditSeries = false
+            errorMessage = nil
+            refresh()
+        } catch {
+            errorMessage = "Unable to update series: \(error.localizedDescription)"
+            showingEditSeries = false
+        }
+    }
+
+    @MainActor private func saveVolumeEdits(_ entry: SeriesEntry) {
+        guard let detail = selectedSeries, let position = validEditPosition else { return }
+        guard !detail.entries.contains(where: {
+            $0.id != entry.id && $0.position == position && $0.kind == editVolumeKind
+        }) else {
+            errorMessage = "A volume with this position and type already exists."
+            editingEntry = nil
+            return
+        }
+        do {
+            let store = try existingSeriesStore()
+            var updated = detail.entries
+            guard let index = updated.firstIndex(where: { $0.id == entry.id }) else { return }
+            updated[index] = SeriesEntry(id: entry.id, seriesID: entry.seriesID,
+                                         bookID: entry.bookID,
+                                         title: editVolumeTitle.trimmingCharacters(in: .whitespacesAndNewlines),
+                                         position: position, kind: editVolumeKind,
+                                         publication: entry.publication, release: entry.release,
+                                         included: entry.included, includedInTracker: entry.includedInTracker)
+            var record = detail.series
+            record.updatedAt = Date()
+            try store.saveSeries(record, entries: updated)
+            selectedSeries = try store.seriesDetail(id: record.id)
+            editingEntry = nil
+            errorMessage = nil
+            refresh()
+        } catch {
+            errorMessage = "Unable to update volume: \(error.localizedDescription)"
+            editingEntry = nil
         }
     }
 
