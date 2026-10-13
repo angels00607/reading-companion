@@ -55,10 +55,15 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.readingcompanion.mac
-        INFOPLIST_KEY_CFBundleURLTypes: ''
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Reading Companion
+    info:
+      path: MacApp/Info.plist
+      properties:
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - readingcompanion
     dependencies:
       - package: Supabase
         product: Supabase
