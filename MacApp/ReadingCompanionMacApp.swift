@@ -348,6 +348,9 @@ private struct MacJournalEditor: View {
 /// Read-only series browser backed by the same device-local database as Home and Journal.
 private struct MacSeriesView: View {
     @State private var series: [SeriesDetail] = []
+    @State private var showingCreate = false
+    @State private var newSeriesName = ""
+    @State private var newSeriesAuthor = ""
     @State private var query = ""
     @State private var filter: SeriesFilter = .all
     @State private var sort: SeriesSort = .recentlyUpdated
@@ -356,7 +359,11 @@ private struct MacSeriesView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Series").font(.title2.bold())
+            HStack {
+                Text("Series").font(.title2.bold())
+                Spacer()
+                Button("Add Series", systemImage: "plus") { showingCreate = true }
+            }
             TextField("Search series or book titles", text: $query)
                 .textFieldStyle(.roundedBorder)
                 .onChange(of: query) { _, _ in refresh() }
@@ -406,6 +413,24 @@ private struct MacSeriesView: View {
                 .font(.caption).foregroundStyle(.secondary)
         }
         .task { refresh() }
+        .sheet(isPresented: $showingCreate) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Add a Series").font(.title2.bold())
+                TextField("Series name", text: $newSeriesName)
+                TextField("Author (optional)", text: $newSeriesAuthor)
+                Text("You can add volumes to this series in a later step.")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack {
+                    Button("Cancel") { showingCreate = false }
+                    Spacer()
+                    Button("Create Series") { createSeries() }
+                        .disabled(newSeriesName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .keyboardShortcut(.defaultAction)
+                }
+            }
+            .padding(24)
+            .frame(width: 440)
+        }
         .sheet(isPresented: Binding(
             get: { selectedSeries != nil },
             set: { if !$0 { selectedSeries = nil } }
@@ -447,6 +472,38 @@ private struct MacSeriesView: View {
             .padding(24)
             .frame(minWidth: 540, minHeight: 420)
             }
+        }
+    }
+
+    @MainActor private func createSeries() {
+        do {
+            let root = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                                   appropriateFor: nil, create: true)
+                .appendingPathComponent("ReadingCompanion", isDirectory: true)
+            try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+            let identity = root.appendingPathComponent("local-owner.txt")
+            let owner: UUID
+            if FileManager.default.fileExists(atPath: identity.path) {
+                guard let saved = UUID(uuidString: try String(contentsOf: identity, encoding: .utf8)) else {
+                    throw CocoaError(.fileReadCorruptFile)
+                }
+                owner = saved
+            } else {
+                owner = UUID()
+                try owner.uuidString.write(to: identity, atomically: true, encoding: .utf8)
+            }
+            let store = try LocalStore(path: root.appendingPathComponent(owner.uuidString + ".sqlite").path,
+                                       ownerID: owner)
+            let name = newSeriesName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let author = newSeriesAuthor.trimmingCharacters(in: .whitespacesAndNewlines)
+            let record = ReadingSeries(ownerID: owner, name: name, author: author.isEmpty ? nil : author)
+            try store.saveSeries(record, entries: [])
+            newSeriesName = ""
+            newSeriesAuthor = ""
+            showingCreate = false
+            refresh()
+        } catch {
+            errorMessage = "Unable to create series: \(error.localizedDescription)"
         }
     }
 
