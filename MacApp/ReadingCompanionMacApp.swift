@@ -349,6 +349,8 @@ private struct MacJournalEditor: View {
 private struct MacSeriesView: View {
     @State private var series: [SeriesDetail] = []
     @State private var showingCreate = false
+    @State private var showingDeleteSeries = false
+    @State private var deletingEntry: SeriesEntry?
     @State private var showingEditSeries = false
     @State private var editSeriesName = ""
     @State private var editSeriesAuthor = ""
@@ -473,6 +475,32 @@ private struct MacSeriesView: View {
                 .frame(width: 500)
             }
         }
+        .confirmationDialog(
+            "Delete this series?",
+            isPresented: $showingDeleteSeries,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Series", role: .destructive) { deleteSelectedSeries() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This deletes the series and its volume associations. Library books and reading history remain untouched.")
+        }
+        .confirmationDialog(
+            "Delete this volume?",
+            isPresented: Binding(
+                get: { deletingEntry != nil },
+                set: { if !$0 { deletingEntry = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Delete Volume", role: .destructive) {
+                if let entry = deletingEntry { deleteVolume(entry) }
+                deletingEntry = nil
+            }
+            Button("Cancel", role: .cancel) { deletingEntry = nil }
+        } message: {
+            Text("This removes the volume from the series, not the linked library book or reading history.")
+        }
         .sheet(isPresented: $showingEditSeries) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Edit Series").font(.title2.bold())
@@ -549,6 +577,9 @@ private struct MacSeriesView: View {
                 HStack {
                     Text(detail.series.name).font(.title2.bold())
                     Spacer()
+                    Button("Delete Series", role: .destructive) {
+                        showingDeleteSeries = true
+                    }
                     Button("Edit Series") {
                         editSeriesName = detail.series.name
                         editSeriesAuthor = detail.series.author ?? ""
@@ -579,6 +610,10 @@ private struct MacSeriesView: View {
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
+                                    Button("Delete", role: .destructive) {
+                                        deletingEntry = entry
+                                    }
+                                    .buttonStyle(.link)
                                     Button("Edit") {
                                         editVolumeTitle = entry.title
                                         editVolumePosition = NSDecimalNumber(decimal: entry.position).stringValue
@@ -663,6 +698,31 @@ private struct MacSeriesView: View {
         } catch {
             errorMessage = "Unable to update volume: \(error.localizedDescription)"
             editingEntry = nil
+        }
+    }
+
+    @MainActor private func deleteSelectedSeries() {
+        guard let detail = selectedSeries else { return }
+        do {
+            try existingSeriesStore().deleteSeries(id: detail.series.id)
+            selectedSeries = nil
+            errorMessage = nil
+            refresh()
+        } catch {
+            errorMessage = "Unable to delete series: \(error.localizedDescription)"
+        }
+    }
+
+    @MainActor private func deleteVolume(_ entry: SeriesEntry) {
+        guard let detail = selectedSeries else { return }
+        do {
+            let store = try existingSeriesStore()
+            try store.deleteSeriesEntry(id: entry.id, seriesID: detail.series.id)
+            selectedSeries = try store.seriesDetail(id: detail.series.id)
+            errorMessage = nil
+            refresh()
+        } catch {
+            errorMessage = "Unable to delete volume: \(error.localizedDescription)"
         }
     }
 
