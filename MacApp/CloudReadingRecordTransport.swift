@@ -54,7 +54,7 @@ struct CloudReadingRecordTransport {
     }
 }
 
-private struct JSONDocument: Decodable, Sendable {
+struct JSONDocument: Decodable, Sendable {
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         _ = try container.decode([String: JSONNode].self)
