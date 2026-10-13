@@ -231,6 +231,7 @@ private struct MacJournalEditor: View {
     @Environment(\.dismiss) private var dismiss
     let item: JournalInboxItem
     @State private var summary: String
+    @State private var formatText: String
     @State private var startDateText: String
     @State private var finishDateText: String
     @State private var ratingSelection: Int
@@ -240,6 +241,7 @@ private struct MacJournalEditor: View {
     init(item: JournalInboxItem) {
         self.item = item
         _summary = State(initialValue: item.entry.summary ?? "")
+        _formatText = State(initialValue: item.reading.journalFormat?.rawValue ?? "")
         _pages = State(initialValue: item.entry.pageCount.map(String.init) ?? "")
         _startDateText = State(initialValue: item.reading.startDate?.isoString ?? "")
         _finishDateText = State(initialValue: item.reading.finishDate?.isoString ?? "")
@@ -268,21 +270,24 @@ private struct MacJournalEditor: View {
                     Text("\(stars) stars").tag(stars)
                 }
             }
+            TextField("Reading format", text: $formatText)
+            Text("Enter a supported format identifier. The format must be valid to save.")
+                .font(.caption).foregroundStyle(.secondary)
             TextField("Pages (optional)", text: $pages)
             TextField("Start date (YYYY-MM-DD, optional)", text: $startDateText)
             TextField("Finish date (YYYY-MM-DD, optional)", text: $finishDateText)
             Text("Summary").font(.headline)
             TextEditor(text: $summary).frame(minHeight: 180)
-            if item.reading.journalFormat == nil {
-                Text("Set a reading format on iPhone before editing this entry.")
-                    .foregroundStyle(.secondary)
+            if !formatText.isEmpty && JournalFormat(rawValue: formatText) == nil {
+                Text("Unsupported reading format. Use a valid format identifier.")
+                    .foregroundStyle(.red)
             }
             if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }
                 Button("Save Changes") { save() }
-                    .disabled(item.reading.journalFormat == nil ||
+                    .disabled(JournalFormat(rawValue: formatText) == nil ||
                               summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                               (!pages.isEmpty && (Int(pages) ?? 0) <= 0) ||
                               !validDateText(startDateText) || !validDateText(finishDateText))
@@ -306,7 +311,7 @@ private struct MacJournalEditor: View {
     }
 
     @MainActor private func save() {
-        guard let format = item.reading.journalFormat else { return }
+        guard let format = JournalFormat(rawValue: formatText) else { return }
         do {
             let root = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
                                                    appropriateFor: nil, create: true)
