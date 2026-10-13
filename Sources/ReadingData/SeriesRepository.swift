@@ -62,6 +62,32 @@ extension LocalStore: SeriesRepository {
         }
     }
 
+    public func deleteSeriesEntry(id: UUID, seriesID: UUID) throws {
+        try queue.write { db in
+            guard try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM series_entries WHERE owner_id=? AND id=? AND series_id=?",
+                                   arguments: [ownerID.uuidString,id.uuidString,seriesID.uuidString]) == 1 else {
+                throw DomainError.invalidTransition
+            }
+            try db.execute(sql: "DELETE FROM series_entries WHERE owner_id=? AND id=? AND series_id=?",
+                           arguments: [ownerID.uuidString,id.uuidString,seriesID.uuidString])
+            try db.execute(sql: "UPDATE series SET updated_at=? WHERE owner_id=? AND id=?",
+                           arguments: [stamp(),ownerID.uuidString,seriesID.uuidString])
+        }
+    }
+
+    public func deleteSeries(id: UUID) throws {
+        try queue.write { db in
+            guard try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM series WHERE owner_id=? AND id=?",
+                                   arguments: [ownerID.uuidString,id.uuidString]) == 1 else {
+                throw DomainError.invalidTransition
+            }
+            try db.execute(sql: "DELETE FROM series_entries WHERE owner_id=? AND series_id=?",
+                           arguments: [ownerID.uuidString,id.uuidString])
+            try db.execute(sql: "DELETE FROM series WHERE owner_id=? AND id=?",
+                           arguments: [ownerID.uuidString,id.uuidString])
+        }
+    }
+
     public func setStatusOverride(seriesID: UUID, status: SeriesStatus?) throws { try queue.write { db in
         guard try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM series WHERE owner_id=? AND id=?", arguments: [ownerID.uuidString,seriesID.uuidString]) == 1 else { throw DomainError.invalidTransition }
         try db.execute(sql: "UPDATE series SET user_status_override=?,updated_at=? WHERE owner_id=? AND id=?", arguments: [status?.rawValue,stamp(),ownerID.uuidString,seriesID.uuidString])
