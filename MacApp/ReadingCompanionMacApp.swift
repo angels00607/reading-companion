@@ -350,6 +350,9 @@ private struct MacSeriesView: View {
     @State private var series: [SeriesDetail] = []
     @State private var showingCreate = false
     @State private var showingAddVolume = false
+    @State private var linkingEntry: SeriesEntry?
+    @State private var linkCandidates: [CatalogRecord] = []
+    @State private var chosenBookID: UUID?
     @State private var volumeTitle = ""
     @State private var volumePosition = ""
     @State private var volumeKind: SeriesEntryKind = .main
@@ -435,6 +438,34 @@ private struct MacSeriesView: View {
             .padding(24)
             .frame(width: 440)
         }
+        .sheet(isPresented: Binding(
+            get: { linkingEntry != nil },
+            set: { if !$0 { linkingEntry = nil } }
+        )) {
+            if let entry = linkingEntry {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Link a Library Book").font(.title2.bold())
+                    Text(entry.title).foregroundStyle(.secondary)
+                    Picker("Library book", selection: $chosenBookID) {
+                        Text("No linked book").tag(UUID?.none)
+                        ForEach(linkCandidates, id: \.book.id) { candidate in
+                            Text("\(candidate.book.title) — \(candidate.book.author)")
+                                .tag(Optional(candidate.book.id))
+                        }
+                    }
+                    Text("Read progress comes from the linked book's recorded reading status.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    HStack {
+                        Button("Cancel") { linkingEntry = nil }
+                        Spacer()
+                        Button("Save Link") { saveLink(entry) }
+                            .keyboardShortcut(.defaultAction)
+                    }
+                }
+                .padding(24)
+                .frame(width: 500)
+            }
+        }
         .sheet(isPresented: $showingAddVolume) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Add a Volume").font(.title2.bold())
@@ -493,6 +524,10 @@ private struct MacSeriesView: View {
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
                                     Spacer()
+                                    Button(entry.bookID == nil ? "Link Book" : "Change Link") {
+                                        beginLink(entry)
+                                    }
+                                    .buttonStyle(.link)
                                     if entry.isRead {
                                         Label("Read", systemImage: "checkmark.circle.fill")
                                     }
@@ -507,6 +542,53 @@ private struct MacSeriesView: View {
             .frame(minWidth: 540, minHeight: 420)
             }
         }
+    }
+
+    @MainActor private func beginLink(_ entry: SeriesEntry) {
+        do {
+            let store = try existingSeriesStore()
+            linkCandidates = try store.library(query: "", view: .all, sort: .title, limit: 500)
+            chosenBookID = entry.bookID
+            linkingEntry = entry
+            errorMessage = nil
+        } catch {
+            errorMessage = "Unable to load library books: \(error.localizedDescription)"
+        }
+    }
+
+    @MainActor private func saveLink(_ entry: SeriesEntry) {
+        guard let detail = selectedSeries else { return }
+        do {
+            let store = try existingSeriesStore()
+            var updated = detail.entries
+            guard let index = updated.firstIndex(where: { $0.id == entry.id }) else { return }
+            updated[index] = SeriesEntry(id: entry.id, seriesID: entry.seriesID,
+                                         bookID: chosenBookID, title: entry.title,
+                                         position: entry.position, kind: entry.kind,
+                                         publication: entry.publication, release: entry.release,
+                                         included: entry.included, includedInTracker: entry.includedInTracker)
+            try store.saveSeries(detail.series, entries: updated)
+            selectedSeries = try store.seriesDetail(id: detail.series.id)
+            linkingEntry = nil
+            errorMessage = nil
+            refresh()
+        } catch {
+            errorMessage = "Unable to save book link: \(error.localizedDescription)"
+            linkingEntry = nil
+        }
+    }
+
+    private func existingSeriesStore() throws -> LocalStore {
+        let root = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                               appropriateFor: nil, create: true)
+            .appendingPathComponent("ReadingCompanion", isDirectory: true)
+        let identity = root.appendingPathComponent("local-owner.txt")
+        guard FileManager.default.fileExists(atPath: identity.path),
+              let owner = UUID(uuidString: try String(contentsOf: identity, encoding: .utf8)) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        return try LocalStore(path: root.appendingPathComponent(owner.uuidString + ".sqlite").path,
+                              ownerID: owner)
     }
 
     private var validVolumePosition: Decimal? {
