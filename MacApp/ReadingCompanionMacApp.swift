@@ -1,18 +1,80 @@
 import SwiftUI
+import AuthenticationServices
 import ReadingUI
 import ReadingData
 import ReadingDomain
 
 @main
 struct ReadingCompanionMacApp: App {
+    @State private var appleSignIn = MacAppleSignInState()
+
     var body: some Scene {
         WindowGroup("Reading Companion") {
-            FoundationShell(homeContent: AnyView(MacLibraryView()),
+            VStack(spacing: 0) {
+                MacAppleSignInPanel(state: appleSignIn)
+                Divider()
+                FoundationShell(homeContent: AnyView(MacLibraryView()),
                             journalContent: AnyView(MacJournalView()),
                             seriesContent: AnyView(MacSeriesView()))
                 .frame(minWidth: 760, minHeight: 520)
+            }
         }
         .defaultSize(width: 1100, height: 760)
+    }
+}
+
+
+@MainActor @Observable
+private final class MacAppleSignInState {
+    private(set) var accountLabel: String?
+    private(set) var errorMessage: String?
+    private(set) var credentialVerified = false
+
+    func handle(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .failure(let error):
+            credentialVerified = false
+            errorMessage = "Apple sign-in failed: \(error.localizedDescription)"
+        case .success(let authorization):
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  !credential.user.isEmpty,
+                  let token = credential.identityToken,
+                  !token.isEmpty else {
+                credentialVerified = false
+                errorMessage = "Apple did not provide a usable identity token."
+                return
+            }
+            // The identity token must be verified by Supabase before it is used
+            // to select or migrate any local SQLite owner. Never persist this token.
+            accountLabel = credential.email ?? "Apple account authorization received"
+            credentialVerified = false
+            errorMessage = nil
+        }
+    }
+}
+
+private struct MacAppleSignInPanel: View {
+    let state: MacAppleSignInState
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SignInWithAppleButton(.signIn, onRequest: { request in
+                request.requestedScopes = [.email]
+            }, onCompletion: state.handle)
+            .signInWithAppleButtonStyle(.black)
+            .frame(width: 190, height: 42)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Apple Account").font(.headline)
+                Text(state.accountLabel ?? "Local-only library. Cloud account not connected.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if let error = state.errorMessage {
+                    Text(error).font(.caption).foregroundStyle(.red)
+                }
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
     }
 }
 
