@@ -4,6 +4,9 @@ options:
     iOS: "17.0"
     macOS: "14.0"
 packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: 2.0.0
   Foundations:
     path: .
 configs:
@@ -52,10 +55,13 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.readingcompanion.mac
+        INFOPLIST_KEY_CFBundleURLTypes: ''
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Reading Companion
     dependencies:
+      - package: Supabase
+        product: Supabase
       - package: Foundations
         product: ReadingUI
       - package: Foundations
