@@ -1,5 +1,7 @@
 import SwiftUI
 import AuthenticationServices
+import CryptoKit
+import Security
 import ReadingUI
 import ReadingData
 import ReadingDomain
@@ -28,28 +30,52 @@ struct ReadingCompanionMacApp: App {
 private final class MacAppleSignInState {
     private(set) var accountLabel: String?
     private(set) var errorMessage: String?
-    private(set) var credentialVerified = false
+    private var pendingNonce: String?
+
+    func prepare(_ request: ASAuthorizationAppleIDRequest) {
+        do {
+            let nonce = try secureNonce()
+            pendingNonce = nonce
+            request.nonce = SHA256.hash(data: Data(nonce.utf8))
+                .map { String(format: "%02x", $0) }.joined()
+            request.requestedScopes = [.email]
+            errorMessage = nil
+        } catch {
+            pendingNonce = nil
+            errorMessage = "Unable to prepare a secure Apple sign-in request."
+        }
+    }
 
     func handle(_ result: Result<ASAuthorization, Error>) {
+        defer { pendingNonce = nil }
         switch result {
         case .failure(let error):
-            credentialVerified = false
-            errorMessage = "Apple sign-in failed: \(error.localizedDescription)"
+            errorMessage = "Apple sign-in failed: \\(error.localizedDescription)"
         case .success(let authorization):
-            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+            guard pendingNonce != nil,
+                  let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
                   !credential.user.isEmpty,
                   let token = credential.identityToken,
                   !token.isEmpty else {
-                credentialVerified = false
-                errorMessage = "Apple did not provide a usable identity token."
+                errorMessage = "Apple sign-in response could not be validated locally."
                 return
             }
-            // The identity token must be verified by Supabase before it is used
-            // to select or migrate any local SQLite owner. Never persist this token.
-            accountLabel = credential.email ?? "Apple account authorization received"
-            credentialVerified = false
+            // An Apple credential alone is NOT an authenticated Supabase session.
+            // A future cloud exchange must use this request's raw nonce and the
+            // identity token, then verify the returned Supabase user before any
+            // local owner migration. Do not persist either value here.
+            accountLabel = "Apple authorization received — cloud not connected"
             errorMessage = nil
         }
+    }
+
+    private func secureNonce(length: Int = 32) throws -> String {
+        let alphabet = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var bytes = [UInt8](repeating: 0, count: length)
+        guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {
+            throw CocoaError(.fileReadUnknown)
+        }
+        return String(bytes.map { alphabet[Int($0) % alphabet.count] })
     }
 }
 
@@ -58,11 +84,9 @@ private struct MacAppleSignInPanel: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            SignInWithAppleButton(.signIn, onRequest: { request in
-                request.requestedScopes = [.email]
-            }, onCompletion: state.handle)
-            .signInWithAppleButtonStyle(.black)
-            .frame(width: 190, height: 42)
+            SignInWithAppleButton(.signIn, onRequest: state.prepare, onCompletion: state.handle)
+                .signInWithAppleButtonStyle(.black)
+                .frame(width: 190, height: 42)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Apple Account").font(.headline)
                 Text(state.accountLabel ?? "Local-only library. Cloud account not connected.")
