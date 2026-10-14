@@ -54,14 +54,26 @@ struct CloudReadingRecordTransport {
     }
 }
 
-struct JSONDocument: Decodable, Sendable {
+/// Preserves the entire JSON object, including nested values and arrays.
+struct JSONDocument: Codable, Sendable, Equatable {
+    let value: [String: JSONNode]
+
+    init(value: [String: JSONNode]) {
+        self.value = value
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        _ = try container.decode([String: JSONNode].self)
+        value = try container.decode([String: JSONNode].self)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(value)
     }
 }
 
-private indirect enum JSONNode: Decodable, Sendable {
+indirect enum JSONNode: Codable, Sendable, Equatable {
     case null, bool(Bool), number(Double), string(String), array([JSONNode]), object([String: JSONNode])
 
     init(from decoder: Decoder) throws {
@@ -72,5 +84,17 @@ private indirect enum JSONNode: Decodable, Sendable {
         else if let x = try? c.decode(String.self) { self = .string(x) }
         else if let x = try? c.decode([JSONNode].self) { self = .array(x) }
         else { self = .object(try c.decode([String: JSONNode].self)) }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch self {
+        case .null: try c.encodeNil()
+        case .bool(let v): try c.encode(v)
+        case .number(let v): try c.encode(v)
+        case .string(let v): try c.encode(v)
+        case .array(let v): try c.encode(v)
+        case .object(let v): try c.encode(v)
+        }
     }
 }
