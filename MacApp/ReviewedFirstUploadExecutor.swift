@@ -13,15 +13,19 @@ struct ReviewedFirstUploadExecutor {
         case accountChanged
         case remoteRecordsExist
         case incompleteRemoteInventory
+        case approvalMismatch
     }
 
     /// Uses a complete, paginated remote inventory and refuses any preexisting
     /// cloud record for this account. No SQLite writes occur.
     func upload(plan: CoreSyncUploadPreview.Plan,
                 confirmed: Bool,
-                expectedAccountID: UUID) async throws -> [String: Int64] {
+                expectedAccountID: UUID,
+                approvedRecordIDs: Set<String>) async throws -> [String: Int64] {
         guard confirmed else { throw UploadError.confirmationRequired }
         guard plan.canUpload else { throw UploadError.pendingReview }
+        let plannedIDs = Set(plan.items.map { "\($0.recordType.rawValue):\($0.recordID.uuidString)" })
+        guard plannedIDs == approvedRecordIDs else { throw UploadError.approvalMismatch }
         let transport = CloudReadingRecordTransport(client: client)
         let pageSize = 200
         var offset = 0
