@@ -1,5 +1,4 @@
 import Foundation
-import ReadingDomain
 
 /// An explicit, non-mutating preview of the first cloud upload.
 /// No caller should upload if any item needs review.
@@ -52,13 +51,14 @@ public enum CoreSyncUploadPreview {
                 needsReview.append("Unconfirmed local reading deletion: \(id)")
                 continue
             }
-            if books[reading.bookID] == nil {
+            if books[reading.bookID] == nil || books[reading.bookID]?.deletedAt != nil {
                 needsReview.append("Reading references a missing local book: \(id)")
                 continue
             }
             items.append(Item(recordType: .reading, recordID: id,
                               payload: try encoder.encode(reading), isDeleted: false))
         }
+        // An incomplete export must never be mistaken for a complete library.
         return Plan(items: items, needsReview: needsReview)
     }
 }

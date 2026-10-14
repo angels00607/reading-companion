@@ -33,4 +33,21 @@ final class CoreSyncUploadPreviewTests: XCTestCase {
         let plan = try CoreSyncUploadPreview.make(books: [id: book], readings: [:], remoteRecordIDs: [])
         XCTAssertFalse(plan.canUpload)
     }
+
+    func testReadingOfDeletedBookRequiresReview() throws {
+        let bookID = UUID()
+        let readingID = UUID()
+        let book = try CoreSyncPayloads.Book(title: "A", author: "B",
+            localRevision: 1, deletedAt: "2026-10-14")
+        let reading = try CoreSyncPayloads.Reading(
+            bookID: bookID, editionID: nil, status: .read, currentPage: 50,
+            totalPages: 50, startDate: nil, finishDate: nil,
+            ratingState: .unrated, ratingWhole: nil, journalFormat: nil,
+            historical: false, localRevision: 0, deletedAt: nil)
+        let plan = try CoreSyncUploadPreview.make(
+            books: [bookID: book], readings: [readingID: reading], remoteRecordIDs: [])
+        XCTAssertFalse(plan.canUpload)
+        XCTAssertTrue(plan.items.isEmpty)
+    }
+
 }
