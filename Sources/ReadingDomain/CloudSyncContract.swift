@@ -52,8 +52,14 @@ public enum ReadingSyncPlanner {
         if local == remote { return .unchanged }
         guard let base else {
             if local == nil && remote == nil { return .unchanged }
-            if local != nil && remote == nil { return .uploadLocal }
-            if local == nil && remote != nil { return .downloadRemote }
+            // Missing data is not evidence of a deletion: it may be a partial
+            // snapshot or a device that has never synchronized.
+            if local != nil && remote == nil {
+                return local!.isDeleted ? .needsUserReview : .uploadLocal
+            }
+            if local == nil && remote != nil {
+                return remote!.isDeleted ? .needsUserReview : .downloadRemote
+            }
             return .needsUserReview
         }
         let localChanged = local != base
@@ -62,7 +68,9 @@ public enum ReadingSyncPlanner {
         case (false, false): return .unchanged
         case (true, false): return .uploadLocal
         case (false, true): return .downloadRemote
-        case (true, true): return .needsUserReview
+        case (true, true):
+            // Independently arriving at the same result is not a conflict.
+            return local == remote ? .unchanged : .needsUserReview
         }
     }
 }
