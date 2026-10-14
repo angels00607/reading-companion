@@ -10,7 +10,7 @@ struct ReviewedCloudWriter {
     struct SaveRequest: Encodable {
         let p_record_type: String
         let p_record_id: UUID
-        let p_payload: [String: String]
+        let p_payload: JSONDocument
         let p_expected_revision: Int64
         let p_is_deleted: Bool
     }
@@ -25,7 +25,7 @@ struct ReviewedCloudWriter {
     /// the server-confirmed revision. Conflicts are surfaced to the caller.
     func save(recordType: CloudReadingRecord.RecordType,
               recordID: UUID,
-              payload: [String: String],
+              payload: JSONDocument,
               expectedRevision: Int64,
               isDeleted: Bool = false) async throws -> Int64 {
         guard expectedRevision >= 0 else { throw WriteError.invalidExpectedRevision }
