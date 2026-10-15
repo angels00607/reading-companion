@@ -231,7 +231,7 @@ private struct MacLibraryView: View {
                 }
             }
             .padding(24)
-            .frame(width: 580, minHeight: 380)
+            .frame(width: 580, height: 420)
         }
         .sheet(isPresented: $showingAdd) {
             VStack(alignment: .leading, spacing: 16) {
