@@ -109,6 +109,9 @@ private struct MacLibraryView: View {
     @State private var showingSyncPreview = false
     @State private var syncPreview: CoreSyncUploadPreview.Plan?
     @State private var syncPreviewError: String?
+    @State private var cloudInventory: ReviewedCloudInventory.Summary?
+    @State private var cloudInventoryError: String?
+    @State private var checkingCloud = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -173,6 +176,21 @@ private struct MacLibraryView: View {
         .sheet(isPresented: $showingSyncPreview) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Cloud Transfer Preview").font(.title2.bold())
+                Button("Check Supabase (read-only)") {
+                    Task { await inspectCloud() }
+                }
+                .disabled(checkingCloud)
+                if checkingCloud { ProgressView() }
+                if let cloudInventory {
+                    Text("Cloud account: \(cloudInventory.accountID.uuidString)")
+                        .font(.caption).textSelection(.enabled)
+                    Text("Already in cloud: \(cloudInventory.existingBooks) books, \(cloudInventory.existingReadings) readings, \(cloudInventory.otherRecords) other records.")
+                    Text("Cloud records are never overwritten from this preview.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                if let cloudInventoryError {
+                    Text(cloudInventoryError).foregroundStyle(.red).font(.caption)
+                }
                 if let syncPreviewError {
                     Text(syncPreviewError).foregroundStyle(.red)
                 } else if let syncPreview {
@@ -220,6 +238,8 @@ private struct MacLibraryView: View {
     @MainActor private func previewCloudTransfer() {
         syncPreview = nil
         syncPreviewError = nil
+        cloudInventory = nil
+        cloudInventoryError = nil
         do {
             guard let store else { return }
             syncPreview = try store.coreSyncPreview()
@@ -227,6 +247,20 @@ private struct MacLibraryView: View {
             syncPreviewError = "Unable to prepare preview: \(error.localizedDescription)"
         }
         showingSyncPreview = true
+    }
+
+    @MainActor private func inspectCloud() async {
+        guard !checkingCloud else { return }
+        checkingCloud = true
+        defer { checkingCloud = false }
+        cloudInventory = nil
+        cloudInventoryError = nil
+        do {
+            cloudInventory = try await ReviewedCloudInventory(
+                client: GoogleAuthConfiguration.client).inspect()
+        } catch {
+            cloudInventoryError = "Unable to inspect Supabase: \(error.localizedDescription)"
+        }
     }
 
     @MainActor private func openStore() {
