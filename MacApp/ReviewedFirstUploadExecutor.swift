@@ -21,11 +21,14 @@ struct ReviewedFirstUploadExecutor {
     func upload(plan: CoreSyncUploadPreview.Plan,
                 confirmed: Bool,
                 expectedAccountID: UUID,
-                approvedRecordIDs: Set<String>) async throws -> [String: Int64] {
+                approvedRecordIDs: Set<String>,
+                approvedItems: [CoreSyncUploadPreview.Item]) async throws -> [String: Int64] {
         guard confirmed else { throw UploadError.confirmationRequired }
         guard plan.canUpload else { throw UploadError.pendingReview }
         let plannedIDs = Set(plan.items.map { "\($0.recordType.rawValue):\($0.recordID.uuidString)" })
-        guard plannedIDs == approvedRecordIDs else { throw UploadError.approvalMismatch }
+        guard plannedIDs == approvedRecordIDs, plan.items == approvedItems else {
+            throw UploadError.approvalMismatch
+        }
         let transport = CloudReadingRecordTransport(client: client)
         let pageSize = 200
         var offset = 0
