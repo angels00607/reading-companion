@@ -106,6 +106,9 @@ private struct MacLibraryView: View {
     @State private var newTitle = ""
     @State private var newAuthor = ""
     @State private var showingAdd = false
+    @State private var showingSyncPreview = false
+    @State private var syncPreview: CoreSyncUploadPreview.Plan?
+    @State private var syncPreviewError: String?
     @State private var errorMessage: String?
 
     var body: some View {
@@ -113,6 +116,8 @@ private struct MacLibraryView: View {
             HStack {
                 Text("My Library").font(.title2.bold())
                 Spacer()
+                Button("Preview Cloud Transfer") { previewCloudTransfer() }
+                    .disabled(store == nil)
                 Button("Add Book", systemImage: "plus") { showingAdd = true }
                     .disabled(store == nil)
             }
@@ -165,6 +170,34 @@ private struct MacLibraryView: View {
                 .font(.caption).foregroundStyle(.secondary)
         }
         .task { openStore() }
+        .sheet(isPresented: $showingSyncPreview) {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Cloud Transfer Preview").font(.title2.bold())
+                if let syncPreviewError {
+                    Text(syncPreviewError).foregroundStyle(.red)
+                } else if let syncPreview {
+                    let bookCount = syncPreview.items.filter { $0.recordType == .book }.count
+                    let readingCount = syncPreview.items.filter { $0.recordType == .reading }.count
+                    Text("\(bookCount) books and \(readingCount) readings prepared locally.")
+                    if !syncPreview.needsReview.isEmpty {
+                        Text("Needs review: \(syncPreview.needsReview.count)").font(.headline)
+                        ScrollView {
+                            ForEach(syncPreview.needsReview, id: \.self) { issue in
+                                Text(issue).font(.caption)
+                            }
+                        }
+                    }
+                    Text("Preview only. The cloud account and remote data have not been checked. No data will be uploaded.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                HStack {
+                    Spacer()
+                    Button("Close") { showingSyncPreview = false }
+                }
+            }
+            .padding(24)
+            .frame(width: 520, height: 320)
+        }
         .sheet(isPresented: $showingAdd) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Add a Book").font(.title2.bold())
@@ -182,6 +215,18 @@ private struct MacLibraryView: View {
             .padding(24)
             .frame(width: 420)
         }
+    }
+
+    @MainActor private func previewCloudTransfer() {
+        syncPreview = nil
+        syncPreviewError = nil
+        do {
+            guard let store else { return }
+            syncPreview = try store.coreSyncPreview()
+        } catch {
+            syncPreviewError = "Unable to prepare preview: \(error.localizedDescription)"
+        }
+        showingSyncPreview = true
     }
 
     @MainActor private func openStore() {
