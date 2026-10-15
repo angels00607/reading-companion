@@ -50,4 +50,25 @@ final class CoreSyncUploadPreviewTests: XCTestCase {
         XCTAssertTrue(plan.items.isEmpty)
     }
 
+    func testMixedCloudInventoryNeverReuploadsExistingBook() throws {
+        let existing = UUID(), fresh = UUID()
+        let book = try CoreSyncPayloads.Book(title: "A", author: "B", localRevision: 0, deletedAt: nil)
+        let plan = try CoreSyncUploadPreview.make(
+            books: [existing: book, fresh: book], readings: [:],
+            remoteRecordIDs: ["book:\(existing.uuidString)", "series:\(UUID().uuidString)"])
+        XCTAssertEqual(plan.items.map(\.recordID), [fresh])
+        XCTAssertFalse(plan.canUpload)
+        XCTAssertEqual(plan.needsReview.count, 1)
+    }
+
+    func testCloudOnlyRecordCannotBeInferredAsDeleted() throws {
+        let book = try CoreSyncPayloads.Book(title: "A", author: "B", localRevision: 0, deletedAt: nil)
+        let plan = try CoreSyncUploadPreview.make(
+            books: [UUID(): book], readings: [:],
+            remoteRecordIDs: ["book:\(UUID().uuidString)"])
+        // The planner must not create tombstones for remote-only entries.
+        XCTAssertEqual(plan.items.count, 1)
+        XCTAssertTrue(plan.items.allSatisfy { !$0.isDeleted })
+    }
+
 }
