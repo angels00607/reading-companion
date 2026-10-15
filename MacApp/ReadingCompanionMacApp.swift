@@ -222,7 +222,7 @@ private struct MacLibraryView: View {
                             }
                         }
                     }
-                    Text("Preview only. The cloud account and remote data have not been checked. No data will be uploaded.")
+                    Text(cloudInventory == nil ? "Local preview only. Check Supabase to compare. No data will be uploaded." : "Local preview before cloud comparison. See the comparison above. No data will be uploaded.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 HStack {
@@ -231,7 +231,7 @@ private struct MacLibraryView: View {
                 }
             }
             .padding(24)
-            .frame(width: 520, height: 320)
+            .frame(width: 580, minHeight: 380)
         }
         .sheet(isPresented: $showingAdd) {
             VStack(alignment: .leading, spacing: 16) {
