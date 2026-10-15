@@ -112,6 +112,7 @@ private struct MacLibraryView: View {
     @State private var cloudInventory: ReviewedCloudInventory.Summary?
     @State private var cloudInventoryError: String?
     @State private var checkingCloud = false
+    @State private var comparedPreview: CoreSyncUploadPreview.Plan?
     @State private var errorMessage: String?
 
     var body: some View {
@@ -188,6 +189,22 @@ private struct MacLibraryView: View {
                     Text("Cloud records are never overwritten from this preview.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                if let comparedPreview, let cloudInventory {
+                    let newBooks = comparedPreview.items.filter { $0.recordType == .book }.count
+                    let newReadings = comparedPreview.items.filter { $0.recordType == .reading }.count
+                    Text("Comparison: \(newBooks) new books, \(newReadings) new readings.")
+                        .font(.headline)
+                    Text("Remote records: \(cloudInventory.recordIDs.count). Local records needing review: \(comparedPreview.needsReview.count).")
+                    if !comparedPreview.needsReview.isEmpty {
+                        ScrollView {
+                            ForEach(comparedPreview.needsReview, id: \.self) { issue in
+                                Text(issue).font(.caption)
+                            }
+                        }
+                    }
+                    Text("Remote-only records are preserved. Matching identifiers require manual review; no upload or download is enabled.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 if let cloudInventoryError {
                     Text(cloudInventoryError).foregroundStyle(.red).font(.caption)
                 }
@@ -239,6 +256,7 @@ private struct MacLibraryView: View {
         syncPreview = nil
         syncPreviewError = nil
         cloudInventory = nil
+        comparedPreview = nil
         cloudInventoryError = nil
         do {
             guard let store else { return }
@@ -256,8 +274,17 @@ private struct MacLibraryView: View {
         cloudInventory = nil
         cloudInventoryError = nil
         do {
-            cloudInventory = try await ReviewedCloudInventory(
+            let inventory = try await ReviewedCloudInventory(
                 client: GoogleAuthConfiguration.client).inspect()
+            guard let store else {
+                cloudInventoryError = "Local library is unavailable."
+                return
+            }
+            // Refresh SQLite AFTER cloud inspection: stale local previews
+            // must not be treated as authorization to upload.
+            let comparison = try store.coreSyncPreview(remoteRecordIDs: inventory.recordIDs)
+            cloudInventory = inventory
+            comparedPreview = comparison
         } catch {
             cloudInventoryError = "Unable to inspect Supabase: \(error.localizedDescription)"
         }
