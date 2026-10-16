@@ -62,8 +62,8 @@ struct ReviewedFirstUploadExecutor {
                 expectedAccountID: UUID,
                 approvedRecordIDs: Set<String>,
                 approvedItems: [CoreSyncUploadPreview.Item],
-                checkpointURL: URL? = nil,
-                checkpoint: InitialTransferCheckpoint? = nil) async throws -> [String: Int64] {
+                checkpointURL: URL,
+                checkpoint: InitialTransferCheckpoint) async throws -> [String: Int64] {
         guard confirmed else { throw UploadError.confirmationRequired }
         guard plan.canUpload else { throw UploadError.pendingReview }
         let plannedIDs = Set(plan.items.map { "\($0.recordType.rawValue):\($0.recordID.uuidString)" })
@@ -100,11 +100,8 @@ struct ReviewedFirstUploadExecutor {
                 payload: document, expectedRevision: 0, isDeleted: item.isDeleted)
             let id = "\(item.recordType.rawValue):\(item.recordID.uuidString)"
             revisions[id] = revision
-            if var current = receipt, let checkpointURL {
-                try current.recordSuccess(id: id, revision: revision)
-                try current.save(to: checkpointURL, allowReplacement: true)
-                receipt = current
-            }
+            try receipt.recordSuccess(id: id, revision: revision)
+            try receipt.save(to: checkpointURL, allowReplacement: true)
         }
         return revisions
     }
