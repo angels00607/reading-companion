@@ -1,5 +1,6 @@
 import Foundation
 import ReadingDomain
+import ReadingData
 import Supabase
 
 /// A deliberately explicit first-upload operation, never invoked at launch.
@@ -14,6 +15,85 @@ struct ReviewedFirstUploadExecutor {
         case remoteRecordsExist
         case incompleteRemoteInventory
         case approvalMismatch
+        case localSnapshotChanged
+    }
+
+    /// An approved transfer must re-read SQLite immediately before sending.
+    /// A backup is mandatory and the authorization is tied to both identities.
+    /// The caller must retain the approval and backup for recovery.
+    func uploadApproved(store: LocalStore,
+                        approval: InitialTransferApproval,
+                        approvedItems: [CoreSyncUploadPreview.Item],
+                        backupURL: URL,
+                        confirmed: Bool) async throws -> [String: Int64] {
+        guard confirmed else { throw UploadError.confirmationRequired }
+        let currentAccount = try await client.auth.session.user.id
+        guard currentAccount == approval.cloudAccountID else {
+            throw UploadError.accountChanged
+        }
+        let latest = try store.coreSyncPreview()
+        guard latest.canUpload,
+              approval.matches(localOwnerID: store.ownerID,
+                               cloudAccountID: currentAccount,
+                               records: latest.items),
+              latest.items == approvedItems else {
+            throw UploadError.localSnapshotChanged
+        }
+        // The SQLite backup is created only after the fresh snapshot passes.
+        // If backup fails, upload never starts.
+        try store.createPreTransferBackup(at: backupURL)
+        let checkpointURL = backupURL.deletingPathExtension()
+            .appendingPathExtension("checkpoint.json")
+        let checkpoint = InitialTransferCheckpoint(approval: approval, backupURL: backupURL)
+        // Persist the initial checkpoint before the first cloud write.
+        try checkpoint.save(to: checkpointURL)
+        return try await upload(plan: latest, confirmed: confirmed,
+                                expectedAccountID: currentAccount,
+                                approvedRecordIDs: Set(approval.approvedRecordIDs),
+                                approvedItems: approvedItems,
+                                checkpointURL: checkpointURL,
+                                checkpoint: checkpoint)
+    }
+
+    /// Resume only after read-only reconciliation of every remote row.
+    /// An unknown or modified cloud record blocks the entire operation.
+    func resumeApproved(store: LocalStore,
+                        approval: InitialTransferApproval,
+                        approvedItems: [CoreSyncUploadPreview.Item],
+                        checkpointURL: URL,
+                        confirmed: Bool) async throws -> [String: Int64] {
+        guard confirmed else { throw UploadError.confirmationRequired }
+        let latest = try store.coreSyncPreview()
+        guard latest.canUpload,
+              approval.matches(localOwnerID: store.ownerID,
+                               cloudAccountID: approval.cloudAccountID,
+                               records: latest.items),
+              latest.items == approvedItems else {
+            throw UploadError.localSnapshotChanged
+        }
+        let inspector = ReviewedTransferRecoveryInspector(client: client)
+        let result = try await inspector.inspect(store: store, approval: approval,
+                                                 checkpointURL: checkpointURL)
+        guard result.canResume else { throw UploadError.approvalMismatch }
+        var checkpoint = try InitialTransferCheckpoint.load(from: checkpointURL)
+        guard checkpoint.matches(approval) else { throw UploadError.approvalMismatch }
+        let writer = ReviewedCloudWriter(client: client)
+        for id in result.remainingIDs {
+            guard try await client.auth.session.user.id == approval.cloudAccountID else {
+                throw UploadError.accountChanged
+            }
+            guard let item = latest.items.first(where: {
+                "\($0.recordType.rawValue):\($0.recordID.uuidString)" == id
+            }) else { throw UploadError.approvalMismatch }
+            // Create-only CAS: never overwrite a remote row on resume.
+            let payload = try JSONDecoder().decode(JSONDocument.self, from: item.payload)
+            let revision = try await writer.save(
+                recordType: item.recordType, recordID: item.recordID,
+                payload: payload, expectedRevision: 0, isDeleted: item.isDeleted)
+            try checkpoint.recordSuccess(id: id, revision: revision)
+            try checkpoint.save(to: checkpointURL, allowReplacement: true)
+        }
+        return checkpoint.successfulRevisions
     }
 
     /// Uses a complete, paginated remote inventory and refuses any preexisting
@@ -22,7 +102,9 @@ struct ReviewedFirstUploadExecutor {
                 confirmed: Bool,
                 expectedAccountID: UUID,
                 approvedRecordIDs: Set<String>,
-                approvedItems: [CoreSyncUploadPreview.Item]) async throws -> [String: Int64] {
+                approvedItems: [CoreSyncUploadPreview.Item],
+                checkpointURL: URL,
+                checkpoint: InitialTransferCheckpoint) async throws -> [String: Int64] {
         guard confirmed else { throw UploadError.confirmationRequired }
         guard plan.canUpload else { throw UploadError.pendingReview }
         let plannedIDs = Set(plan.items.map { "\($0.recordType.rawValue):\($0.recordID.uuidString)" })
@@ -48,6 +130,7 @@ struct ReviewedFirstUploadExecutor {
 
         let writer = ReviewedCloudWriter(client: client)
         var revisions: [String: Int64] = [:]
+        var receipt = checkpoint
         for item in plan.items {
             guard try await client.auth.session.user.id == expectedAccountID else {
                 throw UploadError.accountChanged
@@ -56,7 +139,10 @@ struct ReviewedFirstUploadExecutor {
             let revision = try await writer.save(
                 recordType: item.recordType, recordID: item.recordID,
                 payload: document, expectedRevision: 0, isDeleted: item.isDeleted)
-            revisions["\(item.recordType.rawValue):\(item.recordID.uuidString)"] = revision
+            let id = "\(item.recordType.rawValue):\(item.recordID.uuidString)"
+            revisions[id] = revision
+            try receipt.recordSuccess(id: id, revision: revision)
+            try receipt.save(to: checkpointURL, allowReplacement: true)
         }
         return revisions
     }

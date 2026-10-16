@@ -74,12 +74,13 @@ struct JSONDocument: Codable, Sendable, Equatable {
 }
 
 indirect enum JSONNode: Codable, Sendable, Equatable {
-    case null, bool(Bool), number(Double), string(String), array([JSONNode]), object([String: JSONNode])
+    case null, bool(Bool), integer(Int64), number(Double), string(String), array([JSONNode]), object([String: JSONNode])
 
     init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
         if c.decodeNil() { self = .null }
         else if let x = try? c.decode(Bool.self) { self = .bool(x) }
+        else if let x = try? c.decode(Int64.self) { self = .integer(x) }
         else if let x = try? c.decode(Double.self) { self = .number(x) }
         else if let x = try? c.decode(String.self) { self = .string(x) }
         else if let x = try? c.decode([JSONNode].self) { self = .array(x) }
@@ -91,6 +92,7 @@ indirect enum JSONNode: Codable, Sendable, Equatable {
         switch self {
         case .null: try c.encodeNil()
         case .bool(let v): try c.encode(v)
+        case .integer(let v): try c.encode(v)
         case .number(let v): try c.encode(v)
         case .string(let v): try c.encode(v)
         case .array(let v): try c.encode(v)

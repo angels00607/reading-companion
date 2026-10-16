@@ -113,6 +113,8 @@ private struct MacLibraryView: View {
     @State private var cloudInventoryError: String?
     @State private var checkingCloud = false
     @State private var comparedPreview: CoreSyncUploadPreview.Plan?
+    @State private var backupStatus: String?
+    @State private var backupError: String?
     @State private var errorMessage: String?
 
     var body: some View {
@@ -205,6 +207,18 @@ private struct MacLibraryView: View {
                     Text("Remote-only records are preserved. Matching identifiers require manual review; no upload or download is enabled.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                Divider()
+                Text("Local Safety Backup").font(.headline)
+                Text("Create a separate SQLite backup before any future cloud transfer. This does not upload data.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button("Create Local Backup") { createLocalBackup() }
+                    .disabled(store == nil || checkingCloud)
+                if let backupStatus {
+                    Text(backupStatus).font(.caption).textSelection(.enabled)
+                }
+                if let backupError {
+                    Text(backupError).font(.caption).foregroundStyle(.red)
+                }
                 if let cloudInventoryError {
                     Text(cloudInventoryError).foregroundStyle(.red).font(.caption)
                 }
@@ -252,9 +266,30 @@ private struct MacLibraryView: View {
         }
     }
 
+    @MainActor private func createLocalBackup() {
+        backupStatus = nil
+        backupError = nil
+        guard let store else { return }
+        do {
+            let directory = try FileManager.default.url(
+                for: .applicationSupportDirectory, in: .userDomainMask,
+                appropriateFor: nil, create: true)
+                .appendingPathComponent("ReadingCompanion", isDirectory: true)
+                .appendingPathComponent("Backups", isDirectory: true)
+            let destination = directory.appendingPathComponent(
+                "before-transfer-\(UUID().uuidString).sqlite")
+            let saved = try store.createPreTransferBackup(at: destination)
+            backupStatus = "Backup created: \(saved.path)"
+        } catch {
+            backupError = "Backup failed: \(error.localizedDescription)"
+        }
+    }
+
     @MainActor private func previewCloudTransfer() {
         syncPreview = nil
         syncPreviewError = nil
+        backupStatus = nil
+        backupError = nil
         cloudInventory = nil
         comparedPreview = nil
         cloudInventoryError = nil
