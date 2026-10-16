@@ -1,5 +1,6 @@
 import Foundation
 import ReadingDomain
+import ReadingData
 import Supabase
 
 /// A deliberately explicit first-upload operation, never invoked at launch.
@@ -14,6 +15,37 @@ struct ReviewedFirstUploadExecutor {
         case remoteRecordsExist
         case incompleteRemoteInventory
         case approvalMismatch
+        case localSnapshotChanged
+    }
+
+    /// An approved transfer must re-read SQLite immediately before sending.
+    /// A backup is mandatory and the authorization is tied to both identities.
+    /// The caller must retain the approval and backup for recovery.
+    func uploadApproved(store: LocalStore,
+                        approval: InitialTransferApproval,
+                        approvedItems: [CoreSyncUploadPreview.Item],
+                        backupURL: URL,
+                        confirmed: Bool) async throws -> [String: Int64] {
+        guard confirmed else { throw UploadError.confirmationRequired }
+        let currentAccount = try await client.auth.session.user.id
+        guard currentAccount == approval.cloudAccountID else {
+            throw UploadError.accountChanged
+        }
+        let latest = try store.coreSyncPreview()
+        guard latest.canUpload,
+              approval.matches(localOwnerID: store.ownerID,
+                               cloudAccountID: currentAccount,
+                               records: latest.items),
+              latest.items == approvedItems else {
+            throw UploadError.localSnapshotChanged
+        }
+        // The SQLite backup is created only after the fresh snapshot passes.
+        // If backup fails, upload never starts.
+        try store.createPreTransferBackup(at: backupURL)
+        return try await upload(plan: latest, confirmed: confirmed,
+                                expectedAccountID: currentAccount,
+                                approvedRecordIDs: Set(approval.approvedRecordIDs),
+                                approvedItems: approvedItems)
     }
 
     /// Uses a complete, paginated remote inventory and refuses any preexisting
