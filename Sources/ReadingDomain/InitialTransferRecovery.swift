@@ -10,6 +10,34 @@ public enum InitialTransferRecovery {
         public var canResume: Bool { conflictingIDs.isEmpty }
     }
 
+    /// Stronger recovery validation: a matching revision is not sufficient.
+    /// Compare each acknowledged record's canonical JSON bytes to the approved
+    /// upload bytes; unknown, missing or altered remote payloads block resumption.
+    /// The caller must verify the remote owner and deletion flag before using this.
+    public static func reconcileVerified(
+        approvedPayloads: [String: Data],
+        successfulRevisions: [String: Int64],
+        remoteRecords: [String: (revision: Int64, payload: Data)]
+    ) -> Result {
+        let baseline = reconcile(
+            approvedRecordIDs: Array(approvedPayloads.keys),
+            successfulRevisions: successfulRevisions,
+            remoteRevisions: remoteRecords.mapValues { $0.revision })
+        var conflicts = Set(baseline.conflictingIDs)
+        for id in baseline.completedIDs {
+            guard let approved = approvedPayloads[id],
+                  let remote = remoteRecords[id],
+                  approved == remote.payload else {
+                conflicts.insert(id)
+                continue
+            }
+        }
+        return Result(
+            completedIDs: baseline.completedIDs.filter { !conflicts.contains($0) },
+            remainingIDs: baseline.remainingIDs,
+            conflictingIDs: conflicts.sorted())
+    }
+
     /// A successful write receipt is valid only when its cloud revision still
     /// matches the remote inventory. Unrecognized cloud records block resumption.
     public static func reconcile(
