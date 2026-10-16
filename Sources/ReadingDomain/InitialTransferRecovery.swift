@@ -38,6 +38,49 @@ public enum InitialTransferRecovery {
             conflictingIDs: conflicts.sorted())
     }
 
+    /// Complete recovery comparison including the account owner and deletion state.
+    /// The approved payloads must be the same exact bytes reviewed by the user.
+    public struct VerifiedRemoteRecord: Sendable {
+        public let ownerID: UUID
+        public let revision: Int64
+        public let payload: Data
+        public let isDeleted: Bool
+
+        public init(ownerID: UUID, revision: Int64, payload: Data, isDeleted: Bool) {
+            self.ownerID = ownerID
+            self.revision = revision
+            self.payload = payload
+            self.isDeleted = isDeleted
+        }
+    }
+
+    public static func reconcileVerified(
+        cloudAccountID: UUID,
+        approvedPayloads: [String: Data],
+        successfulRevisions: [String: Int64],
+        remoteRecords: [String: VerifiedRemoteRecord]
+    ) -> Result {
+        let baseline = reconcile(
+            approvedRecordIDs: Array(approvedPayloads.keys),
+            successfulRevisions: successfulRevisions,
+            remoteRevisions: remoteRecords.mapValues { $0.revision })
+        var conflicts = Set(baseline.conflictingIDs)
+        for id in baseline.completedIDs {
+            guard let approved = approvedPayloads[id],
+                  let remote = remoteRecords[id],
+                  remote.ownerID == cloudAccountID,
+                  !remote.isDeleted,
+                  remote.payload == approved else {
+                conflicts.insert(id)
+                continue
+            }
+        }
+        // Unexpected remote records remain conflicts even if their payload matches.
+        return Result(completedIDs: baseline.completedIDs.filter { !conflicts.contains($0) },
+                      remainingIDs: baseline.remainingIDs,
+                      conflictingIDs: conflicts.sorted())
+    }
+
     /// A successful write receipt is valid only when its cloud revision still
     /// matches the remote inventory. Unrecognized cloud records block resumption.
     public static func reconcile(
