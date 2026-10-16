@@ -55,6 +55,47 @@ struct ReviewedFirstUploadExecutor {
                                 checkpoint: checkpoint)
     }
 
+    /// Resume only after read-only reconciliation of every remote row.
+    /// An unknown or modified cloud record blocks the entire operation.
+    func resumeApproved(store: LocalStore,
+                        approval: InitialTransferApproval,
+                        approvedItems: [CoreSyncUploadPreview.Item],
+                        checkpointURL: URL,
+                        confirmed: Bool) async throws -> [String: Int64] {
+        guard confirmed else { throw UploadError.confirmationRequired }
+        let latest = try store.coreSyncPreview()
+        guard latest.canUpload,
+              approval.matches(localOwnerID: store.ownerID,
+                               cloudAccountID: approval.cloudAccountID,
+                               records: latest.items),
+              latest.items == approvedItems else {
+            throw UploadError.localSnapshotChanged
+        }
+        let inspector = ReviewedTransferRecoveryInspector(client: client)
+        let result = try await inspector.inspect(store: store, approval: approval,
+                                                 checkpointURL: checkpointURL)
+        guard result.canResume else { throw UploadError.approvalMismatch }
+        var checkpoint = try InitialTransferCheckpoint.load(from: checkpointURL)
+        guard checkpoint.matches(approval) else { throw UploadError.approvalMismatch }
+        let writer = ReviewedCloudWriter(client: client)
+        for id in result.remainingIDs {
+            guard try await client.auth.session.user.id == approval.cloudAccountID else {
+                throw UploadError.accountChanged
+            }
+            guard let item = latest.items.first(where: {
+                "\($0.recordType.rawValue):\($0.recordID.uuidString)" == id
+            }) else { throw UploadError.approvalMismatch }
+            // Create-only CAS: never overwrite a remote row on resume.
+            let payload = try JSONDecoder().decode(JSONDocument.self, from: item.payload)
+            let revision = try await writer.save(
+                recordType: item.recordType, recordID: item.recordID,
+                payload: payload, expectedRevision: 0, isDeleted: item.isDeleted)
+            try checkpoint.recordSuccess(id: id, revision: revision)
+            try checkpoint.save(to: checkpointURL, allowReplacement: true)
+        }
+        return checkpoint.successfulRevisions
+    }
+
     /// Uses a complete, paginated remote inventory and refuses any preexisting
     /// cloud record for this account. No SQLite writes occur.
     func upload(plan: CoreSyncUploadPreview.Plan,
