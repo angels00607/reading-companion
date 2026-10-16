@@ -19,6 +19,11 @@ extension LocalStore {
         let destination = try DatabaseQueue(path: path.path)
         do {
             try queue.backup(to: destination)
+            // A backup must be readable and pass SQLite integrity validation.
+            let integrity = try destination.read { db in
+                try String.fetchOne(db, sql: "PRAGMA integrity_check")
+            }
+            guard integrity == "ok" else { throw BackupError.integrityCheckFailed }
         } catch {
             try? FileManager.default.removeItem(at: path)
             throw error
@@ -28,5 +33,6 @@ extension LocalStore {
 
     public enum BackupError: Error {
         case invalidDestination
+        case integrityCheckFailed
     }
 }
