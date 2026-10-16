@@ -42,10 +42,17 @@ struct ReviewedFirstUploadExecutor {
         // The SQLite backup is created only after the fresh snapshot passes.
         // If backup fails, upload never starts.
         try store.createPreTransferBackup(at: backupURL)
+        let checkpointURL = backupURL.deletingPathExtension()
+            .appendingPathExtension("checkpoint.json")
+        let checkpoint = InitialTransferCheckpoint(approval: approval, backupURL: backupURL)
+        // Persist the initial checkpoint before the first cloud write.
+        try checkpoint.save(to: checkpointURL)
         return try await upload(plan: latest, confirmed: confirmed,
                                 expectedAccountID: currentAccount,
                                 approvedRecordIDs: Set(approval.approvedRecordIDs),
-                                approvedItems: approvedItems)
+                                approvedItems: approvedItems,
+                                checkpointURL: checkpointURL,
+                                checkpoint: checkpoint)
     }
 
     /// Uses a complete, paginated remote inventory and refuses any preexisting
@@ -54,7 +61,9 @@ struct ReviewedFirstUploadExecutor {
                 confirmed: Bool,
                 expectedAccountID: UUID,
                 approvedRecordIDs: Set<String>,
-                approvedItems: [CoreSyncUploadPreview.Item]) async throws -> [String: Int64] {
+                approvedItems: [CoreSyncUploadPreview.Item],
+                checkpointURL: URL? = nil,
+                checkpoint: InitialTransferCheckpoint? = nil) async throws -> [String: Int64] {
         guard confirmed else { throw UploadError.confirmationRequired }
         guard plan.canUpload else { throw UploadError.pendingReview }
         let plannedIDs = Set(plan.items.map { "\($0.recordType.rawValue):\($0.recordID.uuidString)" })
@@ -80,6 +89,7 @@ struct ReviewedFirstUploadExecutor {
 
         let writer = ReviewedCloudWriter(client: client)
         var revisions: [String: Int64] = [:]
+        var receipt = checkpoint
         for item in plan.items {
             guard try await client.auth.session.user.id == expectedAccountID else {
                 throw UploadError.accountChanged
@@ -88,7 +98,13 @@ struct ReviewedFirstUploadExecutor {
             let revision = try await writer.save(
                 recordType: item.recordType, recordID: item.recordID,
                 payload: document, expectedRevision: 0, isDeleted: item.isDeleted)
-            revisions["\(item.recordType.rawValue):\(item.recordID.uuidString)"] = revision
+            let id = "\(item.recordType.rawValue):\(item.recordID.uuidString)"
+            revisions[id] = revision
+            if var current = receipt, let checkpointURL {
+                try current.recordSuccess(id: id, revision: revision)
+                try current.save(to: checkpointURL, allowReplacement: true)
+                receipt = current
+            }
         }
         return revisions
     }
